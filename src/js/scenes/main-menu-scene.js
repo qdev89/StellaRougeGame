@@ -112,19 +112,19 @@ class MainMenuScene extends Phaser.Scene {
                 handler: () => this.startGame()
             },
             {
-                text: 'HANGAR BAY',
+                text: 'PROFILE',
                 y: height / 2 + 120,
+                handler: () => this.openProfile()
+            },
+            {
+                text: 'HANGAR BAY',
+                y: height / 2 + 200,
                 handler: () => this.openHangar()
             },
             {
                 text: 'OPTIONS',
-                y: height / 2 + 200,
-                handler: () => this.openOptions()
-            },
-            {
-                text: 'DEBUG START',
                 y: height / 2 + 280,
-                handler: () => this.debugStartGame()
+                handler: () => this.openOptions()
             }
         ];
 
@@ -227,8 +227,19 @@ class MainMenuScene extends Phaser.Scene {
                 score: 0,
                 shipType: 'fighter',
                 upgrades: [],
-                penalties: []
+                penalties: [],
+                inventory: this.createDefaultInventory()
             };
+
+            // Initialize meta-progression if not exists
+            if (!this.game.global.metaProgress) {
+                this.game.global.metaProgress = {
+                    credits: 0,
+                    highestSector: 1,
+                    unlockedShips: ['fighter'],
+                    unlockedUpgrades: []
+                };
+            }
 
             // Add a visual indicator that game is starting
             const loadingText = this.add.text(
@@ -245,9 +256,9 @@ class MainMenuScene extends Phaser.Scene {
 
             // Start the game scene with a slight delay
             this.time.delayedCall(500, () => {
-                // Start the game scene explicitly with data
-                console.log('Starting game scene with fresh data');
-                this.scene.start(CONSTANTS.SCENES.GAME, {
+                // Start the sector map scene explicitly with data
+                console.log('Starting sector map scene with fresh data');
+                this.scene.start(CONSTANTS.SCENES.SECTOR_MAP, {
                     sector: 1,
                     score: 0
                 });
@@ -257,6 +268,20 @@ class MainMenuScene extends Phaser.Scene {
             console.error('Error starting game:', error);
             alert('Failed to start game. Check console for details.');
         }
+    }
+
+    openProfile() {
+        console.log('Opening profile management...');
+
+        // Initialize save manager if it doesn't exist
+        if (!this.game.global.saveManager) {
+            this.game.global.saveManager = new SaveManager(this.game);
+        }
+
+        // Start profile scene
+        this.scene.start(CONSTANTS.SCENES.PROFILE, {
+            previousScene: CONSTANTS.SCENES.MAIN_MENU
+        });
     }
 
     openHangar() {
@@ -317,5 +342,66 @@ class MainMenuScene extends Phaser.Scene {
         } else if (this.usingFallbackBackground) {
             // Add some animation for fallback background if needed
         }
+    }
+
+    createDefaultInventory() {
+        // Create a default inventory with some starter items
+        return {
+            consumables: [
+                {
+                    id: 'repair_kit',
+                    name: 'Repair Kit',
+                    description: 'Repairs 25% of your ship\'s hull integrity.',
+                    quantity: 2,
+                    usable: true,
+                    effect: {
+                        type: 'repair',
+                        value: 0.25
+                    }
+                },
+                {
+                    id: 'shield_booster',
+                    name: 'Shield Booster',
+                    description: 'Temporarily increases shield capacity by 50% for 30 seconds.',
+                    quantity: 1,
+                    usable: true,
+                    effect: {
+                        type: 'boost',
+                        stat: 'shield',
+                        value: 0.5,
+                        duration: 30
+                    }
+                }
+            ],
+            materials: [
+                {
+                    id: 'scrap_metal',
+                    name: 'Scrap Metal',
+                    description: 'Common salvaged material used for basic repairs and crafting.',
+                    quantity: 15,
+                    usable: false
+                },
+                {
+                    id: 'energy_cell',
+                    name: 'Energy Cell',
+                    description: 'Standard power source for various ship systems and equipment.',
+                    quantity: 8,
+                    usable: false
+                }
+            ],
+            special: [
+                {
+                    id: 'mysterious_artifact',
+                    name: 'Mysterious Artifact',
+                    description: 'An unknown device of alien origin. Its purpose is unclear.',
+                    quantity: 1,
+                    usable: true,
+                    effect: {
+                        type: 'special',
+                        action: 'revealMap'
+                    }
+                }
+            ]
+        };
     }
 }

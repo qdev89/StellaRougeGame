@@ -60,8 +60,13 @@
     <script src="src/js/scenes/boot-scene.js"></script>
     <script src="src/js/scenes/loading-scene.js"></script>
     <script src="src/js/scenes/main-menu-scene.js"></script>
+    <script src="src/js/scenes/sector-map-scene.js"></script>
     <script src="src/js/scenes/game-scene.js"></script>
     <script src="src/js/scenes/upgrade-scene.js"></script>
+    <script src="src/js/scenes/game-over-scene.js"></script>
+    <script src="src/js/scenes/ship-status-scene.js"></script>
+    <script src="src/js/scenes/inventory-scene.js"></script>
+    <script src="src/js/scenes/profile-scene.js"></script>
     <script src="src/js/entities/player-ship.js"></script>
     <script src="src/js/entities/enemy.js"></script>
     <script src="src/js/entities/enemy-drone.js"></script>
@@ -69,8 +74,10 @@
     <script src="src/js/entities/enemy-destroyer.js"></script>
     <script src="src/js/entities/powerup.js"></script>
     <script src="src/js/systems/procedural-generator.js"></script>
+    <script src="src/js/systems/sector-map-generator.js"></script>
     <script src="src/js/systems/choice-system.js"></script>
     <script src="src/js/systems/sound-manager.js"></script>
+    <script src="src/js/systems/save-manager.js"></script>
 
     <script>
         // Global game state
@@ -80,13 +87,32 @@
                 score: 0,
                 shipType: 'fighter',
                 upgrades: [],
-                penalties: []
+                penalties: [],
+                inventory: {}
             },
             metaProgress: {
                 credits: CONSTANTS.META.STARTING_CREDITS,
                 highestSector: 1,
                 unlockedShips: ['fighter'],
-                permanentUpgrades: []
+                unlockedUpgrades: [],
+                achievements: {}
+            },
+            statistics: {
+                totalRuns: 0,
+                totalPlayTime: 0,
+                highestScore: 0,
+                enemiesDefeated: 0,
+                bossesDefeated: 0,
+                upgradesCollected: 0,
+                itemsUsed: 0,
+                deaths: 0
+            },
+            settings: {
+                soundVolume: 0.7,
+                musicVolume: 0.5,
+                particleEffects: true,
+                screenShake: true,
+                difficulty: 'normal'
             },
             audio: {
                 music: false, // Disabled for this phase

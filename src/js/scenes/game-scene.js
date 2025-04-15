@@ -15,6 +15,10 @@ class GameScene extends Phaser.Scene {
         this.currentSector = data.sector || currentRun.sector || 1;
         this.score = data.score || currentRun.score || 0;
 
+        // Get node type and ID from sector map
+        this.nodeType = data.nodeType || 'COMBAT';
+        this.nodeId = data.nodeId || 0;
+
         // Set up empty collections for game objects
         this.enemies = this.physics.add.group();
         this.hazards = this.physics.add.group();
@@ -26,12 +30,12 @@ class GameScene extends Phaser.Scene {
         // Game state flags
         this.isPaused = false;
         this.isGameOver = false;
-        this.bossEncountered = false;
+        this.bossEncountered = this.nodeType === 'BOSS';
     }
 
     create() {
         try {
-            console.log('GameScene: Starting sector', this.currentSector);
+            console.log(`GameScene: Starting sector ${this.currentSector}, node type: ${this.nodeType}`);
 
             // Initialize game.global if it doesn't exist
             if (!this.game.global) {
@@ -64,8 +68,8 @@ class GameScene extends Phaser.Scene {
             try {
                 this.procGen = new ProceduralGenerator(this);
 
-                // Generate the current sector
-                this.currentSectorData = this.procGen.generateSector(this.currentSector);
+                // Generate the current sector with node type
+                this.currentSectorData = this.procGen.generateSector(this.currentSector, this.nodeType);
             } catch (error) {
                 console.error('Error initializing procedural generator:', error);
                 // Create a minimal fallback sector data
@@ -110,6 +114,7 @@ class GameScene extends Phaser.Scene {
         console.log('Creating fallback sector data');
         this.currentSectorData = {
             number: this.currentSector,
+            nodeType: this.nodeType,
             waves: [
                 {
                     position: -1000,
@@ -118,12 +123,12 @@ class GameScene extends Phaser.Scene {
                         {
                             type: 'DRONE',
                             position: { x: 200, y: -200 },
-                            isElite: false
+                            isElite: this.nodeType === 'ELITE'
                         },
                         {
                             type: 'DRONE',
                             position: { x: 400, y: -300 },
-                            isElite: false
+                            isElite: this.nodeType === 'ELITE'
                         }
                     ],
                     spawned: false
@@ -131,12 +136,12 @@ class GameScene extends Phaser.Scene {
             ],
             hazards: [],
             specialEncounters: [],
-            bossEncounter: {
+            bossEncounter: this.nodeType === 'BOSS' ? {
                 type: 'DESTROYER',
                 position: -5000,
                 arena: 'arena_1',
                 healthMultiplier: 1.0
-            }
+            } : null
         };
 
         // Initialize sectorProgress for the fallback progress tracking
@@ -378,6 +383,44 @@ class GameScene extends Phaser.Scene {
         this.pauseButton.on('pointerdown', () => {
             this.togglePause();
         });
+
+        // Ship status button
+        const shipStatusButton = this.add.text(
+            this.cameras.main.width - 120,
+            70,
+            'SHIP STATUS',
+            {
+                fontFamily: 'monospace',
+                fontSize: '14px',
+                color: '#cccccc',
+                align: 'center',
+                backgroundColor: '#333333',
+                padding: {
+                    x: 8,
+                    y: 4
+                }
+            }
+        ).setScrollFactor(0)
+        .setInteractive({ useHandCursor: true });
+
+        shipStatusButton.on('pointerdown', () => {
+            // Pause the game
+            this.pauseGameplay();
+
+            // Start the ship status scene
+            this.scene.launch(CONSTANTS.SCENES.SHIP_STATUS, {
+                previousScene: CONSTANTS.SCENES.GAME,
+                sector: this.currentSector,
+                score: this.score
+            });
+
+            // When the ship status scene is closed, resume gameplay
+            this.events.once('resume', () => {
+                this.resumeGameplay();
+            });
+        });
+
+        this.uiContainer.add(shipStatusButton);
     }
 
     setupPhysics() {
@@ -674,22 +717,181 @@ class GameScene extends Phaser.Scene {
         // Pause the game while showing the choice UI
         this.pauseGameplay();
 
-        // Generate a choice from the choice system
-        const choice = this.choiceSystem.generateChoice('standard');
+        // Generate a choice from the choice system based on sector and node type
+        const choice = this.choiceSystem.generateChoice('standard', this.currentSector, this.nodeType);
 
-        // In a complete implementation, this would open a UI panel
-        console.log('Showing upgrade choice:', choice);
+        // Create a UI panel for the choice
+        this.createChoiceUI(choice);
+    }
 
-        // For now, just apply a random upgrade
-        const randomOption = Phaser.Math.Between(0, choice.options.length - 1);
-        const result = this.choiceSystem.applyChoice(randomOption, choice);
+    createChoiceUI(choice) {
+        // Create a semi-transparent background
+        const overlay = this.add.rectangle(
+            0, 0,
+            this.cameras.main.width,
+            this.cameras.main.height,
+            0x000000, 0.7
+        ).setOrigin(0, 0).setScrollFactor(0).setDepth(100);
+
+        // Create a panel for the choice
+        const panel = this.add.rectangle(
+            this.cameras.main.width / 2,
+            this.cameras.main.height / 2,
+            600, 400,
+            0x333366, 0.9
+        ).setScrollFactor(0).setDepth(101);
+
+        // Add title
+        const title = this.add.text(
+            this.cameras.main.width / 2,
+            this.cameras.main.height / 2 - 150,
+            choice.title,
+            {
+                fontFamily: 'monospace',
+                fontSize: '24px',
+                color: '#ffffff',
+                align: 'center'
+            }
+        ).setOrigin(0.5).setScrollFactor(0).setDepth(102);
+
+        // Add description
+        const description = this.add.text(
+            this.cameras.main.width / 2,
+            this.cameras.main.height / 2 - 110,
+            choice.description,
+            {
+                fontFamily: 'monospace',
+                fontSize: '16px',
+                color: '#cccccc',
+                align: 'center',
+                wordWrap: { width: 550 }
+            }
+        ).setOrigin(0.5).setScrollFactor(0).setDepth(102);
+
+        // Add option buttons
+        const optionButtons = [];
+        const buttonHeight = 70;
+        const buttonSpacing = 10;
+        const startY = this.cameras.main.height / 2 - 50;
+
+        choice.options.forEach((option, index) => {
+            // Create button background
+            const button = this.add.rectangle(
+                this.cameras.main.width / 2,
+                startY + (buttonHeight + buttonSpacing) * index,
+                550, buttonHeight,
+                0x446688, 0.9
+            ).setScrollFactor(0).setDepth(102)
+            .setInteractive({ useHandCursor: true });
+
+            // Add option text
+            const text = this.add.text(
+                this.cameras.main.width / 2 - 260,
+                startY + (buttonHeight + buttonSpacing) * index - 25,
+                option.text,
+                {
+                    fontFamily: 'monospace',
+                    fontSize: '18px',
+                    color: '#ffffff',
+                    align: 'left'
+                }
+            ).setScrollFactor(0).setDepth(103);
+
+            // Add option description
+            const optDesc = this.add.text(
+                this.cameras.main.width / 2 - 260,
+                startY + (buttonHeight + buttonSpacing) * index + 5,
+                option.description,
+                {
+                    fontFamily: 'monospace',
+                    fontSize: '14px',
+                    color: '#aaaaaa',
+                    align: 'left',
+                    wordWrap: { width: 500 }
+                }
+            ).setScrollFactor(0).setDepth(103);
+
+            // Add event handler
+            button.on('pointerdown', () => {
+                this.selectChoiceOption(index, choice, [overlay, panel, title, description, ...optionButtons.flatMap(b => [b.button, b.text, b.desc])]);
+            });
+
+            // Add hover effect
+            button.on('pointerover', () => {
+                button.setFillStyle(0x5588aa);
+            });
+
+            button.on('pointerout', () => {
+                button.setFillStyle(0x446688);
+            });
+
+            optionButtons.push({ button, text, desc: optDesc });
+        });
+
+        // Store UI elements for later cleanup
+        this.choiceUI = {
+            overlay,
+            panel,
+            title,
+            description,
+            optionButtons
+        };
+    }
+
+    selectChoiceOption(index, choice, uiElements) {
+        // Apply the choice
+        const result = this.choiceSystem.applyChoice(index, choice);
 
         console.log('Applied choice:', result);
 
-        // Resume gameplay after a short delay
-        this.time.delayedCall(1000, () => {
+        // Show feedback
+        this.showChoiceFeedback(result);
+
+        // Clean up UI elements after a delay
+        this.time.delayedCall(1500, () => {
+            uiElements.forEach(element => element.destroy());
             this.resumeGameplay();
         });
+    }
+
+    showChoiceFeedback(result) {
+        // Create feedback text
+        let feedbackText = 'Choice applied:';
+
+        // Add rewards
+        if (result.rewards && result.rewards.length > 0) {
+            feedbackText += '\n\nRewards:';
+            result.rewards.forEach(reward => {
+                feedbackText += `\n- ${reward.name}: ${reward.description}`;
+            });
+        }
+
+        // Add penalties
+        if (result.penalties && result.penalties.length > 0) {
+            feedbackText += '\n\nPenalties:';
+            result.penalties.forEach(penalty => {
+                feedbackText += `\n- ${penalty.name}: ${penalty.description}`;
+            });
+        }
+
+        // Display feedback
+        const feedback = this.add.text(
+            this.cameras.main.width / 2,
+            this.cameras.main.height / 2,
+            feedbackText,
+            {
+                fontFamily: 'monospace',
+                fontSize: '18px',
+                color: '#ffffff',
+                align: 'center',
+                backgroundColor: '#000000',
+                padding: { x: 20, y: 20 },
+                wordWrap: { width: 500 }
+            }
+        ).setOrigin(0.5).setScrollFactor(0).setDepth(105);
+
+        // Add to UI elements for cleanup
+        this.choiceUI.feedback = feedback;
     }
 
     spawnResourceCache(position) {
@@ -1081,260 +1283,27 @@ class GameScene extends Phaser.Scene {
         // Store in global state
         this.game.global.lastRun = runData;
 
-        // Create game over overlay
-        this.gameOverOverlay = this.add.rectangle(
-            0, 0,
-            this.cameras.main.width,
-            this.cameras.main.height,
-            0x000000, 0.8
-        ).setOrigin(0, 0).setScrollFactor(0).setDepth(100);
-
-        // Add game over text with animation
-        this.gameOverText = this.add.text(
-            this.cameras.main.width / 2,
-            this.cameras.main.height / 2 - 100,
-            'MISSION FAILED',
-            {
-                fontFamily: 'monospace',
-                fontSize: '48px',
-                color: '#ff3333',
-                align: 'center'
-            }
-        ).setOrigin(0.5).setScrollFactor(0).setDepth(101).setAlpha(0);
-
-        // Add score text
-        this.finalScoreText = this.add.text(
-            this.cameras.main.width / 2,
-            this.cameras.main.height / 2,
-            `FINAL SCORE: ${this.score}`,
-            {
-                fontFamily: 'monospace',
-                fontSize: '32px',
-                color: '#ffffff',
-                align: 'center'
-            }
-        ).setOrigin(0.5).setScrollFactor(0).setDepth(101).setAlpha(0);
-
-        // Add sector reached text
-        this.sectorText = this.add.text(
-            this.cameras.main.width / 2,
-            this.cameras.main.height / 2 + 50,
-            `SECTOR: ${this.currentSector}`,
-            {
-                fontFamily: 'monospace',
-                fontSize: '24px',
-                color: '#aaaaff',
-                align: 'center'
-            }
-        ).setOrigin(0.5).setScrollFactor(0).setDepth(101).setAlpha(0);
-
-        // Add restart option
-        this.restartText = this.add.text(
-            this.cameras.main.width / 2,
-            this.cameras.main.height / 2 + 120,
-            'Press R to try again',
-            {
-                fontFamily: 'monospace',
-                fontSize: '20px',
-                color: '#33ff33',
-                align: 'center'
-            }
-        ).setOrigin(0.5).setScrollFactor(0).setDepth(101).setAlpha(0);
-
-        // Add continue to menu option
-        this.menuText = this.add.text(
-            this.cameras.main.width / 2,
-            this.cameras.main.height / 2 + 160,
-            'Press M for menu',
-            {
-                fontFamily: 'monospace',
-                fontSize: '20px',
-                color: '#33ff33',
-                align: 'center'
-            }
-        ).setOrigin(0.5).setScrollFactor(0).setDepth(101).setAlpha(0);
-
-        // Animate text elements sequentially
-        this.time.delayedCall(500, () => {
-            this.tweens.add({
-                targets: this.gameOverText,
-                alpha: 1,
-                y: this.gameOverText.y + 20,
-                duration: 500,
-                ease: 'Power2'
-            });
-        });
-
+        // Add a brief delay before transitioning to game over scene
         this.time.delayedCall(1000, () => {
-            this.tweens.add({
-                targets: this.finalScoreText,
-                alpha: 1,
-                y: this.finalScoreText.y + 10,
-                duration: 400
+            // Start the game over scene
+            this.scene.start(CONSTANTS.SCENES.GAME_OVER, {
+                score: this.score,
+                sector: this.currentSector,
+                enemiesDefeated: defeatedCount,
+                timeElapsed: this.time.now,
+                upgrades: this.choiceSystem ? this.choiceSystem.playerBuild.activeUpgrades : [],
+                penalties: this.choiceSystem ? this.choiceSystem.playerBuild.activePenalties : []
             });
         });
-
-        this.time.delayedCall(1500, () => {
-            this.tweens.add({
-                targets: this.sectorText,
-                alpha: 1,
-                y: this.sectorText.y + 10,
-                duration: 400
-            });
-        });
-
-        this.time.delayedCall(2000, () => {
-            this.tweens.add({
-                targets: [this.restartText, this.menuText],
-                alpha: 1,
-                y: '+=10',
-                duration: 400,
-                ease: 'Back.easeOut',
-                onComplete: () => {
-                    // Make option text blink
-                    this.tweens.add({
-                        targets: [this.restartText, this.menuText],
-                        alpha: 0.5,
-                        ease: 'Sine.easeInOut',
-                        duration: 500,
-                        yoyo: true,
-                        repeat: -1
-                    });
-                }
-            });
-
-            // Calculate and update meta-progression
-            this.updateMetaProgression();
-
-            // Add key handlers for restart and menu
-            this.input.keyboard.once('keydown-R', this.restartGame, this);
-            this.input.keyboard.once('keydown-M', this.returnToMainMenu, this);
-        });
     }
 
-    updateMetaProgression() {
-        // Calculate credits earned from this run
-        const creditsEarned = Math.floor(this.score / 10);
 
-        // Update global meta-progression
-        if (!this.game.global.metaProgress) {
-            this.game.global.metaProgress = {
-                credits: 0,
-                highestSector: 1,
-                unlockedShips: ['fighter'],
-                unlockedUpgrades: []
-            };
-        }
 
-        // Add credits
-        this.game.global.metaProgress.credits += creditsEarned;
 
-        // Update highest sector reached
-        if (this.currentSector > this.game.global.metaProgress.highestSector) {
-            this.game.global.metaProgress.highestSector = this.currentSector;
-        }
 
-        // Check if we've unlocked any new content
-        this.checkForUnlocks();
 
-        // Display credits earned
-        this.creditsText = this.add.text(
-            this.cameras.main.width / 2,
-            this.cameras.main.height - 50,
-            `CREDITS EARNED: ${creditsEarned}`,
-            {
-                fontFamily: 'monospace',
-                fontSize: '18px',
-                color: '#ffff00',
-                align: 'center'
-            }
-        ).setOrigin(0.5).setScrollFactor(0).setDepth(101).setAlpha(0);
 
-        this.tweens.add({
-            targets: this.creditsText,
-            alpha: 1,
-            y: this.creditsText.y - 10,
-            duration: 500,
-            delay: 300
-        });
-    }
 
-    checkForUnlocks() {
-        // Check if we've reached certain milestones to unlock content
-        const metaProgress = this.game.global.metaProgress;
-
-        // Example: Unlock second ship type after reaching sector 3
-        if (this.currentSector >= 3 && !metaProgress.unlockedShips.includes('interceptor')) {
-            metaProgress.unlockedShips.push('interceptor');
-
-            // Show unlock message
-            this.showUnlockMessage('New ship type: INTERCEPTOR');
-        }
-
-        // Example: Unlock special upgrade at score threshold
-        if (this.score >= 50000 && !metaProgress.unlockedUpgrades.includes('advanced_shields')) {
-            metaProgress.unlockedUpgrades.push('advanced_shields');
-
-            // Show unlock message
-            this.showUnlockMessage('New upgrade: ADVANCED SHIELDS');
-        }
-    }
-
-    showUnlockMessage(message) {
-        // Create a popup for the unlock message
-        const unlockText = this.add.text(
-            this.cameras.main.width / 2,
-            this.cameras.main.height - 100,
-            `UNLOCKED: ${message}`,
-            {
-                fontFamily: 'monospace',
-                fontSize: '20px',
-                color: '#ffcc00',
-                align: 'center',
-                backgroundColor: '#333333',
-                padding: { x: 20, y: 10 }
-            }
-        ).setOrigin(0.5).setScrollFactor(0).setDepth(102).setAlpha(0);
-
-        // Animate popup
-        this.tweens.add({
-            targets: unlockText,
-            alpha: 1,
-            y: unlockText.y - 20,
-            duration: 800,
-            ease: 'Back.easeOut',
-            yoyo: true,
-            hold: 2000,
-            repeat: 0,
-            onComplete: () => {
-                unlockText.destroy();
-            }
-        });
-    }
-
-    restartGame() {
-        // Reset the game state and start a new run
-        console.log('Restarting game...');
-
-        // Optionally play a sound
-        // this.sound.play('restart-sound');
-
-        // Start a new game at sector 1
-        this.scene.start(CONSTANTS.SCENES.GAME, {
-            sector: 1,
-            score: 0
-        });
-    }
-
-    returnToMainMenu() {
-        // Return to the main menu
-        console.log('Returning to main menu...');
-
-        // Optionally play a sound
-        // this.sound.play('menu-sound');
-
-        this.scene.start(CONSTANTS.SCENES.MAIN_MENU);
-    }
 
     completeLevel() {
         // Level is complete, transition to upgrade scene

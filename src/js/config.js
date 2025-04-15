@@ -23,8 +23,13 @@ const config = {
         BootScene,
         LoadingScene,
         MainMenuScene,
+        SectorMapScene,
         GameScene,
-        UpgradeScene
+        UpgradeScene,
+        GameOverScene,
+        ShipStatusScene,
+        InventoryScene,
+        ProfileScene
     ],
     scale: {
         mode: Phaser.Scale.FIT,

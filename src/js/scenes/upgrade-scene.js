@@ -18,28 +18,39 @@ class UpgradeScene extends Phaser.Scene {
 
     create() {
         console.log('UpgradeScene: Preparing for sector', this.nextSector);
-        
+
         // Create background
         this.createBackground();
-        
+
         // Setup UI elements
         this.createUI();
-        
+
         // Create choice system if it doesn't exist
         this.choiceSystem = this.choiceSystem || new ChoiceSystem(this);
-        
-        // Generate a special between-sector choice
-        this.currentChoice = this.choiceSystem.generateChoice('path');
-        
+
+        // Get node type from data or default to EVENT
+        this.nodeType = this.registry.get('nodeType') || 'EVENT';
+
+        // Generate a choice based on node type and sector
+        let choiceType = 'path';
+        if (this.nodeType === 'MERCHANT') {
+            choiceType = 'merchant';
+        } else if (this.nodeType === 'EVENT') {
+            choiceType = 'event';
+        }
+
+        // Generate the choice with sector number and node type
+        this.currentChoice = this.choiceSystem.generateChoice(choiceType, this.nextSector, this.nodeType);
+
         // Display the choice UI
         this.displayChoiceUI();
-        
+
         // Setup event handlers
         this.setupEvents();
-        
+
         // Calculate reward modifiers based on previous sector
         this.calculateRewardModifiers();
-        
+
         // Play background music
         // this.playMusic();
     }
@@ -49,13 +60,13 @@ class UpgradeScene extends Phaser.Scene {
         this.bgStars = this.add.tileSprite(0, 0, this.cameras.main.width, this.cameras.main.height, 'bg-stars')
             .setOrigin(0, 0)
             .setScrollFactor(0);
-            
+
         // Add a nebula effect
         this.bgNebula = this.add.tileSprite(0, 0, this.cameras.main.width, this.cameras.main.height, 'bg-nebula')
             .setOrigin(0, 0)
             .setScrollFactor(0)
             .setAlpha(0.4);
-        
+
         // Add a planet in the background for visual interest
         this.bgPlanets = this.add.tileSprite(0, 0, this.cameras.main.width, this.cameras.main.height, 'bg-planets')
             .setOrigin(0, 0)
@@ -71,7 +82,7 @@ class UpgradeScene extends Phaser.Scene {
             color: '#33ff33',
             align: 'center'
         }).setOrigin(0.5);
-        
+
         // Add sector info
         this.add.text(this.cameras.main.width / 2, 100, `ENTERING SECTOR ${this.nextSector}`, {
             fontFamily: 'monospace',
@@ -79,7 +90,7 @@ class UpgradeScene extends Phaser.Scene {
             color: '#ffffff',
             align: 'center'
         }).setOrigin(0.5);
-        
+
         // Add score
         this.add.text(this.cameras.main.width / 2, 140, `SCORE: ${this.score}`, {
             fontFamily: 'monospace',
@@ -87,7 +98,7 @@ class UpgradeScene extends Phaser.Scene {
             color: '#ffff33',
             align: 'center'
         }).setOrigin(0.5);
-        
+
         // Add ship status section
         this.add.text(100, 200, 'SHIP STATUS:', {
             fontFamily: 'monospace',
@@ -95,7 +106,7 @@ class UpgradeScene extends Phaser.Scene {
             color: '#33ff33',
             align: 'left'
         });
-        
+
         // Ship type
         this.add.text(120, 230, `TYPE: ${this.capitalizeFirst(this.shipType)}`, {
             fontFamily: 'monospace',
@@ -103,7 +114,7 @@ class UpgradeScene extends Phaser.Scene {
             color: '#ffffff',
             align: 'left'
         });
-        
+
         // Active upgrades
         this.add.text(120, 260, 'UPGRADES:', {
             fontFamily: 'monospace',
@@ -111,7 +122,7 @@ class UpgradeScene extends Phaser.Scene {
             color: '#3388ff',
             align: 'left'
         });
-        
+
         // List upgrades (simplified for now)
         let yPos = 290;
         this.upgrades.forEach((upgrade, index) => {
@@ -132,7 +143,7 @@ class UpgradeScene extends Phaser.Scene {
                 });
             }
         });
-        
+
         if (this.upgrades.length === 0) {
             this.add.text(140, yPos, '• None', {
                 fontFamily: 'monospace',
@@ -142,7 +153,7 @@ class UpgradeScene extends Phaser.Scene {
             });
             yPos += 25;
         }
-        
+
         // Active penalties
         yPos += 10;
         this.add.text(120, yPos, 'SYSTEM DAMAGE:', {
@@ -151,7 +162,7 @@ class UpgradeScene extends Phaser.Scene {
             color: '#ff3333',
             align: 'left'
         });
-        
+
         // List penalties
         yPos += 30;
         this.penalties.forEach((penalty, index) => {
@@ -172,7 +183,7 @@ class UpgradeScene extends Phaser.Scene {
                 });
             }
         });
-        
+
         if (this.penalties.length === 0) {
             this.add.text(140, yPos, '• None', {
                 fontFamily: 'monospace',
@@ -191,7 +202,7 @@ class UpgradeScene extends Phaser.Scene {
             color: '#33ff33',
             align: 'center'
         }).setOrigin(0.5);
-        
+
         // Display the choice description
         this.add.text(this.cameras.main.width / 2, 260, this.currentChoice.description, {
             fontFamily: 'monospace',
@@ -200,12 +211,12 @@ class UpgradeScene extends Phaser.Scene {
             align: 'center',
             wordWrap: { width: 500 }
         }).setOrigin(0.5);
-        
+
         // Display option buttons
         this.optionButtons = [];
         const startY = 320;
         const spacing = 150;
-        
+
         this.currentChoice.options.forEach((option, index) => {
             // Create button background
             const button = this.add.image(
@@ -215,7 +226,7 @@ class UpgradeScene extends Phaser.Scene {
             )
             .setDisplaySize(500, 120)
             .setInteractive();
-            
+
             // Create option title
             const title = this.add.text(
                 button.x,
@@ -228,7 +239,7 @@ class UpgradeScene extends Phaser.Scene {
                     align: 'center'
                 }
             ).setOrigin(0.5);
-            
+
             // Create option description
             const description = this.add.text(
                 button.x,
@@ -242,18 +253,18 @@ class UpgradeScene extends Phaser.Scene {
                     wordWrap: { width: 450 }
                 }
             ).setOrigin(0.5);
-            
+
             // Create rewards/penalties text
             let rewardsText = '';
             if (option.rewards && option.rewards.length > 0) {
                 rewardsText += 'Rewards: ' + option.rewards.map(r => r.name || r.type).join(', ');
             }
-            
+
             if (option.penalties && option.penalties.length > 0) {
                 if (rewardsText) rewardsText += ' | ';
                 rewardsText += 'Penalties: ' + option.penalties.map(p => p.name || p.type).join(', ');
             }
-            
+
             const rewards = this.add.text(
                 button.x,
                 button.y + 40,
@@ -266,10 +277,10 @@ class UpgradeScene extends Phaser.Scene {
                     wordWrap: { width: 450 }
                 }
             ).setOrigin(0.5);
-            
+
             // Set up button interactions
             this.setupButtonInteractions(button, index);
-            
+
             // Store button components for later use
             this.optionButtons.push({ button, title, description, rewards });
         });
@@ -280,19 +291,19 @@ class UpgradeScene extends Phaser.Scene {
             button.setTint(0x44ff44);
             button.setScale(1.05);
         });
-        
+
         button.on('pointerout', () => {
             button.clearTint();
             button.setScale(1);
         });
-        
+
         button.on('pointerdown', () => {
             // Apply the selected choice
             const result = this.choiceSystem.applyChoice(index, this.currentChoice);
-            
+
             // Show feedback that choice was made
             this.showChoiceFeedback(index, result);
-            
+
             // Disable all buttons to prevent multiple choices
             this.optionButtons.forEach(optionButton => {
                 optionButton.button.disableInteractive();
@@ -303,7 +314,7 @@ class UpgradeScene extends Phaser.Scene {
                     optionButton.rewards.setAlpha(0.5);
                 }
             });
-            
+
             // Continue to next sector after a delay
             this.time.delayedCall(2000, () => {
                 this.continueToBattle();
@@ -315,7 +326,7 @@ class UpgradeScene extends Phaser.Scene {
         // Highlight selected button
         const selectedButton = this.optionButtons[selectedIndex];
         selectedButton.button.setTint(0x00ff00);
-        
+
         // Create a "choice made" text
         this.add.text(
             selectedButton.button.x,
@@ -328,7 +339,7 @@ class UpgradeScene extends Phaser.Scene {
                 align: 'center'
             }
         ).setOrigin(0.5);
-        
+
         // Create a continue text
         this.continueText = this.add.text(
             this.cameras.main.width / 2,
@@ -341,7 +352,7 @@ class UpgradeScene extends Phaser.Scene {
                 align: 'center'
             }
         ).setOrigin(0.5);
-        
+
         // Make continue text blink
         this.tweens.add({
             targets: this.continueText,
@@ -365,7 +376,7 @@ class UpgradeScene extends Phaser.Scene {
 
     calculateRewardModifiers() {
         // Calculate reward modifiers based on sector number and player stats
-        // This is a placeholder - in a full implementation, this would adjust 
+        // This is a placeholder - in a full implementation, this would adjust
         // the rewards based on game progression
         this.rewardModifier = 1 + (0.1 * (this.nextSector - 1));
     }
@@ -376,9 +387,9 @@ class UpgradeScene extends Phaser.Scene {
         this.game.global.currentRun.score = this.score;
         this.game.global.currentRun.upgrades = this.upgrades;
         this.game.global.currentRun.penalties = this.penalties;
-        
-        // Start the game scene with the updated data
-        this.scene.start(CONSTANTS.SCENES.GAME, {
+
+        // Start the sector map scene with the updated data
+        this.scene.start(CONSTANTS.SCENES.SECTOR_MAP, {
             sector: this.nextSector,
             score: this.score
         });

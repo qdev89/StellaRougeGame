@@ -11,9 +11,13 @@ const CONSTANTS = {
         BOOT: 'BootScene',
         LOADING: 'LoadingScene',
         MAIN_MENU: 'MainMenuScene',
+        SECTOR_MAP: 'SectorMapScene',
         GAME: 'GameScene',
         UPGRADE: 'UpgradeScene',
-        GAME_OVER: 'GameOverScene'
+        GAME_OVER: 'GameOverScene',
+        SHIP_STATUS: 'ShipStatusScene',
+        INVENTORY: 'InventoryScene',
+        PROFILE: 'ProfileScene'
     },
 
     // Player ship settings
