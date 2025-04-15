@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stellar Rogue</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #fff;
+            font-family: monospace;
+        }
+        #game-container {
+            width: 640px;
+            height: 800px;
+        }
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 100;
+        }
+        #loading h1 {
+            color: #33ff33;
+            margin-bottom: 10px;
+        }
+        #version {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            font-size: 12px;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container"></div>
+    <div id="loading">
+        <h1>STELLAR ROGUE</h1>
+        <p>Loading...</p>
+    </div>
+    <div id="version">v0.1.2 Alpha</div>
+
+    <!-- Phaser library -->
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.js"></script>
+
+    <!-- Game scripts -->
+    <script src="src/js/utils/constants.js"></script>
+    <script src="src/js/scenes/boot-scene.js"></script>
+    <script src="src/js/scenes/loading-scene.js"></script>
+    <script src="src/js/scenes/main-menu-scene.js"></script>
+    <script src="src/js/scenes/game-scene.js"></script>
+    <script src="src/js/scenes/upgrade-scene.js"></script>
+    <script src="src/js/entities/player-ship.js"></script>
+    <script src="src/js/entities/enemy.js"></script>
+    <script src="src/js/entities/enemy-drone.js"></script>
+    <script src="src/js/entities/enemy-gunship.js"></script>
+    <script src="src/js/entities/enemy-destroyer.js"></script>
+    <script src="src/js/entities/powerup.js"></script>
+    <script src="src/js/systems/procedural-generator.js"></script>
+    <script src="src/js/systems/choice-system.js"></script>
+    <script src="src/js/systems/sound-manager.js"></script>
+
+    <script>
+        // Global game state
+        const gameState = {
+            currentRun: {
+                sector: 1,
+                score: 0,
+                shipType: 'fighter',
+                upgrades: [],
+                penalties: []
+            },
+            metaProgress: {
+                credits: CONSTANTS.META.STARTING_CREDITS,
+                highestSector: 1,
+                unlockedShips: ['fighter'],
+                permanentUpgrades: []
+            },
+            audio: {
+                music: false, // Disabled for this phase
+                sfx: false,   // Disabled for this phase
+                volume: 0
+            },
+            debug: {
+                invincible: false,
+                unlockAll: false,
+                showFps: false
+            }
+        };
+
+        // Game configuration
+        const config = {
+            type: Phaser.CANVAS,
+            width: 640,
+            height: 800,
+            backgroundColor: '#000000',
+            parent: 'game-container',
+            pixelArt: true,
+            physics: {
+                default: 'arcade',
+                arcade: {
+                    gravity: { y: 0 },
+                    debug: false
+                }
+            },
+            scene: [
+                BootScene,
+                LoadingScene,
+                MainMenuScene,
+                GameScene,
+                UpgradeScene
+            ],
+            scale: {
+                mode: Phaser.Scale.FIT,
+                autoCenter: Phaser.Scale.CENTER_BOTH
+            }
+        };
+
+        // Initialize game when page loads
+        window.onload = function() {
+            try {
+                // Hide loading screen
+                document.getElementById('loading').style.display = 'none';
+
+                // Create game instance
+                const game = new Phaser.Game(config);
+
+                // Attach global state
+                game.global = gameState;
+
+                console.log('Game initialized successfully');
+            } catch (error) {
+                console.error('Failed to initialize game:', error);
+                document.getElementById('loading').innerHTML = '<h1>Error</h1><p>' + error.message + '</p>';
+                document.getElementById('loading').style.display = 'block';
+            }
+        };
+    </script>
+</body>
+</html>

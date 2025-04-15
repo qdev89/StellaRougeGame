@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stellar Rogue - Enemy Tests</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #fff;
+            font-family: monospace;
+        }
+        
+        #game-container {
+            position: relative;
+            border: 1px solid #333;
+        }
+        
+        h1 {
+            color: #33ff33;
+            margin-bottom: 20px;
+        }
+        
+        #test-results {
+            margin-top: 20px;
+            width: 800px;
+            padding: 10px;
+            background-color: #111;
+            border: 1px solid #333;
+            white-space: pre;
+            font-family: monospace;
+        }
+    </style>
+    
+    <!-- Phaser library -->
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+    
+    <!-- Game constants -->
+    <script src="../src/js/utils/constants.js"></script>
+    
+    <!-- Enemy classes -->
+    <script src="../src/js/entities/enemy.js"></script>
+    <script src="../src/js/entities/enemy-drone.js"></script>
+    <script src="../src/js/entities/enemy-gunship.js"></script>
+    <script src="../src/js/entities/enemy-destroyer.js"></script>
+    
+    <!-- Test script -->
+    <script src="enemy-test.js"></script>
+</head>
+<body>
+    <h1>STELLAR ROGUE - ENEMY TESTS</h1>
+    <div id="game-container"></div>
+    <div id="test-results">Test results will appear here...</div>
+    
+    <script>
+        // Capture console output to display in the test results div
+        const testResults = document.getElementById('test-results');
+        const originalConsoleLog = console.log;
+        const originalConsoleWarn = console.warn;
+        const originalConsoleError = console.error;
+        
+        console.log = function() {
+            originalConsoleLog.apply(console, arguments);
+            const args = Array.from(arguments);
+            testResults.textContent += '> ' + args.join(' ') + '\n';
+        };
+        
+        console.warn = function() {
+            originalConsoleWarn.apply(console, arguments);
+            const args = Array.from(arguments);
+            testResults.textContent += '⚠️ ' + args.join(' ') + '\n';
+        };
+        
+        console.error = function() {
+            originalConsoleError.apply(console, arguments);
+            const args = Array.from(arguments);
+            testResults.textContent += '❌ ' + args.join(' ') + '\n';
+        };
+    </script>
+</body>
+</html>
