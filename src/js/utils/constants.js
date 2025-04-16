@@ -52,35 +52,133 @@ const CONSTANTS = {
                 SPEED: 80,
                 SCORE: 500,
                 FIRE_RATE: 3000 // milliseconds between shots
+            },
+            INTERCEPTOR: {
+                HEALTH: 40,
+                SPEED: 200,
+                SCORE: 150,
+                FIRE_RATE: 1000 // milliseconds between shots
+            },
+            BOMBER: {
+                HEALTH: 80,
+                SPEED: 100,
+                SCORE: 300,
+                FIRE_RATE: 4000 // milliseconds between shots
+            },
+            STEALTH: {
+                HEALTH: 50,
+                SPEED: 180,
+                SCORE: 350,
+                FIRE_RATE: 2500 // milliseconds between shots
+            },
+            TURRET: {
+                HEALTH: 150,
+                SPEED: 0,
+                SCORE: 400,
+                FIRE_RATE: 1200 // milliseconds between shots
+            },
+            CARRIER: {
+                HEALTH: 200,
+                SPEED: 60,
+                SCORE: 600,
+                FIRE_RATE: 5000 // milliseconds between shots
+            }
+        },
+
+        // Mini-boss settings
+        MINI_BOSSES: {
+            ASSAULT_CAPTAIN: {
+                HEALTH: 300,
+                SPEED: 100,
+                SCORE: 1000,
+                FIRE_RATE: 1000,
+                PHASES: 2,
+                ATTACK_PATTERNS: ['spread', 'charge']
+            },
+            SHIELD_MASTER: {
+                HEALTH: 250,
+                SPEED: 80,
+                SCORE: 1000,
+                FIRE_RATE: 2000,
+                PHASES: 2,
+                ATTACK_PATTERNS: ['shield', 'burst']
+            },
+            DRONE_COMMANDER: {
+                HEALTH: 200,
+                SPEED: 70,
+                SCORE: 1000,
+                FIRE_RATE: 3000,
+                PHASES: 2,
+                ATTACK_PATTERNS: ['drones', 'support']
+            },
+            STEALTH_HUNTER: {
+                HEALTH: 220,
+                SPEED: 150,
+                SCORE: 1000,
+                FIRE_RATE: 1500,
+                PHASES: 2,
+                ATTACK_PATTERNS: ['cloak', 'ambush']
+            },
+            BOMBER_CHIEF: {
+                HEALTH: 280,
+                SPEED: 60,
+                SCORE: 1000,
+                FIRE_RATE: 2500,
+                PHASES: 2,
+                ATTACK_PATTERNS: ['bombs', 'mines']
             }
         },
 
         // Boss enemy settings
         BOSSES: {
+            // Sector 1 Boss
             SCOUT_COMMANDER: {
                 HEALTH: 500,
                 SCORE: 2000,
-                PHASES: 2
+                PHASES: 2,
+                ATTACK_PATTERNS: ['spread', 'drones', 'beam', 'ramming']
             },
+            // Sector 2 Boss
             BATTLE_CARRIER: {
                 HEALTH: 800,
                 SCORE: 3000,
-                PHASES: 3
+                PHASES: 3,
+                ATTACK_PATTERNS: ['drones', 'missiles', 'beam', 'shield']
             },
+            // Sector 3 Boss
             DESTROYER_PRIME: {
                 HEALTH: 1000,
                 SCORE: 4000,
-                PHASES: 3
+                PHASES: 3,
+                ATTACK_PATTERNS: ['artillery', 'mines', 'charge', 'burst']
             },
+            // Sector 4 Boss
+            STEALTH_OVERLORD: {
+                HEALTH: 900,
+                SCORE: 4500,
+                PHASES: 3,
+                ATTACK_PATTERNS: ['cloak', 'ambush', 'mines', 'spread']
+            },
+            // Sector 5 Boss
             DREADNOUGHT: {
                 HEALTH: 1500,
                 SCORE: 5000,
-                PHASES: 4
+                PHASES: 4,
+                ATTACK_PATTERNS: ['artillery', 'drones', 'beam', 'shield', 'missiles']
             },
+            // Sector 6 Boss
+            BOMBER_TITAN: {
+                HEALTH: 1300,
+                SCORE: 5500,
+                PHASES: 3,
+                ATTACK_PATTERNS: ['bombs', 'mines', 'artillery', 'drones']
+            },
+            // Final Boss
             NEMESIS: {
                 HEALTH: 2000,
                 SCORE: 10000,
-                PHASES: 5
+                PHASES: 5,
+                ATTACK_PATTERNS: ['all']
             }
         }
     },
@@ -143,6 +241,25 @@ const CONSTANTS = {
             TIER_2: 1500,
             TIER_3: 3000
         }
+    },
+
+    // Time-pressure choice settings
+    TIME_PRESSURE: {
+        // Time limits in milliseconds
+        STANDARD_CHOICE_TIME: 20000,  // 20 seconds for standard choices
+        EMERGENCY_CHOICE_TIME: 10000,  // 10 seconds for emergency choices
+        CRITICAL_CHOICE_TIME: 5000,    // 5 seconds for critical choices
+
+        // Penalties for timeout
+        DEFAULT_TIMEOUT_PENALTY: { type: 'health', value: 10 },
+        EMERGENCY_TIMEOUT_PENALTY: { type: 'health', value: 25 },
+        CRITICAL_TIMEOUT_PENALTY: { type: 'health', value: 40 },
+
+        // Probability settings
+        EMERGENCY_CHANCE_BASE: 0.1,     // Base chance of emergency per sector
+        EMERGENCY_CHANCE_SCALING: 0.05, // Additional chance per sector
+        CRITICAL_CHANCE_BASE: 0.05,     // Base chance of critical emergency
+        CRITICAL_CHANCE_SCALING: 0.03   // Additional chance per sector
     }
 };
 

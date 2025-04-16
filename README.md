@@ -32,13 +32,18 @@ This game is currently in early development (v0.1.2 Alpha). The following featur
 
 - [x] Basic game structure and scene management
 - [x] Player ship movement and controls
-- [x] Enemy base class and several enemy types
+- [x] Enemy base class and multiple enemy types (15 varieties)
 - [x] Combat system (collisions, damage)
 - [x] Scrolling background system
 - [x] UI elements (health, shields, score)
 - [x] Procedural sector generation
 - [x] Choice and upgrade system
-- [ ] Boss encounters
+- [x] Time-pressure choice mechanics
+- [x] Mini-bosses (5 types with unique behaviors)
+- [x] Sector bosses (multiple bosses with phase transitions)
+- [x] Meta-progression system
+- [ ] Subsystem Synergy Grid
+- [ ] Nemesis System for final boss
 - [ ] Sound implementation (temporarily disabled)
 
 See the [project plan](project-plan.md) for more details on the development roadmap.

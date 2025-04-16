@@ -126,6 +126,7 @@ class LoadingScene extends Phaser.Scene {
             this.load.image('enemy-drone', 'enemy-drone.png');
             this.load.image('enemy-gunship', 'enemy-gunship.png');
             this.load.image('enemy-destroyer', 'enemy-destroyer.png');
+            // New enemy types will use existing assets with different tints and behaviors
             this.load.image('laser-blue', 'laser-blue.png');
             this.load.image('laser-red', 'laser-red.png');
             this.load.image('plasma-bolt', 'plasma-bolt.png');
@@ -156,6 +157,7 @@ class LoadingScene extends Phaser.Scene {
             'plasma-bolt', 'missile', 'powerup-health', 'powerup-shield',
             'powerup-weapon', 'powerup-score', 'powerup-flash', 'particle-blue',
             'star-particle', 'bg-dust'
+            // New enemy types will use existing assets with different tints
         ];
 
         requiredTextures.forEach(key => {

@@ -12,11 +12,16 @@ class ProceduralGenerator {
         this.difficultyMultiplier = 1.0;
 
         // Wave generation parameters
-        this.enemyPool = ['DRONE', 'GUNSHIP', 'DESTROYER'];
+        this.enemyPool = ['DRONE', 'GUNSHIP', 'DESTROYER', 'INTERCEPTOR', 'BOMBER', 'STEALTH', 'TURRET', 'CARRIER'];
         this.enemyWeights = {
-            DRONE: 70,
-            GUNSHIP: 25,
-            DESTROYER: 5
+            DRONE: 60,
+            GUNSHIP: 20,
+            DESTROYER: 5,
+            INTERCEPTOR: 25,
+            BOMBER: 10,
+            STEALTH: 15,
+            TURRET: 5,
+            CARRIER: 3
         };
 
         // Pattern library
@@ -171,14 +176,62 @@ class ProceduralGenerator {
         // Adjust weights based on sector number
         let adjustedWeights = {...this.enemyWeights};
 
-        if (sector >= 3) {
-            // Increase chance of tougher enemies in higher sectors
+        // Sector 1: Basic enemies only
+        if (sector === 1) {
+            // Only use basic enemies in sector 1
+            adjustedWeights.INTERCEPTOR = 0;
+            adjustedWeights.BOMBER = 0;
+            adjustedWeights.STEALTH = 0;
+            adjustedWeights.TURRET = 0;
+            adjustedWeights.CARRIER = 0;
+        }
+        // Sector 2: Introduce interceptors
+        else if (sector === 2) {
+            adjustedWeights.BOMBER = 0;
+            adjustedWeights.STEALTH = 0;
+            adjustedWeights.TURRET = 0;
+            adjustedWeights.CARRIER = 0;
+            // Boost interceptors in sector 2
+            adjustedWeights.INTERCEPTOR = 20;
+        }
+        // Sector 3+: Gradually introduce all enemy types
+        else if (sector >= 3) {
+            // Decrease basic enemies
             adjustedWeights.DRONE -= 10 * (sector - 2);
-            adjustedWeights.GUNSHIP += 5 * (sector - 2);
-            adjustedWeights.DESTROYER += 5 * (sector - 2);
+            // Increase advanced enemies
+            adjustedWeights.GUNSHIP += 2 * (sector - 2);
+            adjustedWeights.DESTROYER += 3 * (sector - 2);
+            adjustedWeights.INTERCEPTOR += 5 * (sector - 2);
 
-            // Ensure weights don't go below zero
-            adjustedWeights.DRONE = Math.max(adjustedWeights.DRONE, 30);
+            // Introduce bombers in sector 3
+            if (sector >= 3) {
+                adjustedWeights.BOMBER += 5 * (sector - 2);
+            }
+
+            // Introduce stealth in sector 4
+            if (sector >= 4) {
+                adjustedWeights.STEALTH += 8 * (sector - 3);
+            } else {
+                adjustedWeights.STEALTH = 0;
+            }
+
+            // Introduce turrets in sector 5
+            if (sector >= 5) {
+                adjustedWeights.TURRET += 5 * (sector - 4);
+            } else {
+                adjustedWeights.TURRET = 0;
+            }
+
+            // Introduce carriers in sector 6
+            if (sector >= 6) {
+                adjustedWeights.CARRIER += 3 * (sector - 5);
+            } else {
+                adjustedWeights.CARRIER = 0;
+            }
+
+            // Ensure weights don't go below minimum values
+            adjustedWeights.DRONE = Math.max(adjustedWeights.DRONE, 20);
+            adjustedWeights.GUNSHIP = Math.max(adjustedWeights.GUNSHIP, 10);
         }
 
         // Calculate total weight
@@ -360,12 +413,162 @@ class ProceduralGenerator {
         // Each boss has a different arena
         const arenaType = `arena_${sectorNumber % 5 || 5}`;
 
+        // Generate arena hazards based on boss type
+        const arenaHazards = this.generateBossArenaHazards(bossType, sectorNumber);
+
         return {
             type: bossType,
             position: this.sectorLength,
             arena: arenaType,
-            healthMultiplier: 1 + (0.1 * (sectorNumber - 1)) // Bosses get 10% more health per sector
+            healthMultiplier: 1 + (0.1 * (sectorNumber - 1)), // Bosses get 10% more health per sector
+            hazards: arenaHazards
         };
+    }
+
+    /**
+     * Generate hazards for boss arena
+     */
+    generateBossArenaHazards(bossType, sectorNumber) {
+        const hazards = [];
+
+        // Different hazards based on boss type
+        switch (bossType) {
+            case 'SCOUT_COMMANDER': // The Guardian
+                // Add asteroid field
+                hazards.push({
+                    type: 'asteroid',
+                    density: 0.3,
+                    size: { min: 20, max: 50 },
+                    speed: { min: 50, max: 100 },
+                    damage: 10
+                });
+
+                // Add shield generators
+                hazards.push({
+                    type: 'shield_generator',
+                    count: 3,
+                    health: 50,
+                    position: 'orbit'
+                });
+                break;
+
+            case 'BATTLE_CARRIER': // The Carrier
+                // Add drone spawners
+                hazards.push({
+                    type: 'drone_spawner',
+                    count: 2,
+                    spawnRate: 5000, // ms between spawns
+                    maxDrones: 4
+                });
+
+                // Add energy barriers
+                hazards.push({
+                    type: 'energy_barrier',
+                    pattern: 'horizontal',
+                    activationTime: 3000, // ms active
+                    cooldownTime: 2000 // ms inactive
+                });
+                break;
+
+            case 'DESTROYER_PRIME':
+                // Add laser grid
+                hazards.push({
+                    type: 'laser_grid',
+                    pattern: 'grid',
+                    activationTime: 2000,
+                    cooldownTime: 3000,
+                    damage: 20
+                });
+
+                // Add mines
+                hazards.push({
+                    type: 'mines',
+                    count: 8,
+                    damage: 30
+                });
+                break;
+
+            case 'DREADNOUGHT':
+                // Add all hazards with increased difficulty
+                hazards.push({
+                    type: 'asteroid',
+                    density: 0.4,
+                    size: { min: 30, max: 60 },
+                    speed: { min: 70, max: 120 },
+                    damage: 15
+                });
+
+                hazards.push({
+                    type: 'energy_barrier',
+                    pattern: 'cross',
+                    activationTime: 2500,
+                    cooldownTime: 1500
+                });
+
+                hazards.push({
+                    type: 'laser_grid',
+                    pattern: 'random',
+                    activationTime: 1500,
+                    cooldownTime: 2000,
+                    damage: 25
+                });
+                break;
+
+            case 'NEMESIS':
+                // The ultimate challenge - all hazards at maximum difficulty
+                hazards.push({
+                    type: 'asteroid',
+                    density: 0.5,
+                    size: { min: 40, max: 70 },
+                    speed: { min: 100, max: 150 },
+                    damage: 20
+                });
+
+                hazards.push({
+                    type: 'energy_barrier',
+                    pattern: 'spiral',
+                    activationTime: 2000,
+                    cooldownTime: 1000
+                });
+
+                hazards.push({
+                    type: 'laser_grid',
+                    pattern: 'adaptive', // Adapts to player position
+                    activationTime: 1000,
+                    cooldownTime: 1500,
+                    damage: 30
+                });
+
+                hazards.push({
+                    type: 'drone_spawner',
+                    count: 3,
+                    spawnRate: 4000,
+                    maxDrones: 6
+                });
+                break;
+        }
+
+        // Scale hazard difficulty based on sector number
+        if (sectorNumber > 1) {
+            hazards.forEach(hazard => {
+                // Increase damage by 10% per sector
+                if (hazard.damage) {
+                    hazard.damage = Math.floor(hazard.damage * (1 + 0.1 * (sectorNumber - 1)));
+                }
+
+                // Increase spawn rates and counts
+                if (hazard.count) {
+                    hazard.count = Math.min(hazard.count + Math.floor((sectorNumber - 1) / 2), hazard.count * 2);
+                }
+
+                // Decrease cooldown times
+                if (hazard.cooldownTime) {
+                    hazard.cooldownTime = Math.max(hazard.cooldownTime * (1 - 0.05 * (sectorNumber - 1)), hazard.cooldownTime / 2);
+                }
+            });
+        }
+
+        return hazards;
     }
 
     /**

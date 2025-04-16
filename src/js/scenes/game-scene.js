@@ -190,6 +190,12 @@ class GameScene extends Phaser.Scene {
         // Check for special encounters
         this.checkSpecialEncounters();
 
+        // Check for random emergency events (time-pressure choices)
+        // Only check occasionally to avoid constant checks
+        if (time % 5000 < 16) { // Check roughly every 5 seconds
+            this.checkForEmergencyEvent();
+        }
+
         // Update UI elements
         this.updateHealthUI();
 
@@ -578,6 +584,46 @@ class GameScene extends Phaser.Scene {
                     );
                     break;
 
+                case 'INTERCEPTOR':
+                    enemy = new EnemyInterceptor(
+                        this,
+                        enemyData.position.x,
+                        enemyData.position.y
+                    );
+                    break;
+
+                case 'BOMBER':
+                    enemy = new EnemyBomber(
+                        this,
+                        enemyData.position.x,
+                        enemyData.position.y
+                    );
+                    break;
+
+                case 'STEALTH':
+                    enemy = new EnemyStealth(
+                        this,
+                        enemyData.position.x,
+                        enemyData.position.y
+                    );
+                    break;
+
+                case 'TURRET':
+                    enemy = new EnemyTurret(
+                        this,
+                        enemyData.position.x,
+                        enemyData.position.y
+                    );
+                    break;
+
+                case 'CARRIER':
+                    enemy = new EnemyCarrier(
+                        this,
+                        enemyData.position.x,
+                        enemyData.position.y
+                    );
+                    break;
+
                 default:
                     // Fallback to base enemy class if type is unknown
                     enemy = new Enemy(
@@ -713,6 +759,50 @@ class GameScene extends Phaser.Scene {
         }
     }
 
+    /**
+     * Show a random emergency choice with time pressure
+     */
+    showEmergencyChoice() {
+        // Pause the game while showing the choice UI
+        this.pauseGameplay();
+
+        // Flash warning effect
+        this.cameras.main.flash(500, 255, 0, 0, 0.3);
+
+        // Play alert sound if available
+        // if (this.sound.get('alert')) {
+        //     this.sound.play('alert', { volume: 0.7 });
+        // }
+
+        // Generate an emergency choice with time pressure
+        const choice = this.choiceSystem.generateChoice('time_pressure', this.currentSector, 'HAZARD', true);
+
+        // Create UI panel for the choice with time pressure
+        this.createChoiceUI(choice, true);
+    }
+
+    /**
+     * Check if an emergency event should occur based on sector progress
+     */
+    checkForEmergencyEvent() {
+        // Only trigger emergencies if player is active and not in a boss encounter
+        if (!this.player || !this.player.active || this.bossEncountered) return false;
+
+        // Calculate chance based on sector number
+        const baseChance = CONSTANTS.TIME_PRESSURE.EMERGENCY_CHANCE_BASE;
+        const scalingChance = CONSTANTS.TIME_PRESSURE.EMERGENCY_CHANCE_SCALING * (this.currentSector - 1);
+        const emergencyChance = baseChance + scalingChance;
+
+        // Roll for emergency event
+        if (Math.random() < emergencyChance) {
+            console.log('Emergency event triggered!');
+            this.showEmergencyChoice();
+            return true;
+        }
+
+        return false;
+    }
+
     showUpgradeChoice() {
         // Pause the game while showing the choice UI
         this.pauseGameplay();
@@ -724,7 +814,7 @@ class GameScene extends Phaser.Scene {
         this.createChoiceUI(choice);
     }
 
-    createChoiceUI(choice) {
+    createChoiceUI(choice, isTimePressure = false) {
         // Create a semi-transparent background
         const overlay = this.add.rectangle(
             0, 0,
@@ -738,7 +828,7 @@ class GameScene extends Phaser.Scene {
             this.cameras.main.width / 2,
             this.cameras.main.height / 2,
             600, 400,
-            0x333366, 0.9
+            isTimePressure || choice.isTimePressure ? 0x663333 : 0x333366, 0.9 // Red background for time pressure
         ).setScrollFactor(0).setDepth(101);
 
         // Add title
@@ -749,7 +839,7 @@ class GameScene extends Phaser.Scene {
             {
                 fontFamily: 'monospace',
                 fontSize: '24px',
-                color: '#ffffff',
+                color: isTimePressure || choice.isTimePressure ? '#ff3333' : '#ffffff', // Red text for time pressure
                 align: 'center'
             }
         ).setOrigin(0.5).setScrollFactor(0).setDepth(102);
@@ -773,6 +863,81 @@ class GameScene extends Phaser.Scene {
         const buttonHeight = 70;
         const buttonSpacing = 10;
         const startY = this.cameras.main.height / 2 - 50;
+
+        // Create UI elements array for later cleanup
+        const uiElements = [overlay, panel, title, description];
+
+        // Add timer if this is a time pressure choice
+        let timerBar, timerText, timerEvent;
+        if (isTimePressure || choice.isTimePressure) {
+            // Get time limit from choice or use default
+            const timeLimit = choice.timeLimit || CONSTANTS.TIME_PRESSURE.STANDARD_CHOICE_TIME;
+
+            // Create timer bar background
+            const timerBarBg = this.add.rectangle(
+                this.cameras.main.width / 2,
+                this.cameras.main.height / 2 - 180,
+                550, 15,
+                0x333333, 1
+            ).setScrollFactor(0).setDepth(102);
+
+            // Create timer bar fill
+            timerBar = this.add.rectangle(
+                this.cameras.main.width / 2 - 275,
+                this.cameras.main.height / 2 - 180,
+                550, 15,
+                0xff3333, 1
+            ).setOrigin(0, 0.5).setScrollFactor(0).setDepth(102);
+
+            // Create timer text
+            timerText = this.add.text(
+                this.cameras.main.width / 2,
+                this.cameras.main.height / 2 - 180,
+                (timeLimit / 1000).toFixed(1) + 's',
+                {
+                    fontFamily: 'monospace',
+                    fontSize: '14px',
+                    color: '#ffffff',
+                    align: 'center'
+                }
+            ).setOrigin(0.5).setScrollFactor(0).setDepth(103);
+
+            // Add timer elements to UI elements array
+            uiElements.push(timerBarBg, timerBar, timerText);
+
+            // Create timer event
+            let timeRemaining = timeLimit;
+            timerEvent = this.time.addEvent({
+                delay: 100, // Update every 100ms for smooth timer
+                callback: () => {
+                    timeRemaining -= 100;
+
+                    // Update timer bar width
+                    const progress = timeRemaining / timeLimit;
+                    timerBar.width = 550 * progress;
+
+                    // Update timer text
+                    timerText.setText((timeRemaining / 1000).toFixed(1) + 's');
+
+                    // Flash timer when low on time
+                    if (timeRemaining <= 3000) {
+                        timerBar.setFillStyle(0xff0000);
+                        if (timeRemaining % 500 < 250) {
+                            timerText.setColor('#ff0000');
+                        } else {
+                            timerText.setColor('#ffffff');
+                        }
+                    }
+
+                    // Time's up!
+                    if (timeRemaining <= 0) {
+                        this.handleChoiceTimeout(choice, uiElements, timerEvent);
+                    }
+                },
+                callbackScope: this,
+                loop: true
+            });
+        }
 
         choice.options.forEach((option, index) => {
             // Create button background
@@ -813,7 +978,12 @@ class GameScene extends Phaser.Scene {
 
             // Add event handler
             button.on('pointerdown', () => {
-                this.selectChoiceOption(index, choice, [overlay, panel, title, description, ...optionButtons.flatMap(b => [b.button, b.text, b.desc])]);
+                // Cancel timer if it exists
+                if (timerEvent) {
+                    timerEvent.remove();
+                }
+
+                this.selectChoiceOption(index, choice, uiElements);
             });
 
             // Add hover effect
@@ -826,6 +996,7 @@ class GameScene extends Phaser.Scene {
             });
 
             optionButtons.push({ button, text, desc: optDesc });
+            uiElements.push(button, text, optDesc);
         });
 
         // Store UI elements for later cleanup
@@ -834,7 +1005,10 @@ class GameScene extends Phaser.Scene {
             panel,
             title,
             description,
-            optionButtons
+            optionButtons,
+            timerBar,
+            timerText,
+            timerEvent
         };
     }
 
@@ -856,13 +1030,13 @@ class GameScene extends Phaser.Scene {
 
     showChoiceFeedback(result) {
         // Create feedback text
-        let feedbackText = 'Choice applied:';
+        let feedbackText = result.isTimeout ? 'Time Expired:' : 'Choice applied:';
 
         // Add rewards
         if (result.rewards && result.rewards.length > 0) {
             feedbackText += '\n\nRewards:';
             result.rewards.forEach(reward => {
-                feedbackText += `\n- ${reward.name}: ${reward.description}`;
+                feedbackText += `\n- ${reward.name || reward.type}: ${reward.description || reward.value}`;
             });
         }
 
@@ -870,7 +1044,7 @@ class GameScene extends Phaser.Scene {
         if (result.penalties && result.penalties.length > 0) {
             feedbackText += '\n\nPenalties:';
             result.penalties.forEach(penalty => {
-                feedbackText += `\n- ${penalty.name}: ${penalty.description}`;
+                feedbackText += `\n- ${penalty.name || this.getPenaltyDescription(penalty)}`;
             });
         }
 
@@ -882,7 +1056,7 @@ class GameScene extends Phaser.Scene {
             {
                 fontFamily: 'monospace',
                 fontSize: '18px',
-                color: '#ffffff',
+                color: result.isTimeout ? '#ff6666' : '#ffffff',
                 align: 'center',
                 backgroundColor: '#000000',
                 padding: { x: 20, y: 20 },
@@ -892,6 +1066,120 @@ class GameScene extends Phaser.Scene {
 
         // Add to UI elements for cleanup
         this.choiceUI.feedback = feedback;
+    }
+
+    /**
+     * Handle timeout for time-pressure choices
+     */
+    handleChoiceTimeout(choice, uiElements, timerEvent) {
+        // Cancel the timer event
+        if (timerEvent) {
+            timerEvent.remove();
+        }
+
+        console.log('Choice timeout!', choice);
+
+        // Flash screen red
+        this.cameras.main.flash(500, 255, 0, 0, 0.5);
+
+        // Apply timeout consequences
+        const result = this.choiceSystem.applyChoice(-1, choice, true);
+
+        // Show timeout feedback
+        this.showTimeoutFeedback(result, choice);
+
+        // Clean up UI elements after a delay
+        this.time.delayedCall(2000, () => {
+            uiElements.forEach(element => {
+                if (element && element.destroy) {
+                    element.destroy();
+                }
+            });
+            this.resumeGameplay();
+        });
+    }
+
+    /**
+     * Show feedback for timeout
+     */
+    showTimeoutFeedback(result, choice) {
+        // Create timeout message
+        const timeoutText = this.add.text(
+            this.cameras.main.width / 2,
+            this.cameras.main.height / 2 - 200,
+            'TIME EXPIRED',
+            {
+                fontFamily: 'monospace',
+                fontSize: '28px',
+                color: '#ff0000',
+                align: 'center',
+                stroke: '#000000',
+                strokeThickness: 4
+            }
+        ).setOrigin(0.5).setScrollFactor(0).setDepth(200);
+
+        // Create consequence text
+        const consequenceText = this.add.text(
+            this.cameras.main.width / 2,
+            this.cameras.main.height / 2 - 160,
+            choice.timeoutOption ? choice.timeoutOption.description : 'You failed to make a decision in time.',
+            {
+                fontFamily: 'monospace',
+                fontSize: '16px',
+                color: '#ff9999',
+                align: 'center',
+                wordWrap: { width: 500 }
+            }
+        ).setOrigin(0.5).setScrollFactor(0).setDepth(200);
+
+        // List penalties
+        if (result.penalties && result.penalties.length > 0) {
+            let penaltyText = 'Consequences:\n';
+            result.penalties.forEach(penalty => {
+                penaltyText += `- ${this.getPenaltyDescription(penalty)}\n`;
+            });
+
+            this.add.text(
+                this.cameras.main.width / 2,
+                this.cameras.main.height / 2 - 100,
+                penaltyText,
+                {
+                    fontFamily: 'monospace',
+                    fontSize: '14px',
+                    color: '#ff6666',
+                    align: 'center'
+                }
+            ).setOrigin(0.5).setScrollFactor(0).setDepth(200);
+        }
+
+        // Animate the text
+        this.tweens.add({
+            targets: [timeoutText, consequenceText],
+            y: '-=20',
+            alpha: { from: 0, to: 1 },
+            duration: 500,
+            ease: 'Power2'
+        });
+    }
+
+    /**
+     * Get a human-readable description of a penalty
+     */
+    getPenaltyDescription(penalty) {
+        switch (penalty.type) {
+            case 'health':
+                return `Ship integrity reduced by ${penalty.value}%`;
+            case 'shield':
+                return `Shield capacity reduced by ${penalty.value}%`;
+            case 'speed':
+                return `Engine efficiency reduced by ${penalty.value}%`;
+            case 'fireRate':
+                return `Weapon systems degraded by ${penalty.value}%`;
+            case 'weakness':
+                return `New vulnerability: ${penalty.value}`;
+            default:
+                return `${penalty.type}: ${penalty.value}`;
+        }
     }
 
     spawnResourceCache(position) {
@@ -921,38 +1209,49 @@ class GameScene extends Phaser.Scene {
         // Create a boss based on the type
         let boss;
 
-        // For now, use a super-sized destroyer as the boss
-        boss = new EnemyDestroyer(
-            this,
-            this.cameras.main.width / 2,
-            this.cameras.main.scrollY - 200
-        );
+        // Create the appropriate boss based on sector and type
+        switch (bossData.type) {
+            case 'SCOUT_COMMANDER':
+                boss = new BossGuardian(
+                    this,
+                    this.cameras.main.width / 2,
+                    this.cameras.main.scrollY - 200
+                );
+                break;
 
-        // Scale up the boss and give it more health
-        boss.setScale(3.0);
-        boss.health *= bossData.healthMultiplier;
-        boss.maxHealth *= bossData.healthMultiplier;
-
-        // If it has shields, boost those too
-        if (boss.hasShield) {
-            boss.shieldHealth *= bossData.healthMultiplier;
-            boss.maxShieldHealth *= bossData.healthMultiplier;
+            // For other boss types, use a placeholder for now
+            default:
+                boss = new BossGuardian(
+                    this,
+                    this.cameras.main.width / 2,
+                    this.cameras.main.scrollY - 200
+                );
+                break;
         }
 
-        // Make the boss elite for extra challenge
-        boss.isElite = true;
-        boss.applyEliteBuffs();
+        // Apply health multiplier based on sector difficulty
+        boss.health *= bossData.healthMultiplier;
+        boss.maxHealth *= bossData.healthMultiplier;
 
         // Add to enemies physics group
         this.enemies.add(boss);
 
+        // Create boss health bar
+        this.createBossHealthBar(boss);
+
         // Create a boss announcement
         this.createBossAnnouncement(bossData.type);
+
+        // Set up boss event listeners
+        this.setupBossEvents(boss);
 
         // Play boss music if available
         if (this.sound.get('boss-music')) {
             this.sound.play('boss-music', { volume: 0.7 });
         }
+
+        // Return the boss reference
+        return boss;
     }
 
     createBossAnnouncement(bossType) {
@@ -989,6 +1288,41 @@ class GameScene extends Phaser.Scene {
                 }
             ).setOrigin(0.5).setScrollFactor(0).setDepth(1001).setAlpha(0);
 
+            // Create boss name text based on type
+            let bossName = "UNKNOWN ENTITY";
+            switch (bossType) {
+                case 'SCOUT_COMMANDER':
+                    bossName = "THE GUARDIAN";
+                    break;
+                case 'BATTLE_CARRIER':
+                    bossName = "THE CARRIER";
+                    break;
+                case 'DESTROYER_PRIME':
+                    bossName = "DESTROYER PRIME";
+                    break;
+                case 'DREADNOUGHT':
+                    bossName = "THE DREADNOUGHT";
+                    break;
+                case 'NEMESIS':
+                    bossName = "THE NEMESIS";
+                    break;
+            }
+
+            // Add boss name text
+            const bossNameText = this.add.text(
+                this.cameras.main.width / 2,
+                this.cameras.main.height / 2 + 60,
+                bossName,
+                {
+                    fontFamily: 'monospace',
+                    fontSize: '24px',
+                    color: '#ffff00',
+                    align: 'center',
+                    stroke: '#000000',
+                    strokeThickness: 3
+                }
+            ).setOrigin(0.5).setScrollFactor(0).setDepth(1001).setAlpha(0);
+
             // Animate warning text
             this.tweens.add({
                 targets: warningText,
@@ -997,17 +1331,26 @@ class GameScene extends Phaser.Scene {
                 duration: 500,
                 ease: 'Power2',
                 onComplete: () => {
-                    // Hold for a moment then fade out
+                    // Animate boss name text after warning
                     this.tweens.add({
-                        targets: warningText,
-                        alpha: 0,
-                        y: warningText.y - 20,
-                        delay: 1500,
+                        targets: bossNameText,
+                        alpha: 1,
                         duration: 500,
-                        ease: 'Power2',
-                        onComplete: () => {
-                            warningText.destroy();
-                        }
+                        ease: 'Power2'
+                    });
+
+                    // Hold for a moment then fade out
+                    this.time.delayedCall(3000, () => {
+                        this.tweens.add({
+                            targets: [warningText, bossNameText],
+                            alpha: 0,
+                            duration: 500,
+                            ease: 'Power2',
+                            onComplete: () => {
+                                warningText.destroy();
+                                bossNameText.destroy();
+                            }
+                        });
                     });
                 }
             });
@@ -1304,6 +1647,287 @@ class GameScene extends Phaser.Scene {
 
 
 
+
+    /**
+     * Create a health bar for the boss
+     */
+    createBossHealthBar(boss) {
+        // Create container for boss UI elements
+        this.bossUI = this.add.container(0, 0).setScrollFactor(0).setDepth(900);
+
+        // Create boss health bar background
+        const barBg = this.add.rectangle(
+            this.cameras.main.width / 2,
+            20,
+            400,
+            20,
+            0x333333
+        ).setScrollFactor(0);
+
+        // Create boss health bar fill
+        this.bossHealthBar = this.add.rectangle(
+            this.cameras.main.width / 2 - 200,
+            20,
+            400,
+            20,
+            0xff3333
+        ).setScrollFactor(0).setOrigin(0, 0.5);
+
+        // Create boss name text
+        const bossNameText = this.add.text(
+            this.cameras.main.width / 2,
+            40,
+            boss.name || 'BOSS',
+            {
+                fontFamily: 'monospace',
+                fontSize: '16px',
+                color: '#ffffff',
+                align: 'center'
+            }
+        ).setScrollFactor(0).setOrigin(0.5, 0);
+
+        // Add elements to container
+        this.bossUI.add(barBg);
+        this.bossUI.add(this.bossHealthBar);
+        this.bossUI.add(bossNameText);
+
+        // Make the UI initially invisible and fade it in
+        this.bossUI.setAlpha(0);
+        this.tweens.add({
+            targets: this.bossUI,
+            alpha: 1,
+            duration: 1000,
+            ease: 'Power2'
+        });
+    }
+
+    /**
+     * Set up event listeners for boss events
+     */
+    setupBossEvents(boss) {
+        // Listen for boss phase changes
+        this.events.on('boss-phase-change', this.onBossPhaseChange, this);
+
+        // Listen for boss damage
+        this.events.on('boss-damage', this.onBossDamage, this);
+
+        // Listen for boss defeat
+        this.events.on('boss-defeated', this.onBossDefeated, this);
+    }
+
+    /**
+     * Handle boss phase change event
+     */
+    onBossPhaseChange(phase) {
+        console.log('Boss entering phase', phase);
+
+        // Visual feedback
+        this.cameras.main.flash(500, 255, 0, 0, 0.5);
+        this.cameras.main.shake(300, 0.01);
+
+        // Add phase indicator
+        const phaseText = this.add.text(
+            this.cameras.main.width / 2,
+            this.cameras.main.height / 2,
+            `PHASE ${phase}`,
+            {
+                fontFamily: 'monospace',
+                fontSize: '24px',
+                color: '#ff3333',
+                align: 'center',
+                stroke: '#000000',
+                strokeThickness: 3
+            }
+        ).setOrigin(0.5).setScrollFactor(0).setDepth(1001).setAlpha(0);
+
+        // Animate phase text
+        this.tweens.add({
+            targets: phaseText,
+            alpha: 1,
+            duration: 300,
+            ease: 'Power2',
+            onComplete: () => {
+                // Hold for a moment, then fade out
+                this.time.delayedCall(1500, () => {
+                    this.tweens.add({
+                        targets: phaseText,
+                        alpha: 0,
+                        duration: 300,
+                        ease: 'Power2',
+                        onComplete: () => {
+                            phaseText.destroy();
+                        }
+                    });
+                });
+            }
+        });
+    }
+
+    /**
+     * Handle boss damage event
+     */
+    onBossDamage(amount, healthPercentage) {
+        // Update boss health bar
+        if (this.bossHealthBar) {
+            this.bossHealthBar.width = 400 * healthPercentage;
+        }
+    }
+
+    /**
+     * Handle boss defeat event
+     */
+    onBossDefeated(boss) {
+        console.log('Boss defeated!', boss);
+
+        // Stop scrolling
+        this.scrollSpeed = 0;
+
+        // Screen effects
+        this.cameras.main.flash(1000, 255, 255, 255, 0.8);
+        this.cameras.main.shake(500, 0.02);
+
+        // Update statistics
+        this.game.global.statistics.bossesDefeated++;
+
+        // Show victory message
+        const victoryText = this.add.text(
+            this.cameras.main.width / 2,
+            this.cameras.main.height / 2,
+            'BOSS DEFEATED',
+            {
+                fontFamily: 'monospace',
+                fontSize: '32px',
+                color: '#33ff33',
+                align: 'center',
+                stroke: '#000000',
+                strokeThickness: 4
+            }
+        ).setOrigin(0.5).setScrollFactor(0).setDepth(1001).setAlpha(0);
+
+        // Animate victory text
+        this.tweens.add({
+            targets: victoryText,
+            alpha: 1,
+            duration: 500,
+            ease: 'Power2'
+        });
+
+        // Grant rewards
+        if (boss.grantRewards) {
+            const rewards = boss.grantRewards();
+            this.processRewards(rewards);
+        }
+
+        // Proceed to next sector after a delay
+        this.time.delayedCall(5000, () => {
+            this.completeLevel();
+        });
+    }
+
+    /**
+     * Process rewards from boss defeat
+     */
+    processRewards(rewards) {
+        if (!rewards || !rewards.length) return;
+
+        console.log('Processing boss rewards:', rewards);
+
+        // Display rewards
+        const rewardsText = this.add.text(
+            this.cameras.main.width / 2,
+            this.cameras.main.height / 2 + 50,
+            'REWARDS:',
+            {
+                fontFamily: 'monospace',
+                fontSize: '20px',
+                color: '#ffff33',
+                align: 'center'
+            }
+        ).setOrigin(0.5, 0).setScrollFactor(0).setDepth(1001).setAlpha(0);
+
+        // Animate rewards text
+        this.tweens.add({
+            targets: rewardsText,
+            alpha: 1,
+            duration: 500,
+            ease: 'Power2',
+            delay: 1000
+        });
+
+        // Process each reward
+        let yOffset = 80;
+        rewards.forEach((reward, index) => {
+            // Create reward text
+            const rewardText = this.add.text(
+                this.cameras.main.width / 2,
+                this.cameras.main.height / 2 + yOffset,
+                this.getRewardText(reward),
+                {
+                    fontFamily: 'monospace',
+                    fontSize: '16px',
+                    color: '#ffffff',
+                    align: 'center'
+                }
+            ).setOrigin(0.5, 0).setScrollFactor(0).setDepth(1001).setAlpha(0);
+
+            // Animate reward text with delay
+            this.tweens.add({
+                targets: rewardText,
+                alpha: 1,
+                duration: 500,
+                ease: 'Power2',
+                delay: 1500 + (index * 300)
+            });
+
+            // Apply the reward
+            this.applyReward(reward);
+
+            yOffset += 25;
+        });
+    }
+
+    /**
+     * Get display text for a reward
+     */
+    getRewardText(reward) {
+        switch (reward.type) {
+            case 'upgrade':
+                return `${reward.name}: ${reward.description}`;
+            case 'credits':
+                return `${reward.value} Credits`;
+            case 'unlock':
+                return `New Ship Unlocked: ${reward.name}`;
+            default:
+                return `Unknown Reward: ${reward.type}`;
+        }
+    }
+
+    /**
+     * Apply a reward to the player
+     */
+    applyReward(reward) {
+        switch (reward.type) {
+            case 'upgrade':
+                // Add upgrade to player's collection
+                this.game.global.currentRun.upgrades.push(reward);
+                break;
+            case 'credits':
+                // Add credits to meta-progression
+                this.game.global.metaProgress.credits += reward.value;
+                break;
+            case 'unlock':
+                // Unlock new ship if not already unlocked
+                if (!this.game.global.metaProgress.unlockedShips.includes(reward.id)) {
+                    this.game.global.metaProgress.unlockedShips.push(reward.id);
+                }
+                break;
+        }
+
+        // Save game after applying rewards
+        if (this.game.saveGameState) {
+            this.game.saveGameState();
+        }
+    }
 
     completeLevel() {
         // Level is complete, transition to upgrade scene

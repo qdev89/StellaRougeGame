@@ -24,11 +24,12 @@ class ChoiceSystem {
 
     /**
      * Generate a choice scenario with options
-     * @param {string} choiceType - The type of choice to generate (standard, path, emergency, merchant, event)
+     * @param {string} choiceType - The type of choice to generate (standard, path, emergency, time_pressure, merchant, event)
      * @param {number} sectorNumber - The current sector number (for difficulty scaling)
      * @param {string} nodeType - The type of node (for themed choices)
+     * @param {boolean} isTimePressure - Whether this is a time-pressure choice
      */
-    generateChoice(choiceType = 'standard', sectorNumber = 1, nodeType = 'COMBAT') {
+    generateChoice(choiceType = 'standard', sectorNumber = 1, nodeType = 'COMBAT', isTimePressure = false) {
         // Determine appropriate tier based on sector number
         const tier = sectorNumber <= 3 ? 1 : 2;
 
@@ -103,6 +104,34 @@ class ChoiceSystem {
                 option.penalties = this.generatePenalties(option.penalties, this.playerBuild, sectorNumber);
             }
         });
+
+        // Add time pressure properties if needed
+        if (isTimePressure || choiceType === 'time_pressure' || choiceType === 'emergency') {
+            // Determine the appropriate time limit based on choice type
+            let timeLimit;
+            let timeoutPenalty;
+
+            if (choiceType === 'emergency' || nodeType === 'HAZARD') {
+                timeLimit = CONSTANTS.TIME_PRESSURE.EMERGENCY_CHOICE_TIME;
+                timeoutPenalty = CONSTANTS.TIME_PRESSURE.EMERGENCY_TIMEOUT_PENALTY;
+            } else if (choiceType === 'time_pressure') {
+                timeLimit = CONSTANTS.TIME_PRESSURE.CRITICAL_CHOICE_TIME;
+                timeoutPenalty = CONSTANTS.TIME_PRESSURE.CRITICAL_TIMEOUT_PENALTY;
+            } else {
+                timeLimit = CONSTANTS.TIME_PRESSURE.STANDARD_CHOICE_TIME;
+                timeoutPenalty = CONSTANTS.TIME_PRESSURE.DEFAULT_TIMEOUT_PENALTY;
+            }
+
+            // Scale time limit based on sector number (harder in later sectors)
+            const scaleFactor = Math.max(0.6, 1 - (sectorNumber - 1) * 0.05);
+            timeLimit = Math.floor(timeLimit * scaleFactor);
+
+            // Add time pressure properties to the choice
+            choice.isTimePressure = true;
+            choice.timeLimit = timeLimit;
+            choice.timeoutPenalty = timeoutPenalty;
+            choice.timeoutOption = this.generateTimeoutOption(choiceType, timeoutPenalty);
+        }
 
         return choice;
     }
@@ -557,17 +586,56 @@ class ChoiceSystem {
     }
 
     /**
-     * Apply choice consequences to the player
+     * Generate a timeout option for time-pressure choices
+     * @param {string} choiceType - The type of choice
+     * @param {Object} penalty - The penalty to apply on timeout
+     * @returns {Object} The timeout option
      */
-    applyChoice(choiceIndex, choice) {
-        const selectedOption = choice.options[choiceIndex];
+    generateTimeoutOption(choiceType, penalty) {
+        // Create different timeout options based on choice type
+        let timeoutOption = {
+            text: 'Time Expired',
+            description: 'You failed to make a decision in time.',
+            penalties: [penalty]
+        };
+
+        // Add more severe consequences for emergency choices
+        if (choiceType === 'emergency') {
+            timeoutOption.description = 'The emergency situation worsened due to your indecision.';
+            // Add an additional penalty
+            timeoutOption.penalties.push({ type: 'speed', value: 20 });
+        } else if (choiceType === 'time_pressure') {
+            timeoutOption.description = 'The critical situation has resulted in severe damage to your ship.';
+            // Add multiple additional penalties
+            timeoutOption.penalties.push({ type: 'speed', value: 30 });
+            timeoutOption.penalties.push({ type: 'fireRate', value: 20 });
+        }
+
+        return timeoutOption;
+    }
+
+    /**
+     * Apply choice consequences to the player
+     * @param {number} choiceIndex - The index of the chosen option
+     * @param {Object} choice - The choice object
+     * @param {boolean} isTimeout - Whether this is a timeout application
+     */
+    applyChoice(choiceIndex, choice, isTimeout = false) {
+        // If this is a timeout, use the timeout option
+        const selectedOption = isTimeout ? choice.timeoutOption : choice.options[choiceIndex];
+
+        if (!selectedOption) {
+            console.error('Invalid choice option:', choiceIndex, choice);
+            return { rewards: [], penalties: [] };
+        }
 
         // Record the choice for history
         this.choiceHistory.push({
             title: choice.title,
             optionChosen: selectedOption.text,
             rewards: selectedOption.rewards,
-            penalties: selectedOption.penalties
+            penalties: selectedOption.penalties,
+            isTimeout: isTimeout
         });
 
         // Apply rewards
@@ -599,7 +667,8 @@ class ChoiceSystem {
         // Return the consequences for UI feedback
         return {
             rewards: selectedOption.rewards || [],
-            penalties: selectedOption.penalties || []
+            penalties: selectedOption.penalties || [],
+            isTimeout: isTimeout
         };
     }
 
@@ -1301,6 +1370,131 @@ class ChoiceSystem {
                             { type: 'shield', value: 30 },
                             { type: 'fireRate', value: 60 },
                             { type: 'weakness', value: 'engineStall' }
+                        ]
+                    }
+                ]
+            },
+
+            // Time-pressure choices - Critical situations
+            {
+                type: 'time_pressure',
+                tier: 1,
+                title: 'Imminent Collision',
+                description: 'WARNING: Asteroid field detected directly ahead! Immediate action required!',
+                options: [
+                    {
+                        text: 'Emergency Evasive Maneuvers',
+                        description: 'Attempt a risky high-speed evasive maneuver.',
+                        rewards: [
+                            { type: 'special', value: 'temporaryInvulnerability' }
+                        ],
+                        penalties: [
+                            { type: 'health', value: 10 } // Minor damage from stress on the ship
+                        ]
+                    },
+                    {
+                        text: 'Full Power to Shields',
+                        description: 'Divert all power to forward shields to withstand impact.',
+                        rewards: [
+                            { type: 'shield', value: 30 }
+                        ],
+                        penalties: [
+                            { type: 'speed', value: 40 },
+                            { type: 'fireRate', value: 20 }
+                        ]
+                    },
+                    {
+                        text: 'Weapons Barrage',
+                        description: 'Blast a path through the asteroids with all weapons.',
+                        rewards: [
+                            { type: 'fireRate', value: 25 }
+                        ],
+                        penalties: [
+                            { type: 'shield', value: 20 }
+                        ]
+                    }
+                ]
+            },
+
+            // Time-pressure choices - System failures
+            {
+                type: 'time_pressure',
+                tier: 1,
+                title: 'Reactor Overload',
+                description: 'CRITICAL ALERT: Ship reactor approaching meltdown! Immediate action required!',
+                options: [
+                    {
+                        text: 'Emergency Shutdown',
+                        description: 'Shut down the reactor completely. Safe but will leave systems underpowered.',
+                        rewards: [
+                            { type: 'health', value: 20 } // Repair some damage
+                        ],
+                        penalties: [
+                            { type: 'speed', value: 30 },
+                            { type: 'fireRate', value: 30 }
+                        ]
+                    },
+                    {
+                        text: 'Vent Plasma',
+                        description: 'Vent excess plasma to space. Risky but maintains power levels.',
+                        rewards: [
+                            { type: 'special', value: 'powerSurge' }
+                        ],
+                        penalties: [
+                            { type: 'health', value: 15 }
+                        ]
+                    },
+                    {
+                        text: 'Reroute Power',
+                        description: 'Reroute power through secondary systems. Balanced approach.',
+                        rewards: [
+                            { type: 'shield', value: 15 }
+                        ],
+                        penalties: [
+                            { type: 'fireRate', value: 15 }
+                        ]
+                    }
+                ]
+            },
+
+            // Time-pressure choices - Combat situations
+            {
+                type: 'time_pressure',
+                tier: 2,
+                title: 'Ambush Alert',
+                description: 'PROXIMITY ALERT: Multiple hostile signatures detected closing in from all sides!',
+                options: [
+                    {
+                        text: 'Evasive Action',
+                        description: 'Focus on evading the ambush with maximum speed.',
+                        rewards: [
+                            { type: 'speed', value: 50 },
+                            { type: 'special', value: 'temporaryInvulnerability' }
+                        ],
+                        penalties: [
+                            { type: 'fireRate', value: 40 }
+                        ]
+                    },
+                    {
+                        text: 'Defensive Posture',
+                        description: 'Maximize shields and prepare to weather the attack.',
+                        rewards: [
+                            { type: 'shield', value: 50 },
+                            { type: 'special', value: 'shieldRecharge' }
+                        ],
+                        penalties: [
+                            { type: 'speed', value: 30 }
+                        ]
+                    },
+                    {
+                        text: 'Preemptive Strike',
+                        description: 'Launch an all-out attack before they can coordinate.',
+                        rewards: [
+                            { type: 'fireRate', value: 40 },
+                            { type: 'weapon', value: 'SPREAD_SHOT' }
+                        ],
+                        penalties: [
+                            { type: 'shield', value: 30 }
                         ]
                     }
                 ]

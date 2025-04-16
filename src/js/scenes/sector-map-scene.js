@@ -500,6 +500,9 @@ class SectorMapScene extends Phaser.Scene {
                     case 'BOSS':
                         // Boss encounter
                         nextScene = CONSTANTS.SCENES.GAME;
+
+                        // Show boss warning
+                        this.showBossWarning();
                         break;
                     case 'MERCHANT':
                         // Merchant encounter
@@ -532,6 +535,109 @@ class SectorMapScene extends Phaser.Scene {
         // Add keyboard controls
         this.input.keyboard.on('keydown-ESC', () => {
             this.scene.start(CONSTANTS.SCENES.MAIN_MENU);
+        });
+    }
+
+    /**
+     * Show a warning when selecting a boss node
+     */
+    showBossWarning() {
+        // Create a warning overlay
+        const overlay = this.add.rectangle(
+            0, 0,
+            this.cameras.main.width,
+            this.cameras.main.height,
+            0x000000, 0.7
+        ).setOrigin(0).setScrollFactor(0).setDepth(1000);
+
+        // Create warning text
+        const warningText = this.add.text(
+            this.cameras.main.width / 2,
+            this.cameras.main.height / 2 - 50,
+            'WARNING!\nBOSS ENCOUNTER AHEAD',
+            {
+                fontFamily: 'monospace',
+                fontSize: '32px',
+                color: '#ff0000',
+                align: 'center',
+                stroke: '#000000',
+                strokeThickness: 4
+            }
+        ).setOrigin(0.5).setScrollFactor(0).setDepth(1001);
+
+        // Create boss name based on sector
+        let bossName = "UNKNOWN ENTITY";
+        switch (this.currentSector % 5) {
+            case 1:
+                bossName = "THE GUARDIAN";
+                break;
+            case 2:
+                bossName = "THE CARRIER";
+                break;
+            case 3:
+                bossName = "DESTROYER PRIME";
+                break;
+            case 4:
+                bossName = "THE DREADNOUGHT";
+                break;
+            case 0: // Every 5th sector
+                bossName = "THE NEMESIS";
+                break;
+        }
+
+        // Add boss name text
+        const bossNameText = this.add.text(
+            this.cameras.main.width / 2,
+            this.cameras.main.height / 2 + 30,
+            bossName,
+            {
+                fontFamily: 'monospace',
+                fontSize: '24px',
+                color: '#ffff00',
+                align: 'center',
+                stroke: '#000000',
+                strokeThickness: 3
+            }
+        ).setOrigin(0.5).setScrollFactor(0).setDepth(1001);
+
+        // Add continue prompt
+        const continueText = this.add.text(
+            this.cameras.main.width / 2,
+            this.cameras.main.height / 2 + 100,
+            'Press SPACE to continue',
+            {
+                fontFamily: 'monospace',
+                fontSize: '18px',
+                color: '#ffffff',
+                align: 'center'
+            }
+        ).setOrigin(0.5).setScrollFactor(0).setDepth(1001);
+
+        // Make continue text blink
+        this.tweens.add({
+            targets: continueText,
+            alpha: 0.5,
+            duration: 500,
+            yoyo: true,
+            repeat: -1
+        });
+
+        // Wait for space key to continue
+        const spaceKey = this.input.keyboard.addKey('SPACE');
+        spaceKey.once('down', () => {
+            // Clean up
+            overlay.destroy();
+            warningText.destroy();
+            bossNameText.destroy();
+            continueText.destroy();
+
+            // Continue to game scene
+            this.scene.start(CONSTANTS.SCENES.GAME, {
+                sector: this.currentSector,
+                score: this.score,
+                nodeType: 'BOSS',
+                nodeId: this.selectedNode
+            });
         });
     }
 }
