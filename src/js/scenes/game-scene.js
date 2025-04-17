@@ -1206,6 +1206,9 @@ class GameScene extends Phaser.Scene {
 
         console.log('Spawning boss:', bossData.type);
 
+        // Set up the boss arena first
+        this.setupBossArena(bossData);
+
         // Create a boss based on the type
         let boss;
 
@@ -1774,6 +1777,421 @@ class GameScene extends Phaser.Scene {
     }
 
     /**
+     * Set up the boss arena environment
+     */
+    setupBossArena(bossData) {
+        console.log('Setting up boss arena for', bossData.type);
+
+        // Create arena boundaries
+        this.createArenaBoundaries();
+
+        // Create arena hazards based on boss type
+        this.createArenaHazards(bossData);
+
+        // Slow down background scrolling for boss fight
+        this.backgroundScrollSpeed = CONSTANTS.GAME.BACKGROUND_SCROLL_SPEED * 0.5;
+
+        // Add visual effects for the arena
+        this.createArenaVisualEffects(bossData);
+    }
+
+    /**
+     * Create visual boundaries for the boss arena
+     */
+    createArenaBoundaries() {
+        // Create a container for arena elements
+        this.arenaElements = this.add.group();
+
+        // Create top and bottom boundaries
+        const arenaTop = this.cameras.main.scrollY - 50;
+        const arenaBottom = this.cameras.main.scrollY + this.cameras.main.height + 50;
+
+        // Visual indicators for arena boundaries
+        const topBoundary = this.add.rectangle(
+            this.cameras.main.width / 2,
+            arenaTop,
+            this.cameras.main.width,
+            10,
+            0xff3333
+        ).setAlpha(0.7).setScrollFactor(1, 1);
+
+        const bottomBoundary = this.add.rectangle(
+            this.cameras.main.width / 2,
+            arenaBottom,
+            this.cameras.main.width,
+            10,
+            0xff3333
+        ).setAlpha(0.7).setScrollFactor(1, 1);
+
+        // Add to arena elements group
+        this.arenaElements.add(topBoundary);
+        this.arenaElements.add(bottomBoundary);
+
+        // Store arena boundaries for collision detection
+        this.arenaBounds = {
+            top: arenaTop,
+            bottom: arenaBottom,
+            left: 0,
+            right: this.cameras.main.width
+        };
+    }
+
+    /**
+     * Create hazards specific to the boss type
+     */
+    createArenaHazards(bossData) {
+        // Create a group for arena hazards
+        this.arenaHazards = this.physics.add.group();
+
+        // Add hazards based on boss type
+        switch (bossData.type) {
+            case 'SCOUT_COMMANDER': // The Guardian
+                this.createGuardianArenaHazards(bossData);
+                break;
+
+            case 'BATTLE_CARRIER': // The Carrier
+                this.createCarrierArenaHazards(bossData);
+                break;
+
+            case 'DESTROYER_PRIME': // Destroyer Prime
+                this.createDestroyerArenaHazards(bossData);
+                break;
+
+            default:
+                // Default hazards for any boss
+                this.createDefaultArenaHazards(bossData);
+                break;
+        }
+
+        // Set up collisions between player and hazards
+        this.physics.add.collider(
+            this.player,
+            this.arenaHazards,
+            this.onPlayerHazardCollision,
+            null,
+            this
+        );
+    }
+
+    /**
+     * Create hazards specific to the Guardian boss
+     */
+    createGuardianArenaHazards(bossData) {
+        // Create asteroid field
+        this.createAsteroidField({
+            position: this.cameras.main.scrollY + 200,
+            width: this.cameras.main.width,
+            count: 10,
+            size: { min: 20, max: 40 },
+            speed: { min: 30, max: 60 },
+            damage: 10
+        });
+
+        // Create shield generators
+        this.createShieldGenerators(bossData);
+
+        // Create energy barriers that activate periodically
+        this.createEnergyBarriers(bossData);
+    }
+
+    /**
+     * Create shield generators for the Guardian boss
+     */
+    createShieldGenerators(bossData) {
+        // Create 3 shield generators that orbit around a center point
+        const centerX = this.cameras.main.width / 2;
+        const centerY = this.cameras.main.scrollY + 100;
+
+        // Create shield generators
+        this.shieldGenerators = [];
+
+        for (let i = 0; i < 3; i++) {
+            // Position in a triangle formation
+            const angle = (i * Math.PI * 2 / 3) + Math.PI / 6;
+            const distance = 150;
+            const x = centerX + Math.cos(angle) * distance;
+            const y = centerY + Math.sin(angle) * distance;
+
+            // Create shield generator
+            const generator = this.physics.add.sprite(x, y, 'enemy-turret');
+            generator.setScale(0.8);
+            generator.setTint(0x3399ff);
+            generator.health = 50;
+            generator.maxHealth = 50;
+            generator.setData('orbitCenter', { x: centerX, y: centerY });
+            generator.setData('orbitDistance', distance);
+            generator.setData('orbitSpeed', 0.001 * (i + 1));
+            generator.setData('orbitAngle', angle);
+            generator.setData('generatorIndex', i);
+
+            // Add to physics group
+            this.arenaHazards.add(generator);
+
+            // Add to shield generators array
+            this.shieldGenerators.push(generator);
+
+            // Create shield effect
+            const shieldEffect = this.add.graphics();
+            shieldEffect.fillStyle(0x3399ff, 0.3);
+            shieldEffect.fillCircle(x, y, 30);
+            shieldEffect.setData('generator', generator);
+
+            // Add update function for shield effect
+            this.events.on('update', (time, delta) => {
+                if (generator.active) {
+                    // Update shield effect position
+                    const genX = generator.x;
+                    const genY = generator.y;
+
+                    shieldEffect.clear();
+                    shieldEffect.fillStyle(0x3399ff, 0.3);
+                    shieldEffect.fillCircle(genX, genY, 30);
+                } else {
+                    // Destroy shield effect if generator is destroyed
+                    shieldEffect.destroy();
+                }
+            });
+        }
+    }
+
+    /**
+     * Create energy barriers for the boss arena
+     */
+    createEnergyBarriers(bossData) {
+        // Create energy barriers that activate periodically
+        this.energyBarriers = [];
+
+        // Create 2 horizontal barriers
+        const barrierY1 = this.cameras.main.scrollY + this.cameras.main.height * 0.3;
+        const barrierY2 = this.cameras.main.scrollY + this.cameras.main.height * 0.7;
+
+        // Create barriers
+        const barrier1 = this.add.rectangle(
+            this.cameras.main.width / 2,
+            barrierY1,
+            this.cameras.main.width,
+            10,
+            0xff3333
+        ).setAlpha(0);
+
+        const barrier2 = this.add.rectangle(
+            this.cameras.main.width / 2,
+            barrierY2,
+            this.cameras.main.width,
+            10,
+            0xff3333
+        ).setAlpha(0);
+
+        // Add physics bodies
+        this.physics.add.existing(barrier1);
+        this.physics.add.existing(barrier2);
+
+        // Make them static
+        barrier1.body.setImmovable(true);
+        barrier2.body.setImmovable(true);
+
+        // Disable initially
+        barrier1.body.enable = false;
+        barrier2.body.enable = false;
+
+        // Add to hazards group
+        this.arenaHazards.add(barrier1);
+        this.arenaHazards.add(barrier2);
+
+        // Add to energy barriers array
+        this.energyBarriers.push(barrier1, barrier2);
+
+        // Set up barrier activation timer
+        this.barrierTimer = this.time.addEvent({
+            delay: 5000, // 5 seconds
+            callback: this.toggleEnergyBarriers,
+            callbackScope: this,
+            loop: true
+        });
+    }
+
+    /**
+     * Toggle energy barriers on/off
+     */
+    toggleEnergyBarriers() {
+        if (!this.energyBarriers || this.energyBarriers.length === 0) return;
+
+        // Toggle each barrier
+        this.energyBarriers.forEach(barrier => {
+            // Toggle active state
+            const isActive = barrier.alpha > 0;
+
+            if (isActive) {
+                // Deactivate barrier
+                this.tweens.add({
+                    targets: barrier,
+                    alpha: 0,
+                    duration: 500,
+                    ease: 'Power2',
+                    onComplete: () => {
+                        barrier.body.enable = false;
+                    }
+                });
+            } else {
+                // Activate barrier
+                barrier.body.enable = true;
+
+                this.tweens.add({
+                    targets: barrier,
+                    alpha: 0.7,
+                    duration: 500,
+                    ease: 'Power2'
+                });
+
+                // Add warning flash
+                this.cameras.main.flash(300, 255, 0, 0, 0.3);
+            }
+        });
+    }
+
+    /**
+     * Create asteroid field hazard
+     */
+    createAsteroidField(config) {
+        const { position, width, count, size, speed, damage } = config;
+
+        // Create asteroids
+        for (let i = 0; i < count; i++) {
+            // Random position within field
+            const x = Phaser.Math.Between(50, this.cameras.main.width - 50);
+            const y = position + Phaser.Math.Between(-50, 50);
+
+            // Create asteroid
+            const asteroid = this.physics.add.sprite(x, y, 'asteroid');
+
+            // Set random size
+            const scale = Phaser.Math.FloatBetween(
+                size.min / 100,
+                size.max / 100
+            );
+            asteroid.setScale(scale);
+
+            // Set random rotation
+            asteroid.setAngularVelocity(Phaser.Math.FloatBetween(-50, 50));
+
+            // Set random velocity
+            const vx = Phaser.Math.FloatBetween(-speed.max, speed.max);
+            const vy = Phaser.Math.FloatBetween(-speed.min, speed.min);
+            asteroid.body.setVelocity(vx, vy);
+
+            // Set damage amount
+            asteroid.setData('damage', damage);
+
+            // Add to hazards group
+            this.arenaHazards.add(asteroid);
+
+            // Set up collision with arena boundaries
+            asteroid.setData('updateCallback', (time, delta) => {
+                // Bounce off arena boundaries
+                if (asteroid.x < 0 || asteroid.x > this.cameras.main.width) {
+                    asteroid.body.velocity.x *= -1;
+                }
+
+                if (asteroid.y < this.arenaBounds.top || asteroid.y > this.arenaBounds.bottom) {
+                    asteroid.body.velocity.y *= -1;
+                }
+            });
+
+            // Add update listener
+            this.events.on('update', asteroid.getData('updateCallback'));
+        }
+    }
+
+    /**
+     * Create visual effects for the boss arena
+     */
+    createArenaVisualEffects(bossData) {
+        // Add background elements specific to boss type
+        switch (bossData.type) {
+            case 'SCOUT_COMMANDER':
+                // Add space station elements in background
+                this.createSpaceStationBackground();
+                break;
+
+            default:
+                // Default background elements
+                break;
+        }
+
+        // Add particle effects
+        this.createArenaParticleEffects(bossData);
+    }
+
+    /**
+     * Create space station background elements
+     */
+    createSpaceStationBackground() {
+        // Add some background elements to suggest a space station environment
+        const bgElements = [
+            { x: 100, y: this.cameras.main.scrollY + 100, scale: 0.7 },
+            { x: this.cameras.main.width - 100, y: this.cameras.main.scrollY + 150, scale: 0.8 },
+            { x: 150, y: this.cameras.main.scrollY + this.cameras.main.height - 100, scale: 0.6 },
+            { x: this.cameras.main.width - 150, y: this.cameras.main.scrollY + this.cameras.main.height - 150, scale: 0.7 }
+        ];
+
+        // Create each element
+        bgElements.forEach(element => {
+            const sprite = this.add.sprite(element.x, element.y, 'asteroid');
+            sprite.setScale(element.scale);
+            sprite.setTint(0x666666);
+            sprite.setAlpha(0.5);
+            sprite.setDepth(-10);
+
+            // Add to arena elements group
+            this.arenaElements.add(sprite);
+        });
+    }
+
+    /**
+     * Create particle effects for the arena
+     */
+    createArenaParticleEffects(bossData) {
+        // Add particle effects based on boss type
+        switch (bossData.type) {
+            case 'SCOUT_COMMANDER':
+                // Add shield particles
+                if (this.particles) {
+                    const shieldParticles = this.particles.createEmitter({
+                        frame: 'blue',
+                        x: this.cameras.main.width / 2,
+                        y: this.cameras.main.scrollY + 100,
+                        speed: { min: 20, max: 40 },
+                        scale: { start: 0.2, end: 0 },
+                        blendMode: 'ADD',
+                        lifespan: 1000,
+                        quantity: 1,
+                        frequency: 100
+                    });
+                }
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    /**
+     * Handle collision between player and hazard
+     */
+    onPlayerHazardCollision(player, hazard) {
+        // Apply damage to player based on hazard type
+        const damage = hazard.getData('damage') || 10;
+
+        // Apply damage to player
+        if (player.takeDamage) {
+            player.takeDamage(damage);
+        }
+
+        // Visual feedback
+        this.cameras.main.shake(100, 0.01);
+    }
+
+    /**
      * Handle boss defeat event
      */
     onBossDefeated(boss) {
@@ -1812,17 +2230,295 @@ class GameScene extends Phaser.Scene {
             ease: 'Power2'
         });
 
-        // Grant rewards
-        if (boss.grantRewards) {
-            const rewards = boss.grantRewards();
-            this.processRewards(rewards);
-        }
+        // Show boss rewards after a delay
+        this.time.delayedCall(2000, () => {
+            this.showBossRewards(boss);
+        });
 
-        // Proceed to next sector after a delay
-        this.time.delayedCall(5000, () => {
+        // Clean up arena elements
+        this.cleanupBossArena();
+    }
+
+    /**
+     * Show rewards after defeating a boss
+     */
+    showBossRewards(boss) {
+        // Get rewards from boss
+        if (!boss || !boss.grantRewards) return;
+
+        const rewards = boss.grantRewards();
+        if (!rewards || rewards.length === 0) return;
+
+        console.log('Showing boss rewards:', rewards);
+
+        // Create a rewards container
+        const rewardsContainer = this.add.container(
+            this.cameras.main.width / 2,
+            this.cameras.main.height / 2
+        ).setScrollFactor(0).setDepth(1002);
+
+        // Add background panel
+        const panel = this.add.rectangle(
+            0, 0,
+            400, 300,
+            0x000000, 0.8
+        ).setOrigin(0.5);
+
+        // Add title
+        const title = this.add.text(
+            0, -120,
+            'BOSS REWARDS',
+            {
+                fontFamily: 'monospace',
+                fontSize: '24px',
+                color: '#ffff00',
+                align: 'center',
+                stroke: '#000000',
+                strokeThickness: 3
+            }
+        ).setOrigin(0.5);
+
+        // Add rewards to container
+        rewardsContainer.add([panel, title]);
+
+        // Add each reward
+        let yOffset = -70;
+
+        rewards.forEach((reward, index) => {
+            // Create reward item based on type
+            const rewardItem = this.createRewardItem(reward, 0, yOffset);
+            rewardsContainer.add(rewardItem);
+
+            // Increment y offset for next reward
+            yOffset += 60;
+        });
+
+        // Add continue button
+        const continueButton = this.add.text(
+            0, 120,
+            'CONTINUE',
+            {
+                fontFamily: 'monospace',
+                fontSize: '20px',
+                color: '#33ff33',
+                align: 'center',
+                stroke: '#000000',
+                strokeThickness: 2
+            }
+        ).setOrigin(0.5).setInteractive();
+
+        // Add button to container
+        rewardsContainer.add(continueButton);
+
+        // Add hover effect
+        continueButton.on('pointerover', () => {
+            continueButton.setScale(1.1);
+        });
+
+        continueButton.on('pointerout', () => {
+            continueButton.setScale(1);
+        });
+
+        // Add click handler
+        continueButton.on('pointerdown', () => {
+            // Apply rewards
+            rewards.forEach(reward => {
+                this.applyReward(reward);
+            });
+
+            // Remove rewards container
+            rewardsContainer.destroy();
+
+            // Complete the level
             this.completeLevel();
         });
+
+        // Animate container in
+        rewardsContainer.setAlpha(0);
+        this.tweens.add({
+            targets: rewardsContainer,
+            alpha: 1,
+            duration: 500,
+            ease: 'Power2'
+        });
     }
+
+    /**
+     * Create a reward item display
+     */
+    createRewardItem(reward, x, y) {
+        // Create a container for the reward
+        const container = this.add.container(x, y);
+
+        // Create different displays based on reward type
+        switch (reward.type) {
+            case 'upgrade':
+                // Create upgrade display
+                const upgradeIcon = this.add.rectangle(-70, 0, 40, 40, 0x3399ff).setOrigin(0.5);
+                const upgradeName = this.add.text(
+                    0, -10,
+                    reward.name || 'Unknown Upgrade',
+                    {
+                        fontFamily: 'monospace',
+                        fontSize: '16px',
+                        color: '#ffffff'
+                    }
+                ).setOrigin(0, 0.5);
+
+                const upgradeDesc = this.add.text(
+                    0, 10,
+                    reward.description || '',
+                    {
+                        fontFamily: 'monospace',
+                        fontSize: '12px',
+                        color: '#aaaaaa'
+                    }
+                ).setOrigin(0, 0.5);
+
+                // Add rarity indicator
+                let rarityColor = 0xaaaaaa; // Common
+                if (reward.rarity === 'rare') rarityColor = 0x3399ff;
+                if (reward.rarity === 'epic') rarityColor = 0x9933cc;
+                if (reward.rarity === 'legendary') rarityColor = 0xff9900;
+
+                upgradeIcon.setStrokeStyle(2, rarityColor);
+
+                // Add to container
+                container.add([upgradeIcon, upgradeName, upgradeDesc]);
+                break;
+
+            case 'credits':
+                // Create credits display
+                const creditsIcon = this.add.rectangle(-70, 0, 40, 40, 0xffcc00).setOrigin(0.5);
+                const creditsText = this.add.text(
+                    0, 0,
+                    `${reward.value} CREDITS`,
+                    {
+                        fontFamily: 'monospace',
+                        fontSize: '16px',
+                        color: '#ffcc00'
+                    }
+                ).setOrigin(0, 0.5);
+
+                // Add to container
+                container.add([creditsIcon, creditsText]);
+                break;
+
+            case 'unlock':
+                // Create unlock display
+                const unlockIcon = this.add.rectangle(-70, 0, 40, 40, 0xff3333).setOrigin(0.5);
+                const unlockText = this.add.text(
+                    0, -10,
+                    `NEW SHIP UNLOCKED`,
+                    {
+                        fontFamily: 'monospace',
+                        fontSize: '16px',
+                        color: '#ff3333'
+                    }
+                ).setOrigin(0, 0.5);
+
+                const shipName = this.add.text(
+                    0, 10,
+                    reward.id.toUpperCase(),
+                    {
+                        fontFamily: 'monospace',
+                        fontSize: '14px',
+                        color: '#ffffff'
+                    }
+                ).setOrigin(0, 0.5);
+
+                // Add to container
+                container.add([unlockIcon, unlockText, shipName]);
+                break;
+
+            default:
+                // Generic reward
+                const genericIcon = this.add.rectangle(-70, 0, 40, 40, 0xaaaaaa).setOrigin(0.5);
+                const genericText = this.add.text(
+                    0, 0,
+                    'UNKNOWN REWARD',
+                    {
+                        fontFamily: 'monospace',
+                        fontSize: '16px',
+                        color: '#ffffff'
+                    }
+                ).setOrigin(0, 0.5);
+
+                // Add to container
+                container.add([genericIcon, genericText]);
+                break;
+        }
+
+        return container;
+    }
+
+    /**
+     * Clean up boss arena elements
+     */
+    cleanupBossArena() {
+        // Clean up arena elements
+        if (this.arenaElements) {
+            this.arenaElements.clear(true, true);
+        }
+
+        // Clean up arena hazards
+        if (this.arenaHazards) {
+            this.arenaHazards.clear(true, true);
+        }
+
+        // Clean up shield generators
+        if (this.shieldGenerators) {
+            this.shieldGenerators = [];
+        }
+
+        // Clean up energy barriers
+        if (this.energyBarriers) {
+            this.energyBarriers = [];
+        }
+
+        // Stop barrier timer
+        if (this.barrierTimer) {
+            this.barrierTimer.remove();
+        }
+
+        // Reset background scroll speed
+        this.backgroundScrollSpeed = CONSTANTS.GAME.BACKGROUND_SCROLL_SPEED;
+    }
+
+    /**
+     * Create default arena hazards for any boss type
+     */
+    createDefaultArenaHazards(bossData) {
+        // Create a basic asteroid field
+        this.createAsteroidField({
+            position: this.cameras.main.scrollY + 200,
+            width: this.cameras.main.width,
+            count: 5,
+            size: { min: 20, max: 40 },
+            speed: { min: 20, max: 40 },
+            damage: 10
+        });
+    }
+
+    /**
+     * Create hazards for the Carrier boss
+     */
+    createCarrierArenaHazards(bossData) {
+        // Create drone spawners
+        // This is a placeholder for future implementation
+        console.log('Creating Carrier arena hazards');
+    }
+
+    /**
+     * Create hazards for the Destroyer boss
+     */
+    createDestroyerArenaHazards(bossData) {
+        // Create artillery impact zones
+        // This is a placeholder for future implementation
+        console.log('Creating Destroyer arena hazards');
+    }
+
+    // The following methods are now handled by the new boss rewards system
 
     /**
      * Process rewards from boss defeat
