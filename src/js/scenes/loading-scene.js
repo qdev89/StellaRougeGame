@@ -110,13 +110,8 @@ class LoadingScene extends Phaser.Scene {
     }
 
     loadGameAssets() {
-        // Load the space.jfif file for the player ship
-        try {
-            this.load.image('player-ship-sprite', 'src/assets/sprites/space.jfif');
-            console.log('Loading player ship sprite from space.jfif');
-        } catch (error) {
-            console.warn('Failed to load space.jfif:', error);
-        }
+        // Create a spaceship sprite using base64 data to avoid CORS issues
+        this.createSpaceshipSprite();
 
         // We'll create all other textures programmatically
         console.log('Creating other assets programmatically');
@@ -132,6 +127,140 @@ class LoadingScene extends Phaser.Scene {
 
         // Audio loading is completely disabled
         console.log('Audio loading completely disabled - all sound functionality has been removed');
+    }
+
+    createSpaceshipSprite() {
+        try {
+            // Create a simple, clean spaceship texture
+            const width = 120;
+            const height = 160;
+
+            // Create a canvas for the spaceship
+            const texture = this.textures.createCanvas('player-ship-sprite', width, height);
+            const context = texture.getContext();
+
+            // Clear the canvas
+            context.clearRect(0, 0, width, height);
+
+            // Center coordinates
+            const centerX = width / 2;
+
+            // Draw the main body of the ship
+            context.fillStyle = '#4488ff'; // Blue
+            context.beginPath();
+            context.moveTo(centerX, 20);           // Nose of the ship
+            context.lineTo(centerX + 40, height - 60); // Right side
+            context.lineTo(centerX + 20, height - 40); // Right corner
+            context.lineTo(centerX - 20, height - 40); // Left corner
+            context.lineTo(centerX - 40, height - 60); // Left side
+            context.closePath();
+            context.fill();
+
+            // Add a cockpit
+            context.fillStyle = '#99ccff'; // Light blue
+            context.beginPath();
+            context.moveTo(centerX, 40);           // Top of cockpit
+            context.lineTo(centerX + 15, 80);      // Right side
+            context.lineTo(centerX, 90);           // Bottom
+            context.lineTo(centerX - 15, 80);      // Left side
+            context.closePath();
+            context.fill();
+
+            // Add engine section
+            context.fillStyle = '#2244aa'; // Darker blue
+            context.beginPath();
+            context.moveTo(centerX - 20, height - 40); // Left top
+            context.lineTo(centerX + 20, height - 40); // Right top
+            context.lineTo(centerX + 15, height - 20); // Right bottom
+            context.lineTo(centerX - 15, height - 20); // Left bottom
+            context.closePath();
+            context.fill();
+
+            // Add engine glow
+            const engineGradient = context.createLinearGradient(
+                centerX, height - 20,
+                centerX, height
+            );
+            engineGradient.addColorStop(0, '#ffcc33'); // Yellow
+            engineGradient.addColorStop(1, 'rgba(255, 204, 51, 0)');
+
+            context.fillStyle = engineGradient;
+            context.beginPath();
+            context.moveTo(centerX - 15, height - 20); // Left top
+            context.lineTo(centerX + 15, height - 20); // Right top
+            context.lineTo(centerX + 10, height);      // Right bottom
+            context.lineTo(centerX - 10, height);      // Left bottom
+            context.closePath();
+            context.fill();
+
+            // Add wing details
+            context.fillStyle = '#3366cc'; // Medium blue
+
+            // Left wing
+            context.beginPath();
+            context.moveTo(centerX - 40, height - 60); // Inner top
+            context.lineTo(centerX - 50, height - 80); // Outer top
+            context.lineTo(centerX - 45, height - 50); // Outer bottom
+            context.lineTo(centerX - 20, height - 40); // Inner bottom
+            context.closePath();
+            context.fill();
+
+            // Right wing
+            context.beginPath();
+            context.moveTo(centerX + 40, height - 60); // Inner top
+            context.lineTo(centerX + 50, height - 80); // Outer top
+            context.lineTo(centerX + 45, height - 50); // Outer bottom
+            context.lineTo(centerX + 20, height - 40); // Inner bottom
+            context.closePath();
+            context.fill();
+
+            // Add some highlights
+            context.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+            context.lineWidth = 1;
+
+            // Highlight on the body
+            context.beginPath();
+            context.moveTo(centerX - 10, 40);
+            context.lineTo(centerX - 25, height - 70);
+            context.stroke();
+
+            // Add some details (lights)
+            context.fillStyle = '#ffffff';
+
+            // Front light
+            context.beginPath();
+            context.arc(centerX, 30, 2, 0, Math.PI * 2);
+            context.fill();
+
+            // Wing lights
+            context.beginPath();
+            context.arc(centerX - 45, height - 65, 2, 0, Math.PI * 2);
+            context.fill();
+
+            context.beginPath();
+            context.arc(centerX + 45, height - 65, 2, 0, Math.PI * 2);
+            context.fill();
+
+            // Add a subtle glow around the ship
+            const shipGlow = context.createRadialGradient(
+                centerX, height/2, 10,
+                centerX, height/2, 70
+            );
+            shipGlow.addColorStop(0, 'rgba(68, 136, 255, 0.2)');
+            shipGlow.addColorStop(1, 'rgba(68, 136, 255, 0)');
+
+            context.fillStyle = shipGlow;
+            context.beginPath();
+            context.arc(centerX, height/2, 60, 0, Math.PI * 2);
+            context.fill();
+
+            // Update the texture
+            texture.refresh();
+
+            console.log('Created basic spaceship sprite');
+        } catch (error) {
+            console.warn('Failed to create spaceship sprite:', error);
+        }
     }
 
     createPlaceholderTextures() {

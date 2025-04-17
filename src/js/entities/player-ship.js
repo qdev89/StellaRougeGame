@@ -1422,13 +1422,12 @@ class PlayerShip extends Phaser.Physics.Arcade.Sprite {
             const isUsingSpaceJfif = this.texture.key === 'player-ship-sprite';
 
             if (isUsingSpaceJfif) {
-                // For space.jfif, use different settings
-                this.setScale(0.3); // Adjust scale for the new sprite
-                this.setAngle(-90); // Rotate the ship to face upward
+                // For our basic spaceship sprite
+                this.setScale(1.0); // Adjust scale for the new sprite
 
                 // Set the hitbox size to match the visible part of the ship
-                this.body.setSize(100, 100);
-                this.body.setOffset(50, 50);
+                this.body.setSize(80, 120);
+                this.body.setOffset(20, 20);
             } else {
                 // For the default sprite
                 this.setTint(0x3399ff);
@@ -1462,9 +1461,9 @@ class PlayerShip extends Phaser.Physics.Arcade.Sprite {
             // Add engine trails
             if (this.scene.textures.exists('player-ship-engines')) {
                 // Create engine sprite
-                this.engineSprite = this.scene.add.sprite(0, isUsingSpaceJfif ? 50 : 15, 'player-ship-engines');
+                this.engineSprite = this.scene.add.sprite(0, isUsingSpaceJfif ? 70 : 15, 'player-ship-engines');
                 this.engineSprite.setOrigin(0.5, 0);
-                this.engineSprite.setScale(isUsingSpaceJfif ? 1.5 : 1.2);
+                this.engineSprite.setScale(isUsingSpaceJfif ? 0.8 : 1.2);
                 this.engineContainer.add(this.engineSprite);
 
                 // Create engine animation if it doesn't exist
@@ -1493,8 +1492,8 @@ class PlayerShip extends Phaser.Physics.Arcade.Sprite {
                 this.engineParticles = this.scene.add.particles('star-particle');
 
                 // Adjust particle positions based on the sprite
-                const engineY = isUsingSpaceJfif ? 50 : 20;
-                const thrusterOffset = isUsingSpaceJfif ? 20 : 10;
+                const engineY = isUsingSpaceJfif ? 75 : 20;
+                const thrusterOffset = isUsingSpaceJfif ? 15 : 10;
 
                 // Main engine exhaust
                 this.engineEmitter = this.engineParticles.createEmitter({
@@ -1553,15 +1552,15 @@ class PlayerShip extends Phaser.Physics.Arcade.Sprite {
             }
 
             // Create a shield effect
-            const shieldRadius = isUsingSpaceJfif ? 60 : 30;
-            this.shieldEffect = this.scene.add.circle(0, 0, shieldRadius, 0x3399ff, 0.2)
+            const shieldRadius = isUsingSpaceJfif ? 50 : 30;
+            this.shieldEffect = this.scene.add.circle(0, isUsingSpaceJfif ? 20 : 0, shieldRadius, 0x3399ff, 0.2)
                 .setOrigin(0.5);
             this.shieldEffect.setAlpha(0); // Start invisible
             this.visualsContainer.add(this.shieldEffect);
 
             // Create a hit effect (initially invisible)
-            const hitRadius = isUsingSpaceJfif ? 50 : 25;
-            this.hitEffect = this.scene.add.circle(0, 0, hitRadius, 0xff3333, 0)
+            const hitRadius = isUsingSpaceJfif ? 40 : 25;
+            this.hitEffect = this.scene.add.circle(0, isUsingSpaceJfif ? 20 : 0, hitRadius, 0xff3333, 0)
                 .setOrigin(0.5);
             this.visualsContainer.add(this.hitEffect);
 
