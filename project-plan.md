@@ -4,6 +4,8 @@
 
 **STELLAR ROGUE** is a vertical scrolling retro roguelike flying shooter built with HTML5/JavaScript using the Phaser.js framework. Players pilot a fighter craft through procedurally generated sectors filled with enemies, hazards, and encounters, making meaningful choices that affect their ship's capabilities and the challenges ahead.
 
+The game features a balanced difficulty level with 50% fewer enemies and reduced ammo frequency, making it accessible while still providing a challenge.
+
 ## Core Game Elements
 
 ### 1. Retro Visual Style
@@ -132,8 +134,26 @@ We've made significant progress on Phase 3 by implementing:
   - Credits system for unlocking content
   - Profile management with save/load functionality
   - Achievement framework for future expansion
+- Balanced difficulty with 50% fewer enemies
+- Strategic ammo management system:
+  - Different ammo types for each weapon
+  - Ammo drops from defeated enemies
+  - Ammo regeneration over time
+  - Visual UI for ammo status
 
 Sound implementation has been completely disabled and moved to Phase 4 to focus on gameplay mechanics first.
+
+## Recent Updates
+
+### Enhanced Weapon System
+- Added 3 new weapon types:
+  - Dual Cannon: Fires two parallel projectiles
+  - Laser Beam: Continuous damage beam
+  - Scatter Bomb: Explodes into multiple fragments
+- Implemented weapon switching with number keys 1-7
+- Added visual feedback for weapon switching
+- Enhanced projectile visuals with colors and particle effects
+- Added weapon selector UI with unlocked/locked status indicators
 
 ## Next Steps
 

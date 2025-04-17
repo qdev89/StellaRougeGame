@@ -17,23 +17,48 @@ class MainMenuScene extends Phaser.Scene {
         // Create a simple background if image assets aren't available
         this.createBackground();
 
-        // Title text
-        const titleText = this.add.text(width / 2, height / 4, 'STELLAR ROGUE', {
+        // Create a title container for animations
+        const titleContainer = this.add.container(width / 2, height / 5);
+
+        // Title text with enhanced styling
+        const titleText = this.add.text(0, 0, 'STELLAR ROGUE', {
             fontFamily: 'monospace',
-            fontSize: '48px',
+            fontSize: '52px',
             fontStyle: 'bold',
-            color: '#33ff33',
+            color: '#33aaff',
             align: 'center',
-            stroke: '#000000',
-            strokeThickness: 6
+            stroke: '#000033',
+            strokeThickness: 8,
+            shadow: { offsetX: 2, offsetY: 2, color: '#0066cc', blur: 10, stroke: true }
         }).setOrigin(0.5);
 
-        // Subtitle text
-        const subtitleText = this.add.text(width / 2, titleText.y + 60, 'RETRO ROGUELIKE FLYING SHOOTER', {
+        // Add a glow effect behind the title
+        const titleGlow = this.add.graphics();
+        titleGlow.fillStyle(0x33aaff, 0.2);
+        titleGlow.fillCircle(0, 0, 180);
+
+        // Add elements to container in correct order (glow behind text)
+        titleContainer.add([titleGlow, titleText]);
+
+        // Animate the title with a gentle floating effect
+        this.tweens.add({
+            targets: titleContainer,
+            y: titleContainer.y - 10,
+            duration: 2000,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
+
+        // Subtitle text with enhanced styling
+        const subtitleText = this.add.text(width / 2, titleContainer.y + 80, 'RETRO ROGUELIKE FLYING SHOOTER', {
             fontFamily: 'monospace',
-            fontSize: '16px',
+            fontSize: '18px',
             color: '#ffffff',
-            align: 'center'
+            align: 'center',
+            stroke: '#000033',
+            strokeThickness: 3,
+            shadow: { offsetX: 1, offsetY: 1, color: '#33aaff', blur: 5, stroke: true }
         }).setOrigin(0.5);
 
         // Version text
@@ -72,27 +97,86 @@ class MainMenuScene extends Phaser.Scene {
                     .setAlpha(0.8);
             }
         } else {
-            // Fallback: create a gradient background
-            console.log('Using fallback background (no image assets found)');
+            // Fallback: create an enhanced space background
+            console.log('Using enhanced fallback background');
 
-            // Create a simple dark background
-            this.add.rectangle(
-                0,
-                0,
-                this.cameras.main.width,
-                this.cameras.main.height,
-                0x000000
-            ).setOrigin(0, 0);
+            // Create a gradient background
+            const width = this.cameras.main.width;
+            const height = this.cameras.main.height;
 
-            // Add some star-like dots
-            for (let i = 0; i < 100; i++) {
-                const x = Phaser.Math.Between(0, this.cameras.main.width);
-                const y = Phaser.Math.Between(0, this.cameras.main.height);
-                const size = Phaser.Math.Between(1, 3);
-                const alpha = Phaser.Math.FloatBetween(0.3, 1.0);
+            // Deep space background with gradient
+            const bg = this.add.graphics();
+            bg.fillGradientStyle(0x000022, 0x000022, 0x000044, 0x000033, 1);
+            bg.fillRect(0, 0, width, height);
 
-                this.add.circle(x, y, size, 0xffffff)
-                    .setAlpha(alpha);
+            // Create distant stars (small, many)
+            for (let i = 0; i < 200; i++) {
+                const x = Phaser.Math.Between(0, width);
+                const y = Phaser.Math.Between(0, height);
+                const size = Phaser.Math.FloatBetween(0.5, 2);
+                const alpha = Phaser.Math.FloatBetween(0.3, 0.9);
+
+                const star = this.add.circle(x, y, size, 0xffffff, alpha);
+
+                // Add subtle twinkling effect to some stars
+                if (Math.random() > 0.7) {
+                    this.tweens.add({
+                        targets: star,
+                        alpha: 0.2,
+                        duration: Phaser.Math.Between(1000, 3000),
+                        yoyo: true,
+                        repeat: -1,
+                        ease: 'Sine.easeInOut'
+                    });
+                }
+            }
+
+            // Create a few brighter stars
+            for (let i = 0; i < 30; i++) {
+                const x = Phaser.Math.Between(0, width);
+                const y = Phaser.Math.Between(0, height);
+                const size = Phaser.Math.FloatBetween(1.5, 3);
+
+                // Create star with glow effect
+                const star = this.add.circle(x, y, size, 0xffffff, 1);
+                const glow = this.add.circle(x, y, size * 2, 0x3399ff, 0.3);
+
+                // Add pulsing effect
+                this.tweens.add({
+                    targets: glow,
+                    alpha: 0.1,
+                    scale: 1.5,
+                    duration: Phaser.Math.Between(2000, 4000),
+                    yoyo: true,
+                    repeat: -1,
+                    ease: 'Sine.easeInOut'
+                });
+            }
+
+            // Add a few nebula-like clouds
+            for (let i = 0; i < 5; i++) {
+                const x = Phaser.Math.Between(0, width);
+                const y = Phaser.Math.Between(0, height);
+                const size = Phaser.Math.Between(100, 200);
+
+                // Create a nebula cloud with random color
+                const colors = [0x3366ff, 0x6633ff, 0x3399ff, 0x33ccff];
+                const color = colors[Math.floor(Math.random() * colors.length)];
+
+                const nebula = this.add.graphics();
+                nebula.fillStyle(color, 0.05);
+                nebula.fillCircle(x, y, size);
+
+                // Add subtle movement
+                this.tweens.add({
+                    targets: nebula,
+                    x: x + Phaser.Math.Between(-20, 20),
+                    y: y + Phaser.Math.Between(-20, 20),
+                    duration: 10000,
+                    yoyo: true,
+                    repeat: -1,
+                    ease: 'Sine.easeInOut'
+                });
             }
 
             // Set a property to handle updates in our update method
@@ -101,81 +185,123 @@ class MainMenuScene extends Phaser.Scene {
     }
 
     createMenuButtons(width, height) {
-        // Check if button texture was loaded
-        const useTextButtons = !this.textures.exists('button');
+        // Create a modern menu panel
+        const panelWidth = 300;
+        const panelHeight = 400;
+        const panelX = width / 2;
+        const panelY = height / 2 + 50;
+
+        // Create a semi-transparent panel background with rounded corners
+        const panel = this.add.graphics();
+        panel.fillStyle(0x000033, 0.7);
+        panel.fillRoundedRect(panelX - panelWidth/2, panelY - panelHeight/2, panelWidth, panelHeight, 15);
+
+        // Add a glowing border
+        const border = this.add.graphics();
+        border.lineStyle(2, 0x33aaff, 0.8);
+        border.strokeRoundedRect(panelX - panelWidth/2, panelY - panelHeight/2, panelWidth, panelHeight, 15);
+
+        // Add a decorative header to the panel
+        const headerHeight = 50;
+        const header = this.add.graphics();
+        header.fillStyle(0x33aaff, 0.3);
+        header.fillRoundedRect(panelX - panelWidth/2, panelY - panelHeight/2, panelWidth, headerHeight, { tl: 15, tr: 15, bl: 0, br: 0 });
+
+        // Add header text
+        const headerText = this.add.text(panelX, panelY - panelHeight/2 + headerHeight/2, 'MAIN MENU', {
+            fontFamily: 'monospace',
+            fontSize: '20px',
+            color: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 2
+        }).setOrigin(0.5);
 
         // Button configs
         const buttonConfigs = [
             {
                 text: 'START MISSION',
-                y: height / 2 + 40,
+                y: panelY - panelHeight/2 + headerHeight + 70,
                 handler: () => this.startGame()
             },
             {
                 text: 'PROFILE',
-                y: height / 2 + 120,
+                y: panelY - panelHeight/2 + headerHeight + 140,
                 handler: () => this.openProfile()
             },
             {
                 text: 'HANGAR BAY',
-                y: height / 2 + 200,
+                y: panelY - panelHeight/2 + headerHeight + 210,
                 handler: () => this.openHangar()
             },
             {
                 text: 'OPTIONS',
-                y: height / 2 + 280,
+                y: panelY - panelHeight/2 + headerHeight + 280,
                 handler: () => this.openOptions()
             }
         ];
 
-        // Create buttons based on available assets
+        // Create modern, sleek buttons
         buttonConfigs.forEach(config => {
-            let button;
-            let buttonText;
+            // Create button background with gradient
+            const buttonWidth = 240;
+            const buttonHeight = 50;
+            const button = this.add.graphics();
 
-            if (useTextButtons) {
-                // Fallback: create text-based buttons
-                button = this.add.rectangle(
-                    width / 2,
-                    config.y,
-                    220,
-                    60,
-                    0x333333
-                )
+            // Default state
+            button.fillStyle(0x222244, 0.8);
+            button.fillRoundedRect(panelX - buttonWidth/2, config.y - buttonHeight/2, buttonWidth, buttonHeight, 10);
+            button.lineStyle(1, 0x33aaff, 0.5);
+            button.strokeRoundedRect(panelX - buttonWidth/2, config.y - buttonHeight/2, buttonWidth, buttonHeight, 10);
+
+            // Create an invisible interactive area
+            const hitArea = this.add.rectangle(panelX, config.y, buttonWidth, buttonHeight)
                 .setInteractive({ useHandCursor: true })
-                .setOrigin(0.5);
-
-                // Add a border
-                this.add.rectangle(
-                    width / 2,
-                    config.y,
-                    220,
-                    60,
-                    0x33ff33
-                )
                 .setOrigin(0.5)
-                .setStrokeStyle(2, 0x33ff33);
+                .setAlpha(0.001);
 
-                buttonText = this.add.text(width / 2, config.y, config.text, {
-                    fontFamily: 'monospace',
-                    fontSize: '20px',
-                    color: '#ffffff'
-                }).setOrigin(0.5);
-            } else {
-                // Use image-based buttons
-                button = this.add.image(width / 2, config.y, 'button')
-                    .setInteractive()
-                    .setDisplaySize(220, 60);
-
-                buttonText = this.add.text(button.x, button.y, config.text, {
-                    fontFamily: 'monospace',
-                    fontSize: '20px',
-                    color: '#ffffff'
-                }).setOrigin(0.5);
-            }
+            // Button text with glow effect
+            const buttonText = this.add.text(panelX, config.y, config.text, {
+                fontFamily: 'monospace',
+                fontSize: '18px',
+                color: '#ffffff',
+                stroke: '#000000',
+                strokeThickness: 1,
+                shadow: { offsetX: 1, offsetY: 1, color: '#33aaff', blur: 5, stroke: true }
+            }).setOrigin(0.5);
 
             // Button hover and click effects
-            this.setupButtonInteractions(button, buttonText, config.handler, useTextButtons);
+            hitArea.on('pointerover', () => {
+                button.clear();
+                button.fillStyle(0x3344aa, 0.9);
+                button.fillRoundedRect(panelX - buttonWidth/2, config.y - buttonHeight/2, buttonWidth, buttonHeight, 10);
+                button.lineStyle(2, 0x33ccff, 0.8);
+                button.strokeRoundedRect(panelX - buttonWidth/2, config.y - buttonHeight/2, buttonWidth, buttonHeight, 10);
+                buttonText.setShadow(1, 1, '#33ccff', 10, true);
+                buttonText.setColor('#ffffff');
+            });
+
+            hitArea.on('pointerout', () => {
+                button.clear();
+                button.fillStyle(0x222244, 0.8);
+                button.fillRoundedRect(panelX - buttonWidth/2, config.y - buttonHeight/2, buttonWidth, buttonHeight, 10);
+                button.lineStyle(1, 0x33aaff, 0.5);
+                button.strokeRoundedRect(panelX - buttonWidth/2, config.y - buttonHeight/2, buttonWidth, buttonHeight, 10);
+                buttonText.setShadow(1, 1, '#33aaff', 5, true);
+                buttonText.setColor('#ffffff');
+            });
+
+            hitArea.on('pointerdown', () => {
+                button.clear();
+                button.fillStyle(0x2233aa, 1);
+                button.fillRoundedRect(panelX - buttonWidth/2, config.y - buttonHeight/2, buttonWidth, buttonHeight, 10);
+                buttonText.setY(config.y + 2); // Small press effect
+
+                // Call the handler after a short delay for visual feedback
+                this.time.delayedCall(100, () => {
+                    buttonText.setY(config.y);
+                    config.handler();
+                });
+            });
         });
     }
 
@@ -239,28 +365,156 @@ class MainMenuScene extends Phaser.Scene {
                 };
             }
 
-            // Add a visual indicator that game is starting
+            // Create a loading overlay
+            const overlay = this.add.rectangle(
+                0, 0,
+                this.cameras.main.width,
+                this.cameras.main.height,
+                0x000022, 0.8
+            ).setOrigin(0, 0).setDepth(100);
+
+            // Create a loading container
+            const loadingContainer = this.add.container(this.cameras.main.width / 2, this.cameras.main.height / 2).setDepth(101);
+
+            // Add a glowing border
+            const loadingBorder = this.add.graphics().setDepth(101);
+            loadingBorder.lineStyle(3, 0x33aaff, 0.8);
+            loadingBorder.strokeRoundedRect(-150, -80, 300, 160, 15);
+            loadingContainer.add(loadingBorder);
+
+            // Add loading text with enhanced styling
             const loadingText = this.add.text(
-                this.cameras.main.width / 2,
-                this.cameras.main.height / 2 + 100,
-                'STARTING MISSION...',
+                0, -40,
+                'INITIALIZING MISSION',
                 {
                     fontFamily: 'monospace',
                     fontSize: '24px',
-                    color: '#33ff33',
+                    color: '#33aaff',
+                    align: 'center',
+                    stroke: '#000033',
+                    strokeThickness: 4
+                }
+            ).setOrigin(0.5);
+            loadingContainer.add(loadingText);
+
+            // Create animated dots for loading
+            const loadingDots = this.add.text(
+                0, -10,
+                '...',
+                {
+                    fontFamily: 'monospace',
+                    fontSize: '32px',
+                    color: '#ffffff',
                     align: 'center'
                 }
             ).setOrigin(0.5);
+            loadingContainer.add(loadingDots);
 
-            // Start the game scene with a slight delay
-            this.time.delayedCall(500, () => {
-                // Start the sector map scene explicitly with data
-                console.log('Starting sector map scene with fresh data');
-                this.scene.start(CONSTANTS.SCENES.SECTOR_MAP, {
-                    sector: 1,
-                    score: 0
-                });
+            // Animate the dots
+            let dots = 0;
+            const dotAnimation = this.time.addEvent({
+                delay: 300,
+                callback: () => {
+                    dots = (dots + 1) % 4;
+                    loadingDots.setText('.'.repeat(dots));
+                },
+                loop: true
             });
+
+            // Create a progress bar
+            const progressBarWidth = 250;
+            const progressBarHeight = 15;
+
+            // Progress bar background
+            const progressBarBg = this.add.graphics().setDepth(101);
+            progressBarBg.fillStyle(0x222244, 1);
+            progressBarBg.fillRoundedRect(-progressBarWidth/2, 20, progressBarWidth, progressBarHeight, 5);
+            loadingContainer.add(progressBarBg);
+
+            // Progress bar fill
+            const progressBarFill = this.add.graphics().setDepth(102);
+            loadingContainer.add(progressBarFill);
+
+            // Add ship icon that moves along the progress bar
+            const shipIcon = this.add.triangle(-progressBarWidth/2, 20 + progressBarHeight/2, 0, -10, 10, 10, 0, 5)
+                .setFillStyle(0x33aaff)
+                .setDepth(103);
+            loadingContainer.add(shipIcon);
+
+            // Create loading steps
+            const loadingSteps = [
+                { text: 'INITIALIZING SYSTEMS', duration: 500 },
+                { text: 'LOADING WEAPONS', duration: 400 },
+                { text: 'CALIBRATING SHIELDS', duration: 300 },
+                { text: 'PLOTTING COURSE', duration: 400 },
+                { text: 'READY FOR LAUNCH', duration: 400 }
+            ];
+
+            // Function to update progress
+            let currentStep = 0;
+            let totalDuration = loadingSteps.reduce((sum, step) => sum + step.duration, 0);
+            let elapsedTime = 0;
+
+            // Start the loading sequence
+            const updateLoading = (delta) => {
+                if (currentStep >= loadingSteps.length) {
+                    // Loading complete, start the game
+                    this.scene.start(CONSTANTS.SCENES.SECTOR_MAP, {
+                        sector: 1,
+                        score: 0
+                    });
+                    return;
+                }
+
+                // Update progress bar
+                elapsedTime += delta;
+                const stepProgress = Math.min(elapsedTime / loadingSteps[currentStep].duration, 1);
+                const totalProgress = (currentStep + stepProgress) / loadingSteps.length;
+
+                // Update progress bar fill
+                progressBarFill.clear();
+                progressBarFill.fillStyle(0x33aaff, 1);
+                progressBarFill.fillRoundedRect(
+                    -progressBarWidth/2,
+                    20,
+                    progressBarWidth * totalProgress,
+                    progressBarHeight,
+                    { tl: 5, bl: 5, tr: 0, br: 0 }
+                );
+
+                // Update ship icon position
+                shipIcon.x = -progressBarWidth/2 + progressBarWidth * totalProgress;
+
+                // Update loading text
+                loadingText.setText(loadingSteps[currentStep].text);
+
+                // Move to next step if current step is complete
+                if (stepProgress >= 1) {
+                    currentStep++;
+                    elapsedTime = 0;
+                }
+            };
+
+            // Create an update event
+            this.events.on('update', (time, delta) => {
+                updateLoading(delta);
+            });
+
+            // Add some particle effects
+            if (this.textures.exists('star-particle')) {
+                const particles = this.add.particles('star-particle').setDepth(101);
+                particles.createEmitter({
+                    x: { min: -120, max: 120 },
+                    y: 50,
+                    speedX: { min: -20, max: 20 },
+                    speedY: { min: -40, max: -20 },
+                    scale: { start: 0.4, end: 0 },
+                    lifespan: 1000,
+                    blendMode: 'ADD',
+                    frequency: 50
+                });
+                loadingContainer.add(particles);
+            }
         }
         catch (error) {
             console.error('Error starting game:', error);

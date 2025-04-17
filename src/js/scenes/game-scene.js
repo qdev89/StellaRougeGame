@@ -61,6 +61,7 @@ class GameScene extends Phaser.Scene {
 
             // Set up UI elements
             this.createUI();
+            this.createAmmoUI();
 
             // Collision handlers are set up in setupPhysics()
 
@@ -156,12 +157,15 @@ class GameScene extends Phaser.Scene {
 
         // Update player
         if (this.player && this.player.active) {
-            this.player.update();
+            this.player.update(time, delta);
 
             // Update player projectiles vs homing targets
             if (this.player.weaponType === 'HOMING_MISSILE') {
                 this.updateHomingMissiles();
             }
+
+            // Update health and shield UI
+            this.updateHealthUI();
         }
 
         // Update enemies
@@ -199,21 +203,73 @@ class GameScene extends Phaser.Scene {
             this.checkForEmergencyEvent();
         }
 
-        // Update UI elements
-        this.updateHealthUI();
+        // UI elements are updated in player update
 
-        // Scroll background layers at different speeds for parallax effect
+        // Enhanced parallax scrolling for background layers
         // Check if the background layers are actual sprites or dummy objects
         if (this.bgStars && this.bgStars.tilePositionY !== undefined) {
+            // Stars move slowly, creating a distant background effect
             this.bgStars.tilePositionY -= 0.5 * (delta / 16);
+
+            // Add subtle horizontal drift to stars for more dynamic feel
+            if (!this.starsHorizontalDrift) {
+                this.starsHorizontalDrift = 0;
+                this.starsHorizontalDirection = 1;
+                this.starsHorizontalSpeed = 0.02;
+            }
+
+            // Slowly change horizontal drift direction
+            this.starsHorizontalDrift += this.starsHorizontalSpeed * this.starsHorizontalDirection * (delta / 16);
+            if (Math.abs(this.starsHorizontalDrift) > 10) {
+                this.starsHorizontalDirection *= -1; // Reverse direction
+            }
+
+            this.bgStars.tilePositionX = this.starsHorizontalDrift;
         }
 
         if (this.bgNebula && this.bgNebula.tilePositionY !== undefined) {
+            // Nebula moves very slowly, creating a mid-distance effect
             this.bgNebula.tilePositionY -= 0.2 * (delta / 16);
+
+            // Add subtle pulsing effect to nebula
+            if (!this.nebulaAlphaPulse) {
+                this.nebulaAlphaPulse = 0;
+                this.nebulaAlphaDirection = 1;
+                this.nebulaAlphaSpeed = 0.0005;
+            }
+
+            this.nebulaAlphaPulse += this.nebulaAlphaSpeed * this.nebulaAlphaDirection * (delta / 16);
+            if (this.nebulaAlphaPulse > 0.1 || this.nebulaAlphaPulse < 0) {
+                this.nebulaAlphaDirection *= -1; // Reverse direction
+            }
+
+            // Subtle alpha pulsing between 0.4 and 0.5
+            this.bgNebula.alpha = 0.4 + this.nebulaAlphaPulse;
+
+            // Very subtle horizontal drift opposite to stars
+            if (this.starsHorizontalDrift) {
+                this.bgNebula.tilePositionX = -this.starsHorizontalDrift * 0.3;
+            }
         }
 
         if (this.bgDust && this.bgDust.tilePositionY !== undefined) {
-            this.bgDust.tilePositionY -= 1.0 * (delta / 16);
+            // Dust moves quickly, creating a foreground effect
+            this.bgDust.tilePositionY -= 1.2 * (delta / 16);
+
+            // Add subtle horizontal drift to dust based on player movement
+            if (this.player && this.player.body) {
+                // Dust reacts to player horizontal velocity
+                const playerHorizontalVelocity = this.player.body.velocity.x;
+                if (!this.dustHorizontalOffset) this.dustHorizontalOffset = 0;
+
+                // Dust moves slightly in the opposite direction of player movement
+                this.dustHorizontalOffset -= playerHorizontalVelocity * 0.01 * (delta / 16);
+
+                // Limit the offset to prevent extreme values
+                this.dustHorizontalOffset = Phaser.Math.Clamp(this.dustHorizontalOffset, -50, 50);
+
+                this.bgDust.tilePositionX = this.dustHorizontalOffset;
+            }
         }
     }
 
@@ -259,11 +315,13 @@ class GameScene extends Phaser.Scene {
             // Foreground layer (dust particles)
             this.bgDust = createBgLayer('bg-dust', CONSTANTS.GAME.BACKGROUND_Z_INDEX + 20, 0.3);
 
-            // Create distant star field particle effect
+            // Create enhanced star field particle effects
             try {
                 if (this.textures.exists('star-particle')) {
+                    // Main star particles (small, fast-moving stars)
                     this.starParticles = this.add.particles('star-particle');
 
+                    // Fast-moving small stars (main effect)
                     this.starEmitter = this.starParticles.createEmitter({
                         x: { min: 0, max: this.cameras.main.width },
                         y: 0,
@@ -272,11 +330,97 @@ class GameScene extends Phaser.Scene {
                         scale: { start: 0.2, end: 0 },
                         quantity: 1,
                         blendMode: 'ADD',
-                        frequency: 500
+                        frequency: 300, // More frequent stars
+                        tint: [ 0xffffff, 0xaaaaff, 0xffaaaa, 0xffffaa ] // Varied colors
+                    });
+
+                    // Medium-speed medium stars (less frequent)
+                    this.mediumStarEmitter = this.starParticles.createEmitter({
+                        x: { min: 0, max: this.cameras.main.width },
+                        y: 0,
+                        lifespan: { min: 3000, max: 7000 },
+                        speedY: { min: 50, max: 100 },
+                        scale: { start: 0.4, end: 0.1 },
+                        quantity: 1,
+                        blendMode: 'ADD',
+                        frequency: 1000,
+                        tint: [ 0xffffff, 0x8888ff, 0xff8888 ] // Varied colors
+                    });
+
+                    // Slow-moving large stars (rare)
+                    this.largeStarEmitter = this.starParticles.createEmitter({
+                        x: { min: 0, max: this.cameras.main.width },
+                        y: 0,
+                        lifespan: { min: 5000, max: 10000 },
+                        speedY: { min: 20, max: 40 },
+                        scale: { start: 0.7, end: 0.3 },
+                        alpha: { start: 1, end: 0 },
+                        quantity: 1,
+                        blendMode: 'ADD',
+                        frequency: 3000, // Very infrequent
+                        tint: [ 0xffffff, 0xaaddff, 0xffddaa ] // Varied colors
                     });
 
                     // Star particles should be fixed to camera
                     this.starParticles.setScrollFactor(0).setDepth(CONSTANTS.GAME.BACKGROUND_Z_INDEX + 15);
+
+                    // Create occasional shooting stars
+                    this.shootingStarParticles = this.add.particles('star-particle');
+
+                    this.shootingStarEmitter = this.shootingStarParticles.createEmitter({
+                        x: { min: -100, max: this.cameras.main.width + 100 },
+                        y: { min: -100, max: 100 },
+                        lifespan: 1000,
+                        speedX: { min: -300, max: 300 },
+                        speedY: { min: 300, max: 600 },
+                        scale: { start: 0.8, end: 0.1 },
+                        quantity: 1,
+                        blendMode: 'ADD',
+                        frequency: 8000, // Very rare
+                        tint: 0xffffff,
+                        // Add particle trail
+                        emitCallback: (particle) => {
+                            // Store initial position and velocity for the trail
+                            particle.data = {
+                                initialX: particle.x,
+                                initialY: particle.y,
+                                velocityX: particle.velocityX,
+                                velocityY: particle.velocityY
+                            };
+                        },
+                        deathCallback: (particle) => {
+                            // Create a small explosion effect when the shooting star burns out
+                            for (let i = 0; i < 5; i++) {
+                                this.starParticles.emitParticle(
+                                    1,
+                                    particle.x,
+                                    particle.y,
+                                    'star-particle',
+                                    {
+                                        scale: { start: 0.3, end: 0 },
+                                        speed: { min: 50, max: 100 },
+                                        lifespan: { min: 300, max: 600 },
+                                        blendMode: 'ADD',
+                                        tint: 0xffffaa
+                                    }
+                                );
+                            }
+                        }
+                    });
+
+                    // Add trail to shooting stars
+                    this.shootingStarTrailEmitter = this.shootingStarParticles.createEmitter({
+                        scale: { start: 0.4, end: 0 },
+                        alpha: { start: 0.6, end: 0 },
+                        lifespan: 300,
+                        blendMode: 'ADD',
+                        tint: 0xffffaa,
+                        follow: this.shootingStarEmitter,
+                        frequency: 50,
+                        quantity: 2
+                    });
+
+                    this.shootingStarParticles.setScrollFactor(0).setDepth(CONSTANTS.GAME.BACKGROUND_Z_INDEX + 16);
                 } else {
                     console.warn('Star particle texture not found, skipping particle effect');
                 }
@@ -313,12 +457,32 @@ class GameScene extends Phaser.Scene {
 
     createPlayer() {
         // Create player in the bottom center of the screen
+        // Use the new space.jfif sprite if available, otherwise fall back to the default
+        const shipTexture = this.textures.exists('player-ship-sprite') ? 'player-ship-sprite' : 'player-ship';
+        console.log('Using ship texture:', shipTexture);
+
         this.player = new PlayerShip(
             this,
             this.cameras.main.width / 2,
             this.cameras.main.height - 100,
-            'player-ship'
+            shipTexture
         );
+
+        // Unlock additional weapons for testing
+        this.player.unlockedWeapons = [
+            'BASIC_LASER',
+            'SPREAD_SHOT',
+            'PLASMA_BOLT',
+            'HOMING_MISSILE',
+            'DUAL_CANNON',
+            'LASER_BEAM',
+            'SCATTER_BOMB'
+        ];
+
+        // Fill ammo for all weapons
+        Object.keys(this.player.ammo).forEach(weaponType => {
+            this.player.ammo[weaponType] = this.player.maxAmmo[weaponType];
+        });
     }
 
     createUI() {
@@ -326,91 +490,273 @@ class GameScene extends Phaser.Scene {
         this.uiContainer = this.add.container(0, 0)
             .setScrollFactor(0);
 
-        // Score text
+        // Create a container for weapon and ammo UI
+        this.weaponContainer = this.add.container(0, 0)
+            .setScrollFactor(0);
+        this.uiContainer.add(this.weaponContainer);
+
+        // Score text with enhanced styling
         this.scoreText = this.add.text(20, 20, 'SCORE: 0', {
             fontFamily: 'monospace',
             fontSize: '24px',
-            color: '#33ff33'
+            color: '#33ff33',
+            stroke: '#0A0A1F',
+            strokeThickness: 4,
+            shadow: { offsetX: 2, offsetY: 2, color: '#000000', blur: 2, stroke: true, fill: true }
         }).setScrollFactor(0);
 
         this.uiContainer.add(this.scoreText);
 
-        // Health bar
-        const healthBarBg = this.add.rectangle(20, 60, 200, 20, 0x222222)
-            .setOrigin(0, 0)
+        // Enhanced health bar with gradient and border
+        // Background with rounded corners
+        const healthBarWidth = 200;
+        const healthBarHeight = 20;
+        const healthBarRadius = 4;
+
+        // Create health bar background
+        this.healthBarBg = this.add.rectangle(20, 60, healthBarWidth, healthBarHeight, 0x222233)
+            .setOrigin(0, 0.5)
+            .setScrollFactor(0)
+            .setStrokeStyle(1, 0x33ff33, 0.3);
+
+        // Create health bar fill
+        this.healthBar = this.add.rectangle(20, 60, healthBarWidth, healthBarHeight, 0x33ff33)
+            .setOrigin(0, 0.5)
             .setScrollFactor(0);
 
-        this.healthBar = this.add.rectangle(20, 60, 200, 20, 0x33ff33)
-            .setOrigin(0, 0)
+        // Add health text
+        this.healthText = this.add.text(25, 60, `${CONSTANTS.PLAYER.STARTING_HEALTH}/${CONSTANTS.PLAYER.STARTING_HEALTH}`, {
+            fontFamily: 'monospace',
+            fontSize: '12px',
+            color: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 2
+        }).setScrollFactor(0).setOrigin(0, 0.5);
+
+        this.uiContainer.add([this.healthBarBg, this.healthBar, this.healthText]);
+
+        // Enhanced shield bar with gradient and glow effect
+        const shieldBarWidth = 200;
+        const shieldBarHeight = 10;
+        const shieldBarRadius = 3;
+
+        // Create shield bar background
+        this.shieldBarBg = this.add.rectangle(20, 85, shieldBarWidth, shieldBarHeight, 0x222233)
+            .setOrigin(0, 0.5)
+            .setScrollFactor(0)
+            .setStrokeStyle(1, 0x3388ff, 0.3);
+
+        // Create shield bar fill
+        this.shieldBar = this.add.rectangle(20, 85, shieldBarWidth, shieldBarHeight, 0x3388ff)
+            .setOrigin(0, 0.5)
             .setScrollFactor(0);
 
-        this.uiContainer.add([healthBarBg, this.healthBar]);
+        // Create shield glow effect
+        this.shieldGlow = this.add.rectangle(20, 85, shieldBarWidth + 4, shieldBarHeight + 4, 0x66ccff, 0.3)
+            .setOrigin(0, 0.5)
+            .setScrollFactor(0);
+        this.shieldGlow.x -= 2; // Offset for glow effect
 
-        // Shield bar
-        const shieldBarBg = this.add.rectangle(20, 85, 200, 10, 0x222222)
-            .setOrigin(0, 0)
+        this.uiContainer.add([this.shieldGlow, this.shieldBarBg, this.shieldBar]);
+
+        // Enhanced sector progress bar with gradient
+        const progressBarWidth = 200;
+        const progressBarHeight = 10;
+        const progressBarRadius = 3;
+        const progressBarX = this.cameras.main.width - 220;
+        const progressBarY = 20;
+
+        // Create a background with rounded corners
+        const progressBarBg = this.add.graphics()
+            .setScrollFactor(0);
+        progressBarBg.fillStyle(0x222233, 1);
+        progressBarBg.fillRoundedRect(progressBarX, progressBarY, progressBarWidth, progressBarHeight, progressBarRadius);
+        progressBarBg.lineStyle(1, 0xaaaacc, 0.3);
+        progressBarBg.strokeRoundedRect(progressBarX, progressBarY, progressBarWidth, progressBarHeight, progressBarRadius);
+
+        // Create a mask for the progress bar fill
+        const progressBarMask = this.add.graphics()
+            .setScrollFactor(0);
+        progressBarMask.fillStyle(0xffffff);
+        progressBarMask.fillRoundedRect(progressBarX, progressBarY, progressBarWidth, progressBarHeight, progressBarRadius);
+
+        // Create the progress bar fill with gradient
+        this.progressBarFill = this.add.graphics()
             .setScrollFactor(0);
 
-        this.shieldBar = this.add.rectangle(20, 85, 200, 10, 0x3388ff)
-            .setOrigin(0, 0)
-            .setScrollFactor(0);
+        // Set mask for the progress bar fill
+        this.progressBarFill.setMask(new Phaser.Display.Masks.GeometryMask(this, progressBarMask));
 
-        this.uiContainer.add([shieldBarBg, this.shieldBar]);
+        // Create a function to update the progress bar fill
+        this.updateProgressBarFill = (percent) => {
+            this.progressBarFill.clear();
 
-        // Sector progress bar
-        const progressBarBg = this.add.rectangle(this.cameras.main.width - 220, 20, 200, 10, 0x222222)
-            .setOrigin(0, 0)
-            .setScrollFactor(0);
+            if (percent > 0) {
+                const width = progressBarWidth * percent;
 
-        this.progressBar = this.add.rectangle(this.cameras.main.width - 220, 20, 0, 10, 0xffffff)
-            .setOrigin(0, 0)
-            .setScrollFactor(0);
+                // Progress bar - solid color (no gradient for compatibility)
+                this.progressBarFill.fillStyle(0x33ffff, 1);
+                this.progressBarFill.fillRoundedRect(progressBarX, progressBarY, Math.max(width, progressBarRadius * 2), progressBarHeight, progressBarRadius);
+            }
+        };
 
-        this.sectorText = this.add.text(this.cameras.main.width - 220, 35, 'SECTOR: 1', {
+        // Enhanced sector text
+        this.sectorText = this.add.text(progressBarX, progressBarY + 15, 'SECTOR: 1', {
             fontFamily: 'monospace',
             fontSize: '16px',
-            color: '#ffffff'
+            color: '#ffffff',
+            stroke: '#0A0A1F',
+            strokeThickness: 2
         }).setScrollFactor(0);
 
-        this.uiContainer.add([progressBarBg, this.progressBar, this.sectorText]);
+        this.uiContainer.add([this.progressBarFill, this.sectorText]);
 
-        // Pause button
-        this.pauseButton = this.add.image(this.cameras.main.width - 30, 30, 'button')
+        // Enhanced pause button with glow effect
+        const pauseButtonSize = 40;
+        const pauseButtonX = this.cameras.main.width - 30;
+        const pauseButtonY = 30;
+
+        // Create a circular pause button with glow
+        const pauseButtonBg = this.add.graphics()
+            .setScrollFactor(0);
+        pauseButtonBg.fillStyle(0x222233, 0.7);
+        pauseButtonBg.fillCircle(pauseButtonX, pauseButtonY, pauseButtonSize/2);
+        pauseButtonBg.lineStyle(2, 0x33ff33, 0.5);
+        pauseButtonBg.strokeCircle(pauseButtonX, pauseButtonY, pauseButtonSize/2);
+
+        // Create an interactive area for the pause button
+        this.pauseButton = this.add.circle(pauseButtonX, pauseButtonY, pauseButtonSize/2)
             .setScrollFactor(0)
-            .setScale(0.5)
             .setInteractive();
 
-        this.pauseText = this.add.text(this.pauseButton.x, this.pauseButton.y, 'II', {
+        // Make the pause button invisible (just for interaction)
+        this.pauseButton.setAlpha(0);
+
+        // Pause icon
+        this.pauseText = this.add.text(pauseButtonX, pauseButtonY, 'II', {
             fontFamily: 'monospace',
             fontSize: '16px',
-            color: '#ffffff'
+            color: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 2
         }).setOrigin(0.5).setScrollFactor(0);
 
-        this.uiContainer.add([this.pauseButton, this.pauseText]);
+        this.uiContainer.add([pauseButtonBg, this.pauseButton, this.pauseText]);
 
-        // Set up pause button interaction
+        // Set up pause button interaction with visual feedback
+        this.pauseButton.on('pointerover', () => {
+            pauseButtonBg.clear();
+            pauseButtonBg.fillStyle(0x333344, 0.8);
+            pauseButtonBg.fillCircle(pauseButtonX, pauseButtonY, pauseButtonSize/2);
+            pauseButtonBg.lineStyle(2, 0x33ff33, 0.8);
+            pauseButtonBg.strokeCircle(pauseButtonX, pauseButtonY, pauseButtonSize/2);
+            this.pauseText.setColor('#33ff33');
+        });
+
+        this.pauseButton.on('pointerout', () => {
+            pauseButtonBg.clear();
+            pauseButtonBg.fillStyle(0x222233, 0.7);
+            pauseButtonBg.fillCircle(pauseButtonX, pauseButtonY, pauseButtonSize/2);
+            pauseButtonBg.lineStyle(2, 0x33ff33, 0.5);
+            pauseButtonBg.strokeCircle(pauseButtonX, pauseButtonY, pauseButtonSize/2);
+            this.pauseText.setColor('#ffffff');
+        });
+
         this.pauseButton.on('pointerdown', () => {
             this.togglePause();
         });
 
-        // Ship status button
-        const shipStatusButton = this.add.text(
-            this.cameras.main.width - 120,
-            70,
-            'SHIP STATUS',
-            {
-                fontFamily: 'monospace',
-                fontSize: '14px',
-                color: '#cccccc',
-                align: 'center',
-                backgroundColor: '#333333',
-                padding: {
-                    x: 8,
-                    y: 4
-                }
-            }
+        // Enhanced ship status button
+        const shipStatusButtonX = this.cameras.main.width - 120;
+        const shipStatusButtonY = 70;
+        const shipStatusButtonWidth = 120;
+        const shipStatusButtonHeight = 30;
+        const shipStatusButtonRadius = 5;
+
+        // Create a background with rounded corners and gradient
+        const shipStatusButtonBg = this.add.graphics()
+            .setScrollFactor(0);
+        shipStatusButtonBg.fillStyle(0x222233, 0.8);
+        shipStatusButtonBg.fillRoundedRect(
+            shipStatusButtonX - shipStatusButtonWidth/2,
+            shipStatusButtonY - shipStatusButtonHeight/2,
+            shipStatusButtonWidth,
+            shipStatusButtonHeight,
+            shipStatusButtonRadius
+        );
+        shipStatusButtonBg.lineStyle(1, 0x33ff33, 0.5);
+        shipStatusButtonBg.strokeRoundedRect(
+            shipStatusButtonX - shipStatusButtonWidth/2,
+            shipStatusButtonY - shipStatusButtonHeight/2,
+            shipStatusButtonWidth,
+            shipStatusButtonHeight,
+            shipStatusButtonRadius
+        );
+
+        // Ship status text
+        const shipStatusText = this.add.text(shipStatusButtonX, shipStatusButtonY, 'SHIP STATUS', {
+            fontFamily: 'monospace',
+            fontSize: '14px',
+            color: '#ffffff',
+            align: 'center',
+            stroke: '#000000',
+            strokeThickness: 2
+        }).setOrigin(0.5).setScrollFactor(0);
+
+        // Create an interactive area for the ship status button
+        const shipStatusButton = this.add.rectangle(
+            shipStatusButtonX,
+            shipStatusButtonY,
+            shipStatusButtonWidth,
+            shipStatusButtonHeight
         ).setScrollFactor(0)
         .setInteractive({ useHandCursor: true });
+
+        // Make the button area invisible (just for interaction)
+        shipStatusButton.setAlpha(0);
+
+        // Add hover effects
+        shipStatusButton.on('pointerover', () => {
+            shipStatusButtonBg.clear();
+            shipStatusButtonBg.fillStyle(0x333344, 0.9);
+            shipStatusButtonBg.fillRoundedRect(
+                shipStatusButtonX - shipStatusButtonWidth/2,
+                shipStatusButtonY - shipStatusButtonHeight/2,
+                shipStatusButtonWidth,
+                shipStatusButtonHeight,
+                shipStatusButtonRadius
+            );
+            shipStatusButtonBg.lineStyle(1, 0x33ff33, 0.8);
+            shipStatusButtonBg.strokeRoundedRect(
+                shipStatusButtonX - shipStatusButtonWidth/2,
+                shipStatusButtonY - shipStatusButtonHeight/2,
+                shipStatusButtonWidth,
+                shipStatusButtonHeight,
+                shipStatusButtonRadius
+            );
+            shipStatusText.setColor('#33ff33');
+        });
+
+        shipStatusButton.on('pointerout', () => {
+            shipStatusButtonBg.clear();
+            shipStatusButtonBg.fillStyle(0x222233, 0.8);
+            shipStatusButtonBg.fillRoundedRect(
+                shipStatusButtonX - shipStatusButtonWidth/2,
+                shipStatusButtonY - shipStatusButtonHeight/2,
+                shipStatusButtonWidth,
+                shipStatusButtonHeight,
+                shipStatusButtonRadius
+            );
+            shipStatusButtonBg.lineStyle(1, 0x33ff33, 0.5);
+            shipStatusButtonBg.strokeRoundedRect(
+                shipStatusButtonX - shipStatusButtonWidth/2,
+                shipStatusButtonY - shipStatusButtonHeight/2,
+                shipStatusButtonWidth,
+                shipStatusButtonHeight,
+                shipStatusButtonRadius
+            );
+            shipStatusText.setColor('#ffffff');
+        });
 
         shipStatusButton.on('pointerdown', () => {
             // Pause the game
@@ -429,7 +775,207 @@ class GameScene extends Phaser.Scene {
             });
         });
 
-        this.uiContainer.add(shipStatusButton);
+        this.uiContainer.add([shipStatusButtonBg, shipStatusText, shipStatusButton]);
+
+        // Create ammo UI
+        this.createAmmoUI();
+    }
+
+    createAmmoUI() {
+        // Position for the ammo UI (bottom left)
+        const ammoX = 20;
+        const ammoY = this.cameras.main.height - 60;
+
+        // Create background for ammo display
+        const ammoBg = this.add.graphics()
+            .setScrollFactor(0);
+        ammoBg.fillStyle(0x222233, 0.7);
+        ammoBg.fillRoundedRect(ammoX, ammoY, 200, 40, 5);
+        ammoBg.lineStyle(1, 0x33ff33, 0.5);
+        ammoBg.strokeRoundedRect(ammoX, ammoY, 200, 40, 5);
+
+        // Create weapon icon
+        this.weaponIcon = this.add.rectangle(ammoX + 20, ammoY + 20, 30, 30, 0x33ff33)
+            .setScrollFactor(0);
+
+        // Create weapon name text
+        this.weaponNameText = this.add.text(ammoX + 40, ammoY + 10, 'BASIC LASER', {
+            fontFamily: 'monospace',
+            fontSize: '14px',
+            color: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 2
+        }).setScrollFactor(0);
+
+        // Create ammo counter text
+        this.ammoText = this.add.text(ammoX + 40, ammoY + 25, '100 / 100', {
+            fontFamily: 'monospace',
+            fontSize: '12px',
+            color: '#33ff33',
+            stroke: '#000000',
+            strokeThickness: 2
+        }).setScrollFactor(0);
+
+        // Create ammo bar background
+        const ammoBarBg = this.add.graphics()
+            .setScrollFactor(0);
+        ammoBarBg.fillStyle(0x333344, 1);
+        ammoBarBg.fillRect(ammoX + 120, ammoY + 15, 70, 10);
+
+        // Create ammo bar fill
+        this.ammoBarFill = this.add.graphics()
+            .setScrollFactor(0);
+
+        // Create weapon selector icons
+        this.weaponIcons = [];
+        const iconSize = 25;
+        const iconSpacing = 30;
+        const iconsY = ammoY + 60;
+
+        // Create background for weapon selector
+        const selectorBg = this.add.graphics()
+            .setScrollFactor(0);
+        selectorBg.fillStyle(0x222233, 0.7);
+        selectorBg.fillRoundedRect(ammoX, iconsY - iconSize/2, iconSpacing * 7 + 20, iconSize + 10, 5);
+        selectorBg.lineStyle(1, 0x33ff33, 0.5);
+        selectorBg.strokeRoundedRect(ammoX, iconsY - iconSize/2, iconSpacing * 7 + 20, iconSize + 10, 5);
+
+        // Add weapon selector to container
+        this.weaponContainer.add(selectorBg);
+
+        // Create weapon icons with key numbers
+        const weaponTypes = [
+            'BASIC_LASER',
+            'SPREAD_SHOT',
+            'PLASMA_BOLT',
+            'HOMING_MISSILE',
+            'DUAL_CANNON',
+            'LASER_BEAM',
+            'SCATTER_BOMB'
+        ];
+
+        weaponTypes.forEach((type, index) => {
+            const x = ammoX + 20 + index * iconSpacing;
+            const settings = CONSTANTS.WEAPONS[type];
+            const color = settings?.COLOR || 0xffffff;
+
+            // Create icon
+            const icon = this.add.rectangle(x, iconsY, iconSize, iconSize, color, 0.7)
+                .setScrollFactor(0);
+
+            // Create number label
+            const keyNumber = this.add.text(x, iconsY, (index + 1).toString(), {
+                fontFamily: 'monospace',
+                fontSize: '12px',
+                color: '#ffffff',
+                align: 'center'
+            }).setOrigin(0.5).setScrollFactor(0);
+
+            // Store reference
+            this.weaponIcons.push({ icon, keyNumber, type });
+
+            // Add to container
+            this.weaponContainer.add([icon, keyNumber]);
+        });
+
+        // Add all elements to the weapon container
+        this.weaponContainer.add([ammoBg, this.weaponIcon, this.weaponNameText, this.ammoText, ammoBarBg, this.ammoBarFill]);
+
+        // Initial update
+        this.updateAmmoUI();
+    }
+
+    updateAmmoUI() {
+        // Only update if player exists
+        if (!this.player) return;
+
+        // Get current ammo info
+        const ammoInfo = this.player.getCurrentAmmo();
+
+        // Update weapon name
+        const weaponName = this.getWeaponDisplayName(this.player.weaponType);
+        this.weaponNameText.setText(weaponName);
+
+        // Update ammo counter
+        this.ammoText.setText(`${ammoInfo.current} / ${ammoInfo.max}`);
+
+        // Update ammo bar color based on percentage
+        let color;
+        if (ammoInfo.percentage > 0.6) {
+            color = 0x33ff33; // Green
+        } else if (ammoInfo.percentage > 0.3) {
+            color = 0xffff33; // Yellow
+        } else {
+            color = 0xff3333; // Red
+        }
+
+        // Update ammo bar fill
+        const ammoX = 20;
+        const ammoY = this.cameras.main.height - 60;
+        this.ammoBarFill.clear();
+        this.ammoBarFill.fillStyle(color, 1);
+        this.ammoBarFill.fillRect(ammoX + 120, ammoY + 15, 70 * ammoInfo.percentage, 10);
+
+        // Update weapon icon color to match ammo bar
+        this.weaponIcon.setFillStyle(color);
+
+        // Update weapon selector icons
+        if (this.weaponIcons) {
+            // Get weapon settings for current weapon
+            const settings = CONSTANTS.WEAPONS[this.player.weaponType];
+            const weaponColor = settings?.COLOR || 0xffffff;
+
+            // Update each icon
+            this.weaponIcons.forEach(iconData => {
+                // Check if this is the current weapon
+                const isCurrentWeapon = iconData.type === this.player.weaponType;
+
+                // Check if weapon is unlocked
+                const isUnlocked = this.player.unlockedWeapons.includes(iconData.type);
+
+                // Update icon appearance
+                if (isCurrentWeapon) {
+                    // Highlight current weapon
+                    iconData.icon.setStrokeStyle(2, weaponColor);
+                    iconData.icon.setAlpha(1.0);
+                    iconData.keyNumber.setAlpha(1.0);
+                } else {
+                    // Normal appearance for other weapons
+                    iconData.icon.setStrokeStyle(0);
+
+                    // Dim locked weapons
+                    if (isUnlocked) {
+                        iconData.icon.setAlpha(0.7);
+                        iconData.keyNumber.setAlpha(0.7);
+                    } else {
+                        iconData.icon.setAlpha(0.3);
+                        iconData.keyNumber.setAlpha(0.3);
+                    }
+                }
+            });
+        }
+    }
+
+    getWeaponDisplayName(weaponType) {
+        // Convert weapon type constant to display name
+        switch (weaponType) {
+            case 'BASIC_LASER':
+                return 'BASIC LASER';
+            case 'SPREAD_SHOT':
+                return 'TRI-BEAM';
+            case 'PLASMA_BOLT':
+                return 'PLASMA BOLT';
+            case 'HOMING_MISSILE':
+                return 'HOMING MISSILE';
+            case 'DUAL_CANNON':
+                return 'DUAL CANNON';
+            case 'LASER_BEAM':
+                return 'BEAM LASER';
+            case 'SCATTER_BOMB':
+                return 'SCATTER BOMB';
+            default:
+                return weaponType.replace('_', ' ');
+        }
     }
 
     setupPhysics() {
@@ -482,7 +1028,11 @@ class GameScene extends Phaser.Scene {
         // Initial update of enemy projectile collisions
         this.updateEnemyProjectileCollisions();
 
-        // No need to call updateEnemyProjectileCollisions again as it's already called above
+        // Initialize health and shield UI
+        this.updateHealthUI();
+
+        // Initialize ammo UI
+        this.updateAmmoUI();
     }
 
     applySynergies() {
@@ -544,7 +1094,14 @@ class GameScene extends Phaser.Scene {
             // Update the progress bar based on sector position
             if (this.procGen && typeof this.procGen.updateProgress === 'function') {
                 const progress = this.procGen.updateProgress(scrollSpeed);
-                this.progressBar.width = 200 * progress;
+
+                // Store progress for UI updates
+                this.sectorProgress = progress;
+
+                // Update the progress bar using our enhanced gradient bar
+                if (this.updateProgressBarFill) {
+                    this.updateProgressBarFill(progress);
+                }
 
                 // Check if we've reached the boss
                 if (this.procGen.reachedBoss() && !this.bossEncountered) {
@@ -552,9 +1109,13 @@ class GameScene extends Phaser.Scene {
                 }
             } else {
                 // Fallback if procGen is not available
-                this.sectorProgress += scrollSpeed;
-                const progress = this.sectorProgress / CONSTANTS.SECTOR.LENGTH;
-                this.progressBar.width = 200 * Math.min(progress, 1);
+                this.sectorProgress = (this.sectorProgress || 0) + scrollSpeed;
+                const progress = Math.min(this.sectorProgress / CONSTANTS.SECTOR.LENGTH, 1);
+
+                // Update the progress bar using our enhanced gradient bar
+                if (this.updateProgressBarFill) {
+                    this.updateProgressBarFill(progress);
+                }
             }
         }
     }
@@ -1436,17 +1997,72 @@ class GameScene extends Phaser.Scene {
         const damage = projectile.damage || 10;
         const killed = enemy.takeDamage(damage);
 
-        // If enemy was killed, update score
+        // If enemy was killed, update score and potentially drop ammo
         if (killed) {
             this.updateScore(enemy.score);
+
+            // Chance to drop ammo based on enemy type
+            this.tryDropAmmo(enemy);
         }
 
         // Create hit effect at impact point
-        this.createHitEffect(projectile.x, projectile.y);
+        this.createHitEffect(projectile.x, projectile.y, projectile.settings?.COLOR);
+
+        // Special handling for scatter bombs
+        if (projectile.isScatterBomb && projectile.explode) {
+            projectile.explode();
+            return; // Skip normal destruction since explode handles it
+        }
 
         // Destroy projectile unless it's a penetrating type
         if (projectile.active && !projectile.isPenetrating) {
             projectile.destroy();
+        }
+    }
+
+    tryDropAmmo(enemy) {
+        // Base chance to drop ammo
+        let dropChance = 0.2; // 20% base chance
+
+        // Adjust chance based on enemy type
+        switch (enemy.type) {
+            case 'DRONE':
+                dropChance = 0.15;
+                break;
+            case 'GUNSHIP':
+                dropChance = 0.25;
+                break;
+            case 'DESTROYER':
+                dropChance = 0.35;
+                break;
+            case 'INTERCEPTOR':
+                dropChance = 0.20;
+                break;
+            case 'BOMBER':
+                dropChance = 0.30;
+                break;
+            case 'STEALTH':
+                dropChance = 0.25;
+                break;
+            case 'TURRET':
+                dropChance = 0.40;
+                break;
+            case 'CARRIER':
+                dropChance = 0.50;
+                break;
+            default:
+                dropChance = 0.20;
+        }
+
+        // Elite enemies have higher chance
+        if (enemy.isElite) {
+            dropChance += 0.15;
+        }
+
+        // Roll for ammo drop
+        if (Math.random() < dropChance) {
+            // Create ammo powerup at enemy position
+            this.createPowerup(enemy.x, enemy.y, 'ammo');
         }
     }
 
@@ -1486,6 +2102,18 @@ class GameScene extends Phaser.Scene {
             if (color) {
                 emitter.setTint(color);
             }
+
+            // Add a small flash effect
+            const flash = this.add.circle(x, y, 10, color, 0.7);
+            this.tweens.add({
+                targets: flash,
+                alpha: 0,
+                scale: 2,
+                duration: 200,
+                onComplete: () => {
+                    flash.destroy();
+                }
+            });
 
             // Auto-destroy after particles are done
             this.time.delayedCall(300, () => {
@@ -1544,24 +2172,68 @@ class GameScene extends Phaser.Scene {
     }
 
     updateHealthUI() {
-        // Update health and shield bars
-        if (this.player) {
-            // Update health bar
-            const healthPercentage = this.player.health / this.player.maxHealth;
-            this.healthBar.width = 200 * healthPercentage;
+        // Update health and shield bars with enhanced visuals
+        if (!this.player) {
+            console.warn('updateHealthUI called but player is not defined');
+            return;
+        }
 
-            // Change color based on health level
-            if (healthPercentage < 0.2) {
-                this.healthBar.fillColor = 0xff0000;
-            } else if (healthPercentage < 0.5) {
-                this.healthBar.fillColor = 0xffff00;
-            } else {
-                this.healthBar.fillColor = 0x33ff33;
+        try {
+            // Calculate health and shield percentages
+            const healthPercentage = this.player.health / this.player.maxHealth;
+            const shieldPercentage = this.player.shields / this.player.maxShields;
+
+            console.log('Health percentage:', healthPercentage, 'Shield percentage:', shieldPercentage);
+
+            // Update health bar
+            const healthBarWidth = 200;
+
+            if (this.healthBar) {
+                // Update health bar width based on percentage
+                this.healthBar.width = healthBarWidth * healthPercentage;
+
+                // Determine color based on health percentage
+                let healthColor;
+                if (healthPercentage > 0.6) {
+                    healthColor = 0x33ff33; // Green
+                } else if (healthPercentage > 0.3) {
+                    healthColor = 0xffff33; // Yellow
+                } else {
+                    healthColor = 0xff3333; // Red
+                }
+
+                this.healthBar.fillColor = healthColor;
+            }
+
+            // Update health text
+            if (this.healthText) {
+                this.healthText.setText(`${Math.ceil(this.player.health)}/${this.player.maxHealth}`);
             }
 
             // Update shield bar
-            const shieldPercentage = this.player.shields / this.player.maxShields;
-            this.shieldBar.width = 200 * shieldPercentage;
+            const shieldBarWidth = 200;
+
+            if (this.shieldBar) {
+                // Update shield bar width based on percentage
+                this.shieldBar.width = shieldBarWidth * shieldPercentage;
+            }
+
+            // Update shield glow
+            if (this.shieldGlow) {
+                this.shieldGlow.width = (shieldBarWidth * shieldPercentage) + 4;
+                this.shieldGlow.alpha = shieldPercentage > 0 ? 0.3 : 0;
+            }
+
+            // Update sector progress bar
+            if (this.updateProgressBarFill && this.sectorProgress !== undefined) {
+                this.updateProgressBarFill(this.sectorProgress);
+            }
+
+            // Update ammo UI
+            this.updateAmmoUI();
+
+        } catch (error) {
+            console.error('Error updating health UI:', error);
         }
     }
 
@@ -2663,10 +3335,32 @@ class GameScene extends Phaser.Scene {
         return;
     }
 
-    createPowerup(x, y) {
-        // Create a random powerup at the given location
-        const powerupTypes = ['health', 'shield', 'weapon', 'score'];
-        const type = powerupTypes[Phaser.Math.Between(0, powerupTypes.length - 1)];
+    createPowerup(x, y, specificType = null) {
+        let type;
+
+        if (specificType) {
+            // Use the specified type if provided
+            type = specificType;
+        } else {
+            // Create a random powerup at the given location
+            const powerupTypes = ['health', 'shield', 'weapon', 'score', 'ammo'];
+
+            // Weight the probabilities - make ammo more common
+            const weights = [20, 20, 15, 15, 30]; // Total: 100
+
+            // Select a type based on weights
+            let random = Math.random() * 100;
+            let cumulativeWeight = 0;
+            type = 'ammo'; // Default
+
+            for (let i = 0; i < powerupTypes.length; i++) {
+                cumulativeWeight += weights[i];
+                if (random <= cumulativeWeight) {
+                    type = powerupTypes[i];
+                    break;
+                }
+            }
+        }
 
         // Create powerup group if it doesn't exist
         if (!this.powerups) {

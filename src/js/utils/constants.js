@@ -40,49 +40,49 @@ const CONSTANTS = {
                 HEALTH: 30,
                 SPEED: 150,
                 SCORE: 100,
-                FIRE_RATE: 4000 // milliseconds between shots (doubled)
+                FIRE_RATE: 8000 // milliseconds between shots (quadrupled for reduced ammo frequency)
             },
             GUNSHIP: {
                 HEALTH: 60,
                 SPEED: 120,
                 SCORE: 250,
-                FIRE_RATE: 3000 // milliseconds between shots (doubled)
+                FIRE_RATE: 6000 // milliseconds between shots (quadrupled for reduced ammo frequency)
             },
             DESTROYER: {
                 HEALTH: 120,
                 SPEED: 80,
                 SCORE: 500,
-                FIRE_RATE: 6000 // milliseconds between shots (doubled)
+                FIRE_RATE: 12000 // milliseconds between shots (quadrupled for reduced ammo frequency)
             },
             INTERCEPTOR: {
                 HEALTH: 40,
                 SPEED: 200,
                 SCORE: 150,
-                FIRE_RATE: 2000 // milliseconds between shots (doubled)
+                FIRE_RATE: 4000 // milliseconds between shots (quadrupled for reduced ammo frequency)
             },
             BOMBER: {
                 HEALTH: 80,
                 SPEED: 100,
                 SCORE: 300,
-                FIRE_RATE: 8000 // milliseconds between shots (doubled)
+                FIRE_RATE: 16000 // milliseconds between shots (quadrupled for reduced ammo frequency)
             },
             STEALTH: {
                 HEALTH: 50,
                 SPEED: 180,
                 SCORE: 350,
-                FIRE_RATE: 5000 // milliseconds between shots (doubled)
+                FIRE_RATE: 10000 // milliseconds between shots (quadrupled for reduced ammo frequency)
             },
             TURRET: {
                 HEALTH: 150,
                 SPEED: 0,
                 SCORE: 400,
-                FIRE_RATE: 2400 // milliseconds between shots (doubled)
+                FIRE_RATE: 4800 // milliseconds between shots (quadrupled for reduced ammo frequency)
             },
             CARRIER: {
                 HEALTH: 200,
                 SPEED: 60,
                 SCORE: 600,
-                FIRE_RATE: 10000 // milliseconds between shots (doubled)
+                FIRE_RATE: 20000 // milliseconds between shots (quadrupled for reduced ammo frequency)
             }
         },
 
@@ -92,7 +92,7 @@ const CONSTANTS = {
                 HEALTH: 300,
                 SPEED: 100,
                 SCORE: 1000,
-                FIRE_RATE: 2000, // doubled
+                FIRE_RATE: 4000, // quadrupled for reduced ammo frequency
                 PHASES: 2,
                 ATTACK_PATTERNS: ['spread', 'charge']
             },
@@ -100,7 +100,7 @@ const CONSTANTS = {
                 HEALTH: 250,
                 SPEED: 80,
                 SCORE: 1000,
-                FIRE_RATE: 4000, // doubled
+                FIRE_RATE: 8000, // quadrupled for reduced ammo frequency
                 PHASES: 2,
                 ATTACK_PATTERNS: ['shield', 'burst']
             },
@@ -108,7 +108,7 @@ const CONSTANTS = {
                 HEALTH: 200,
                 SPEED: 70,
                 SCORE: 1000,
-                FIRE_RATE: 6000, // doubled
+                FIRE_RATE: 12000, // quadrupled for reduced ammo frequency
                 PHASES: 2,
                 ATTACK_PATTERNS: ['drones', 'support']
             },
@@ -116,7 +116,7 @@ const CONSTANTS = {
                 HEALTH: 220,
                 SPEED: 150,
                 SCORE: 1000,
-                FIRE_RATE: 3000, // doubled
+                FIRE_RATE: 6000, // quadrupled for reduced ammo frequency
                 PHASES: 2,
                 ATTACK_PATTERNS: ['cloak', 'ambush']
             },
@@ -124,7 +124,7 @@ const CONSTANTS = {
                 HEALTH: 280,
                 SPEED: 60,
                 SCORE: 1000,
-                FIRE_RATE: 5000, // doubled
+                FIRE_RATE: 10000, // quadrupled for reduced ammo frequency
                 PHASES: 2,
                 ATTACK_PATTERNS: ['bombs', 'mines']
             }
@@ -190,27 +190,64 @@ const CONSTANTS = {
             DAMAGE: 10,
             SPEED: 500,
             FIRE_RATE: 300, // milliseconds between shots
-            LIFESPAN: 2000 // milliseconds before auto-destruction
+            LIFESPAN: 2000, // milliseconds before auto-destruction
+            COLOR: 0x33ccff, // Light blue
+            DESCRIPTION: 'Standard rapid-fire laser with balanced damage and fire rate.'
         },
         SPREAD_SHOT: {
             DAMAGE: 8,
             SPEED: 450,
             FIRE_RATE: 500, // milliseconds between shots
             LIFESPAN: 1800, // milliseconds before auto-destruction
-            SPREAD_ANGLE: 25 // degrees of spread
+            SPREAD_ANGLE: 25, // degrees of spread
+            COLOR: 0x33ff33, // Green
+            DESCRIPTION: 'Fires three projectiles in a spread pattern, great for hitting multiple targets.'
         },
         PLASMA_BOLT: {
             DAMAGE: 25,
             SPEED: 300,
             FIRE_RATE: 800, // milliseconds between shots
-            LIFESPAN: 2500 // milliseconds before auto-destruction
+            LIFESPAN: 2500, // milliseconds before auto-destruction
+            COLOR: 0xff33ff, // Purple
+            DESCRIPTION: 'High-damage plasma projectile that can penetrate weak enemies.'
         },
         HOMING_MISSILE: {
             DAMAGE: 20,
             SPEED: 350,
             FIRE_RATE: 1200, // milliseconds between shots
             LIFESPAN: 4000, // milliseconds before auto-destruction
-            TRACKING_SPEED: 0.03 // rate at which the missile adjusts course
+            TRACKING_SPEED: 0.03, // rate at which the missile adjusts course
+            COLOR: 0xff9933, // Orange
+            DESCRIPTION: 'Guided missile that tracks the nearest enemy.'
+        },
+        DUAL_CANNON: {
+            DAMAGE: 12,
+            SPEED: 550,
+            FIRE_RATE: 400, // milliseconds between shots
+            LIFESPAN: 2000, // milliseconds before auto-destruction
+            SPACING: 20, // spacing between the two projectiles
+            COLOR: 0xffff33, // Yellow
+            DESCRIPTION: 'Fires two parallel projectiles with good damage and fire rate.'
+        },
+        LASER_BEAM: {
+            DAMAGE: 3, // damage per frame
+            RANGE: 400, // beam length
+            FIRE_RATE: 50, // continuous beam, updates every 50ms
+            WIDTH: 8, // beam width
+            COLOR: 0xff3333, // Red
+            DESCRIPTION: 'Continuous laser beam that deals damage over time.'
+        },
+        SCATTER_BOMB: {
+            DAMAGE: 15, // initial damage
+            SPEED: 250,
+            FIRE_RATE: 1500, // milliseconds between shots
+            LIFESPAN: 1500, // milliseconds before explosion
+            FRAGMENT_COUNT: 8, // number of fragments after explosion
+            FRAGMENT_DAMAGE: 8, // damage per fragment
+            FRAGMENT_SPEED: 300, // speed of fragments
+            FRAGMENT_LIFESPAN: 1000, // milliseconds before fragment destruction
+            COLOR: 0xff6633, // Orange-red
+            DESCRIPTION: 'Explosive projectile that splits into multiple fragments on impact or timeout.'
         }
     },
 

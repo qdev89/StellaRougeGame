@@ -8,6 +8,8 @@ A vertical scrolling retro roguelike flying shooter built with HTML5/JavaScript 
 
 **STELLAR ROGUE** is a roguelike vertical scrolling shooter where players pilot a fighter craft through procedurally generated sectors filled with enemies, hazards, and encounters. Navigate through dangerous space sectors, defeat unique mini-bosses, and face off against powerful sector bosses in specially designed arena battles.
 
+The game features a balanced difficulty level with reduced enemy counts and a strategic ammo management system. Players must collect ammo drops from defeated enemies and manage their weapon resources while battling through each sector.
+
 Make meaningful choices that affect your ship's capabilities and the challenges ahead. Collect upgrades from defeated bosses, manage your ship's systems, and prepare for the ultimate confrontation with the adaptive Nemesis boss that evolves based on your playstyle.
 
 ## Features
@@ -19,6 +21,9 @@ Make meaningful choices that affect your ship's capabilities and the challenges 
 - **Boss Rewards**: Defeat bosses to earn powerful upgrades, credits, and ship unlocks
 - **Subsystem Synergy Grid**: A 3×3 grid of ship subsystems that create powerful effects when compatible upgrades are adjacent
 - **Nemesis System**: The final boss evolves based on how you defeated previous sector bosses (coming soon)
+- **Ammo Management**: Strategic ammo system with different consumption rates for each weapon type
+- **Weapon Variety**: Multiple weapon types with unique behaviors and ammo requirements
+- **Resource Collection**: Collect ammo drops from defeated enemies to maintain your arsenal
 
 ## How to Play
 
@@ -26,9 +31,17 @@ Make meaningful choices that affect your ship's capabilities and the challenges 
 2. Simply open `index.html` directly in any modern web browser - no server required!
 3. Use arrow keys to move your ship
 4. Press Space to fire weapons
-5. Press Shift to activate dash (when available)
-6. Collect powerups and defeat enemies to progress
-7. Make strategic choices at upgrade stations to enhance your ship
+5. Press Shift to dash (quick dodge)
+6. Use number keys 1-7 to switch between weapons:
+   - 1: Basic Laser - Rapid-fire balanced weapon
+   - 2: Tri-Beam - Fires in a spread pattern
+   - 3: Plasma Bolt - High damage single shot
+   - 4: Homing Missile - Tracks nearby enemies
+   - 5: Dual Cannon - Fires two parallel shots
+   - 6: Beam Laser - Continuous damage beam
+   - 7: Scatter Bomb - Explodes into fragments
+7. Collect powerups and defeat enemies to progress
+8. Make strategic choices at upgrade stations to enhance your ship
 
 ## Development Status
 

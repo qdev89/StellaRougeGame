@@ -10,6 +10,7 @@ class ProceduralGenerator {
         this.currentSector = 1;
         this.sectorLength = CONSTANTS.SECTOR.LENGTH;
         this.difficultyMultiplier = 0.5; // Reduced to 50% for easier gameplay
+        this.enemyReductionFactor = 0.5; // Reduce enemy count by 50%
 
         // Wave generation parameters
         this.enemyPool = ['DRONE', 'GUNSHIP', 'DESTROYER', 'INTERCEPTOR', 'BOMBER', 'STEALTH', 'TURRET', 'CARRIER'];
@@ -64,8 +65,9 @@ class ProceduralGenerator {
         };
 
         // Determine number of enemies based on sector difficulty and node type
-        let minEnemies = Math.floor(CONSTANTS.SECTOR.MIN_ENEMIES * this.difficultyMultiplier);
-        let maxEnemies = Math.floor(CONSTANTS.SECTOR.MAX_ENEMIES * this.difficultyMultiplier);
+        // Apply the enemy reduction factor to reduce enemy count by 50%
+        let minEnemies = Math.floor(CONSTANTS.SECTOR.MIN_ENEMIES * this.difficultyMultiplier * this.enemyReductionFactor);
+        let maxEnemies = Math.floor(CONSTANTS.SECTOR.MAX_ENEMIES * this.difficultyMultiplier * this.enemyReductionFactor);
 
         // Adjust enemy counts based on node type
         if (nodeType === 'HAZARD') {

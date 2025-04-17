@@ -6,35 +6,35 @@ class PowerUp extends Phaser.Physics.Arcade.Sprite {
     constructor(scene, x, y, type) {
         // Determine texture based on type
         const texture = `powerup-${type}`;
-        
+
         super(scene, x, y, texture);
-        
+
         // Add to scene and enable physics
         scene.add.existing(this);
         scene.physics.add.existing(this);
-        
+
         // Power-up properties
         this.type = type;
         this.value = this.determineValue(type);
-        
+
         // Set up physics properties
         this.setDepth(CONSTANTS.GAME.POWERUP_Z_INDEX);
         this.body.setVelocity(0, 50); // Slow downward drift
         this.body.setCollideWorldBounds(false);
-        
+
         // Visual and animation effects
         this.setupVisuals();
-        
+
         // Auto-destroy after a certain time if not collected
         this.lifespan = 10000; // 10 seconds
         this.createdAt = scene.time.now;
-        
+
         // Add to powerups group if it exists
         if (scene.powerups) {
             scene.powerups.add(this);
         }
     }
-    
+
     /**
      * Determine the value/amount of the powerup based on type
      */
@@ -45,16 +45,18 @@ class PowerUp extends Phaser.Physics.Arcade.Sprite {
             case 'shield':
                 return 20; // Shield restore amount
             case 'weapon':
-                return 'BASIC_LASER'; // Default weapon boost
+                return 'PLASMA_BOLT'; // Temporary weapon boost
             case 'score':
                 return 500; // Score bonus
             case 'life':
                 return 1; // Extra life
+            case 'ammo':
+                return 30; // Ammo restore amount
             default:
                 return 10; // Default value
         }
     }
-    
+
     /**
      * Set up visual effects for the powerup
      */
@@ -68,10 +70,10 @@ class PowerUp extends Phaser.Physics.Arcade.Sprite {
             yoyo: true,
             repeat: -1
         });
-        
+
         // Add particle glow effect based on type
         let particleColor;
-        
+
         switch (this.type) {
             case 'health':
                 particleColor = 0xff0000; // Red
@@ -91,10 +93,10 @@ class PowerUp extends Phaser.Physics.Arcade.Sprite {
             default:
                 particleColor = 0xffffff; // White
         }
-        
+
         // Create particle emitter for glow effect
         const particles = this.scene.add.particles(`particle-${this.type}`);
-        
+
         this.emitter = particles.createEmitter({
             x: this.x,
             y: this.y,
@@ -107,7 +109,7 @@ class PowerUp extends Phaser.Physics.Arcade.Sprite {
             tint: particleColor
         });
     }
-    
+
     /**
      * Apply the powerup effect to the player
      */
@@ -117,42 +119,60 @@ class PowerUp extends Phaser.Physics.Arcade.Sprite {
                 player.heal(this.value);
                 // Sound disabled
                 break;
-                
+
             case 'shield':
                 player.rechargeShields(this.value);
                 // Sound disabled
                 break;
-                
+
             case 'weapon':
                 // Temporary weapon boost
                 const originalWeapon = player.weaponType;
-                player.weaponType = 'PLASMA_BOLT';
-                
-                // Revert after 10 seconds
-                this.scene.time.delayedCall(10000, () => {
-                    if (player.active) {
-                        player.weaponType = originalWeapon;
-                    }
-                });
-                
+
+                // Store the weapon to switch to
+                const newWeapon = this.value || 'PLASMA_BOLT';
+
+                // Only switch if the weapon is unlocked or it's a temporary boost
+                if (player.unlockedWeapons.includes(newWeapon) || newWeapon === 'PLASMA_BOLT') {
+                    player.weaponType = newWeapon;
+
+                    // Revert after 10 seconds
+                    this.scene.time.delayedCall(10000, () => {
+                        if (player.active) {
+                            player.weaponType = originalWeapon;
+
+                            // Update UI if available
+                            if (this.scene.updateAmmoUI) {
+                                this.scene.updateAmmoUI();
+                            }
+                        }
+                    });
+                }
+
                 // Sound disabled
                 break;
-                
+
             case 'score':
                 this.scene.updateScore(this.value);
                 // Sound disabled
                 break;
-                
+
             case 'life':
                 // In a game with lives system, would add a life
                 // Sound disabled
                 break;
+
+            case 'ammo':
+                // Add ammo to current weapon
+                player.addAmmo(player.weaponType, this.value);
+                // Sound disabled
+                break;
         }
-        
+
         // Create collection effect
         this.createCollectionEffect();
     }
-    
+
     /**
      * Create a visual effect when the powerup is collected
      */
@@ -162,7 +182,7 @@ class PowerUp extends Phaser.Physics.Arcade.Sprite {
             .setScale(1.5)
             .setAlpha(0.7)
             .setDepth(this.depth + 1);
-            
+
         this.scene.tweens.add({
             targets: flash,
             scale: 2.5,
@@ -172,7 +192,7 @@ class PowerUp extends Phaser.Physics.Arcade.Sprite {
                 flash.destroy();
             }
         });
-        
+
         // Create text popup
         let text;
         switch (this.type) {
@@ -192,7 +212,7 @@ class PowerUp extends Phaser.Physics.Arcade.Sprite {
                 text = '+1 LIFE';
                 break;
         }
-        
+
         const popupText = this.scene.add.text(this.x, this.y - 20, text, {
             fontFamily: 'monospace',
             fontSize: '16px',
@@ -200,7 +220,7 @@ class PowerUp extends Phaser.Physics.Arcade.Sprite {
             stroke: '#000000',
             strokeThickness: 3
         }).setOrigin(0.5).setDepth(this.depth + 1);
-        
+
         this.scene.tweens.add({
             targets: popupText,
             y: popupText.y - 40,
@@ -212,19 +232,19 @@ class PowerUp extends Phaser.Physics.Arcade.Sprite {
             }
         });
     }
-    
+
     update() {
         // Move particle emitter with powerup
         if (this.emitter) {
             this.emitter.setPosition(this.x, this.y);
         }
-        
+
         // Check if lifespan is exceeded
         if (this.scene.time.now - this.createdAt > this.lifespan) {
             this.fadeOut();
         }
     }
-    
+
     /**
      * Fade out and destroy when powerup expires
      */
@@ -239,7 +259,7 @@ class PowerUp extends Phaser.Physics.Arcade.Sprite {
             }
         });
     }
-    
+
     /**
      * Clean up when destroyed
      */
@@ -249,7 +269,7 @@ class PowerUp extends Phaser.Physics.Arcade.Sprite {
             this.emitter.stop();
             this.emitter = null;
         }
-        
+
         super.destroy();
     }
 }
