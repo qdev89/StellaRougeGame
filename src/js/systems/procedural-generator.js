@@ -9,7 +9,7 @@ class ProceduralGenerator {
         // Sector properties
         this.currentSector = 1;
         this.sectorLength = CONSTANTS.SECTOR.LENGTH;
-        this.difficultyMultiplier = 1.0;
+        this.difficultyMultiplier = 0.5; // Reduced to 50% for easier gameplay
 
         // Wave generation parameters
         this.enemyPool = ['DRONE', 'GUNSHIP', 'DESTROYER', 'INTERCEPTOR', 'BOMBER', 'STEALTH', 'TURRET', 'CARRIER'];
@@ -256,8 +256,8 @@ class ProceduralGenerator {
      * Get the chance of spawning an elite enemy based on sector
      */
     getEliteChance() {
-        // Start with base chance, increase with sector
-        return 0.05 + (0.02 * (this.currentSector - 1));
+        // Start with base chance, increase with sector (reduced by 50%)
+        return 0.025 + (0.01 * (this.currentSector - 1));
     }
 
     /**

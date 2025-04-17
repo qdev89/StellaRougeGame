@@ -17,7 +17,7 @@ Make meaningful choices that affect your ship's capabilities and the challenges 
 - **Choice & Consequence System**: Meaningful decisions that shape each run
 - **Boss Arenas**: Unique battle environments with hazards and special mechanics for each boss
 - **Boss Rewards**: Defeat bosses to earn powerful upgrades, credits, and ship unlocks
-- **Subsystem Synergy Grid**: A 3×3 grid of ship subsystems that create powerful effects when compatible upgrades are adjacent (coming soon)
+- **Subsystem Synergy Grid**: A 3×3 grid of ship subsystems that create powerful effects when compatible upgrades are adjacent
 - **Nemesis System**: The final boss evolves based on how you defeated previous sector bosses (coming soon)
 
 ## How to Play
@@ -48,9 +48,9 @@ This game is currently in development (v0.2.0 Alpha). The following features are
 - [x] Boss arenas with environmental hazards
 - [x] Boss rewards system
 - [x] Meta-progression system
-- [ ] Subsystem Synergy Grid (in development)
+- [x] Subsystem Synergy Grid
 - [ ] Nemesis System for final boss
-- [ ] Sound implementation (temporarily disabled)
+- [ ] Sound implementation (completely disabled for now)
 
 ## Development Roadmap
 
@@ -60,13 +60,13 @@ This game is currently in development (v0.2.0 Alpha). The following features are
 
 ### In Progress
 - **Phase 3**: Content expansion and unique systems
-  - Currently implementing: Subsystem Synergy Grid
-  - Next: Nemesis System for final boss
+  - Completed: Subsystem Synergy Grid
+  - Currently implementing: Nemesis System for final boss
   - Planned: Additional upgrades, penalties, and dynamic difficulty scaling
 
 ### Upcoming
 - **Phase 4**: Polish and release preparation
-  - Sound design and music implementation
+  - Sound design and music implementation (planned for future)
   - Tutorial elements and help system
   - Performance optimization
   - Final balancing
@@ -80,7 +80,7 @@ See the [detailed project plan](project-plan.md) for more information.
 - **Rendering**: HTML5 Canvas
 - **Implementation**: Pure HTML5/JS that runs by simply opening index.html
 - **Version Control**: Git
-- **Asset Creation**: Piskel (sprites), BFXR (sound effects)
+- **Asset Creation**: Piskel (sprites)
 
 ## Project Structure
 
@@ -91,8 +91,7 @@ stellar-rogue/
 ├── project-plan.md     # Detailed development plan
 ├── src/                # Source code
 │   ├── assets/         # Game assets
-│   │   ├── images/     # Sprite sheets, backgrounds, UI
-│   │   └── sounds/     # Music and sound effects
+│   │   └── images/     # Sprite sheets, backgrounds, UI
 │   └── js/             # JavaScript code
 │       ├── config.js   # Game configuration
 │       ├── main.js     # Game initialization

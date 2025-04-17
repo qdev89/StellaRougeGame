@@ -17,7 +17,8 @@ const CONSTANTS = {
         GAME_OVER: 'GameOverScene',
         SHIP_STATUS: 'ShipStatusScene',
         INVENTORY: 'InventoryScene',
-        PROFILE: 'ProfileScene'
+        PROFILE: 'ProfileScene',
+        SUBSYSTEM_GRID: 'SubsystemGridScene'
     },
 
     // Player ship settings
@@ -39,49 +40,49 @@ const CONSTANTS = {
                 HEALTH: 30,
                 SPEED: 150,
                 SCORE: 100,
-                FIRE_RATE: 2000 // milliseconds between shots
+                FIRE_RATE: 4000 // milliseconds between shots (doubled)
             },
             GUNSHIP: {
                 HEALTH: 60,
                 SPEED: 120,
                 SCORE: 250,
-                FIRE_RATE: 1500 // milliseconds between shots
+                FIRE_RATE: 3000 // milliseconds between shots (doubled)
             },
             DESTROYER: {
                 HEALTH: 120,
                 SPEED: 80,
                 SCORE: 500,
-                FIRE_RATE: 3000 // milliseconds between shots
+                FIRE_RATE: 6000 // milliseconds between shots (doubled)
             },
             INTERCEPTOR: {
                 HEALTH: 40,
                 SPEED: 200,
                 SCORE: 150,
-                FIRE_RATE: 1000 // milliseconds between shots
+                FIRE_RATE: 2000 // milliseconds between shots (doubled)
             },
             BOMBER: {
                 HEALTH: 80,
                 SPEED: 100,
                 SCORE: 300,
-                FIRE_RATE: 4000 // milliseconds between shots
+                FIRE_RATE: 8000 // milliseconds between shots (doubled)
             },
             STEALTH: {
                 HEALTH: 50,
                 SPEED: 180,
                 SCORE: 350,
-                FIRE_RATE: 2500 // milliseconds between shots
+                FIRE_RATE: 5000 // milliseconds between shots (doubled)
             },
             TURRET: {
                 HEALTH: 150,
                 SPEED: 0,
                 SCORE: 400,
-                FIRE_RATE: 1200 // milliseconds between shots
+                FIRE_RATE: 2400 // milliseconds between shots (doubled)
             },
             CARRIER: {
                 HEALTH: 200,
                 SPEED: 60,
                 SCORE: 600,
-                FIRE_RATE: 5000 // milliseconds between shots
+                FIRE_RATE: 10000 // milliseconds between shots (doubled)
             }
         },
 
@@ -91,7 +92,7 @@ const CONSTANTS = {
                 HEALTH: 300,
                 SPEED: 100,
                 SCORE: 1000,
-                FIRE_RATE: 1000,
+                FIRE_RATE: 2000, // doubled
                 PHASES: 2,
                 ATTACK_PATTERNS: ['spread', 'charge']
             },
@@ -99,7 +100,7 @@ const CONSTANTS = {
                 HEALTH: 250,
                 SPEED: 80,
                 SCORE: 1000,
-                FIRE_RATE: 2000,
+                FIRE_RATE: 4000, // doubled
                 PHASES: 2,
                 ATTACK_PATTERNS: ['shield', 'burst']
             },
@@ -107,7 +108,7 @@ const CONSTANTS = {
                 HEALTH: 200,
                 SPEED: 70,
                 SCORE: 1000,
-                FIRE_RATE: 3000,
+                FIRE_RATE: 6000, // doubled
                 PHASES: 2,
                 ATTACK_PATTERNS: ['drones', 'support']
             },
@@ -115,7 +116,7 @@ const CONSTANTS = {
                 HEALTH: 220,
                 SPEED: 150,
                 SCORE: 1000,
-                FIRE_RATE: 1500,
+                FIRE_RATE: 3000, // doubled
                 PHASES: 2,
                 ATTACK_PATTERNS: ['cloak', 'ambush']
             },
@@ -123,7 +124,7 @@ const CONSTANTS = {
                 HEALTH: 280,
                 SPEED: 60,
                 SCORE: 1000,
-                FIRE_RATE: 2500,
+                FIRE_RATE: 5000, // doubled
                 PHASES: 2,
                 ATTACK_PATTERNS: ['bombs', 'mines']
             }
@@ -216,11 +217,11 @@ const CONSTANTS = {
     // Sector generation settings
     SECTOR: {
         LENGTH: 10000, // virtual pixel length of a sector
-        MIN_ENEMIES: 25, // minimum enemies per sector
-        MAX_ENEMIES: 40, // maximum enemies per sector
-        HAZARD_FREQUENCY: 0.5, // hazards per 1000 pixels
+        MIN_ENEMIES: 12, // minimum enemies per sector (reduced by 50%)
+        MAX_ENEMIES: 20, // maximum enemies per sector (reduced by 50%)
+        HAZARD_FREQUENCY: 0.3, // hazards per 1000 pixels (reduced)
         UPGRADE_NODES: 2, // number of upgrade nodes per sector
-        DIFFICULTY_SCALING: 0.2 // difficulty increase per sector
+        DIFFICULTY_SCALING: 0.1 // difficulty increase per sector (reduced)
     },
 
     // Game settings

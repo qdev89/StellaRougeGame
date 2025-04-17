@@ -56,6 +56,9 @@ class GameScene extends Phaser.Scene {
             // Create the player
             this.createPlayer();
 
+            // Apply synergies from subsystem grid if available
+            this.applySynergies();
+
             // Set up UI elements
             this.createUI();
 
@@ -480,6 +483,26 @@ class GameScene extends Phaser.Scene {
         this.updateEnemyProjectileCollisions();
 
         // No need to call updateEnemyProjectileCollisions again as it's already called above
+    }
+
+    applySynergies() {
+        try {
+            // Check if subsystem grid exists in the current run
+            const currentRun = this.game.global.currentRun || {};
+            const subsystemGrid = currentRun.subsystemGrid;
+
+            if (subsystemGrid && this.player) {
+                console.log('Applying synergies from subsystem grid');
+
+                // Create synergy system if it doesn't exist
+                this.synergySystem = new SynergySystem(this);
+
+                // Process all synergies in the grid and apply their effects to the player ship
+                this.synergySystem.processSynergies(subsystemGrid, this.player);
+            }
+        } catch (error) {
+            console.error('Error applying synergies:', error);
+        }
     }
 
     setupEvents() {
@@ -1248,10 +1271,8 @@ class GameScene extends Phaser.Scene {
         // Set up boss event listeners
         this.setupBossEvents(boss);
 
-        // Play boss music if available
-        if (this.sound.get('boss-music')) {
-            this.sound.play('boss-music', { volume: 0.7 });
-        }
+        // Sound is disabled
+        // No boss music will be played
 
         // Return the boss reference
         return boss;
@@ -2637,23 +2658,9 @@ class GameScene extends Phaser.Scene {
     }
 
     playMusic() {
-        try {
-            // Play background music if it exists
-            if (this.cache.audio.exists('game-music')) {
-                if (!this.sound.get('game-music')) {
-                    const music = this.sound.add('game-music', {
-                        volume: 0.5,
-                        loop: true
-                    });
-
-                    music.play();
-                }
-            } else {
-                console.log('Game music not found, continuing without background music');
-            }
-        } catch (error) {
-            console.warn('Could not play music:', error);
-        }
+        // Sound is disabled
+        console.log('Sound is disabled - skipping music playback');
+        return;
     }
 
     createPowerup(x, y) {

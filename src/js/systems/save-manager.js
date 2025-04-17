@@ -8,11 +8,11 @@ class SaveManager {
         this.saveKey = 'stellarRogue_saveData';
         this.settingsKey = 'stellarRogue_settings';
         this.statsKey = 'stellarRogue_statistics';
-        
+
         // Initialize with default values
         this.initializeDefaults();
     }
-    
+
     /**
      * Initialize default values for a new game
      */
@@ -25,16 +25,16 @@ class SaveManager {
             unlockedUpgrades: [],
             achievements: {}
         };
-        
+
         // Default settings
         this.defaultSettings = {
-            soundVolume: 0.7,
-            musicVolume: 0.5,
+            soundVolume: 0, // Sound is disabled
+            musicVolume: 0, // Music is disabled
             particleEffects: true,
             screenShake: true,
             difficulty: 'normal'
         };
-        
+
         // Default statistics
         this.defaultStats = {
             totalRuns: 0,
@@ -47,7 +47,7 @@ class SaveManager {
             deaths: 0
         };
     }
-    
+
     /**
      * Save the current game state
      * @param {boolean} showFeedback - Whether to show save feedback
@@ -57,36 +57,36 @@ class SaveManager {
         try {
             // Get current meta-progression data
             const metaProgress = this.game.global.metaProgress || this.defaultMetaProgress;
-            
+
             // Create save data object
             const saveData = {
                 metaProgress: metaProgress,
                 timestamp: Date.now(),
                 version: this.game.global.gameVersion || '1.0.0'
             };
-            
+
             // Save to localStorage
             localStorage.setItem(this.saveKey, JSON.stringify(saveData));
-            
+
             // Show feedback if requested
             if (showFeedback && this.game.scene.isActive('MainMenuScene')) {
                 this.showSaveFeedback('Game saved successfully!');
             }
-            
+
             console.log('Game saved successfully');
             return true;
         } catch (error) {
             console.error('Error saving game:', error);
-            
+
             // Show error feedback if requested
             if (showFeedback && this.game.scene.isActive('MainMenuScene')) {
                 this.showSaveFeedback('Error saving game!', true);
             }
-            
+
             return false;
         }
     }
-    
+
     /**
      * Load saved game data
      * @param {boolean} showFeedback - Whether to show load feedback
@@ -96,44 +96,44 @@ class SaveManager {
         try {
             // Get save data from localStorage
             const saveDataString = localStorage.getItem(this.saveKey);
-            
+
             // If no save data exists, return false
             if (!saveDataString) {
                 console.log('No save data found');
                 return false;
             }
-            
+
             // Parse save data
             const saveData = JSON.parse(saveDataString);
-            
+
             // Validate save data
             if (!this.validateSaveData(saveData)) {
                 console.error('Invalid save data');
                 return false;
             }
-            
+
             // Apply save data to game state
             this.game.global.metaProgress = saveData.metaProgress;
-            
+
             // Show feedback if requested
             if (showFeedback && this.game.scene.isActive('MainMenuScene')) {
                 this.showSaveFeedback('Game loaded successfully!');
             }
-            
+
             console.log('Game loaded successfully');
             return true;
         } catch (error) {
             console.error('Error loading game:', error);
-            
+
             // Show error feedback if requested
             if (showFeedback && this.game.scene.isActive('MainMenuScene')) {
                 this.showSaveFeedback('Error loading game!', true);
             }
-            
+
             return false;
         }
     }
-    
+
     /**
      * Save game settings
      * @param {Object} settings - Settings object
@@ -143,13 +143,13 @@ class SaveManager {
         try {
             // Merge with default settings
             const mergedSettings = {...this.defaultSettings, ...settings};
-            
+
             // Save to localStorage
             localStorage.setItem(this.settingsKey, JSON.stringify(mergedSettings));
-            
+
             // Apply settings to game
             this.game.global.settings = mergedSettings;
-            
+
             console.log('Settings saved successfully');
             return true;
         } catch (error) {
@@ -157,7 +157,7 @@ class SaveManager {
             return false;
         }
     }
-    
+
     /**
      * Load game settings
      * @returns {Object} Settings object or default settings
@@ -166,22 +166,22 @@ class SaveManager {
         try {
             // Get settings from localStorage
             const settingsString = localStorage.getItem(this.settingsKey);
-            
+
             // If no settings exist, return defaults
             if (!settingsString) {
                 console.log('No settings found, using defaults');
                 return this.defaultSettings;
             }
-            
+
             // Parse settings
             const settings = JSON.parse(settingsString);
-            
+
             // Merge with default settings to ensure all properties exist
             const mergedSettings = {...this.defaultSettings, ...settings};
-            
+
             // Apply settings to game
             this.game.global.settings = mergedSettings;
-            
+
             console.log('Settings loaded successfully');
             return mergedSettings;
         } catch (error) {
@@ -189,7 +189,7 @@ class SaveManager {
             return this.defaultSettings;
         }
     }
-    
+
     /**
      * Save game statistics
      * @param {Object} stats - Statistics object to merge with existing stats
@@ -199,10 +199,10 @@ class SaveManager {
         try {
             // Get existing stats
             const existingStats = this.loadStats();
-            
+
             // Merge with new stats
             const mergedStats = {...existingStats};
-            
+
             // Update each stat
             for (const [key, value] of Object.entries(stats)) {
                 if (typeof mergedStats[key] === 'number') {
@@ -211,13 +211,13 @@ class SaveManager {
                     mergedStats[key] = value;
                 }
             }
-            
+
             // Save to localStorage
             localStorage.setItem(this.statsKey, JSON.stringify(mergedStats));
-            
+
             // Apply stats to game
             this.game.global.statistics = mergedStats;
-            
+
             console.log('Statistics saved successfully');
             return true;
         } catch (error) {
@@ -225,7 +225,7 @@ class SaveManager {
             return false;
         }
     }
-    
+
     /**
      * Load game statistics
      * @returns {Object} Statistics object or default statistics
@@ -234,22 +234,22 @@ class SaveManager {
         try {
             // Get stats from localStorage
             const statsString = localStorage.getItem(this.statsKey);
-            
+
             // If no stats exist, return defaults
             if (!statsString) {
                 console.log('No statistics found, using defaults');
                 return this.defaultStats;
             }
-            
+
             // Parse stats
             const stats = JSON.parse(statsString);
-            
+
             // Merge with default stats to ensure all properties exist
             const mergedStats = {...this.defaultStats, ...stats};
-            
+
             // Apply stats to game
             this.game.global.statistics = mergedStats;
-            
+
             console.log('Statistics loaded successfully');
             return mergedStats;
         } catch (error) {
@@ -257,7 +257,7 @@ class SaveManager {
             return this.defaultStats;
         }
     }
-    
+
     /**
      * Update a specific statistic
      * @param {string} statName - Name of the statistic to update
@@ -266,18 +266,18 @@ class SaveManager {
     updateStat(statName, value) {
         // Get current stats
         const currentStats = this.game.global.statistics || this.loadStats();
-        
+
         // Update the specific stat
         if (typeof currentStats[statName] === 'number') {
             currentStats[statName] += value;
         } else {
             currentStats[statName] = value;
         }
-        
+
         // Save updated stats
         this.saveStats({[statName]: value});
     }
-    
+
     /**
      * Check if a save file exists
      * @returns {boolean} Whether a save file exists
@@ -285,7 +285,7 @@ class SaveManager {
     saveExists() {
         return localStorage.getItem(this.saveKey) !== null;
     }
-    
+
     /**
      * Delete save data
      * @param {boolean} showFeedback - Whether to show feedback
@@ -295,29 +295,29 @@ class SaveManager {
         try {
             // Remove save data
             localStorage.removeItem(this.saveKey);
-            
+
             // Reset meta-progression to defaults
             this.game.global.metaProgress = {...this.defaultMetaProgress};
-            
+
             // Show feedback if requested
             if (showFeedback && this.game.scene.isActive('MainMenuScene')) {
                 this.showSaveFeedback('Save data deleted!');
             }
-            
+
             console.log('Save data deleted successfully');
             return true;
         } catch (error) {
             console.error('Error deleting save data:', error);
-            
+
             // Show error feedback if requested
             if (showFeedback && this.game.scene.isActive('MainMenuScene')) {
                 this.showSaveFeedback('Error deleting save data!', true);
             }
-            
+
             return false;
         }
     }
-    
+
     /**
      * Reset all data (save, settings, stats)
      * @param {boolean} showFeedback - Whether to show feedback
@@ -329,31 +329,31 @@ class SaveManager {
             localStorage.removeItem(this.saveKey);
             localStorage.removeItem(this.settingsKey);
             localStorage.removeItem(this.statsKey);
-            
+
             // Reset game state to defaults
             this.game.global.metaProgress = {...this.defaultMetaProgress};
             this.game.global.settings = {...this.defaultSettings};
             this.game.global.statistics = {...this.defaultStats};
-            
+
             // Show feedback if requested
             if (showFeedback && this.game.scene.isActive('MainMenuScene')) {
                 this.showSaveFeedback('All data reset!');
             }
-            
+
             console.log('All data reset successfully');
             return true;
         } catch (error) {
             console.error('Error resetting data:', error);
-            
+
             // Show error feedback if requested
             if (showFeedback && this.game.scene.isActive('MainMenuScene')) {
                 this.showSaveFeedback('Error resetting data!', true);
             }
-            
+
             return false;
         }
     }
-    
+
     /**
      * Validate save data structure
      * @param {Object} saveData - Save data to validate
@@ -364,19 +364,19 @@ class SaveManager {
         if (!saveData || !saveData.metaProgress || !saveData.timestamp || !saveData.version) {
             return false;
         }
-        
+
         // Check if meta-progress has required properties
         const metaProgress = saveData.metaProgress;
-        if (typeof metaProgress.credits !== 'number' || 
-            typeof metaProgress.highestSector !== 'number' || 
-            !Array.isArray(metaProgress.unlockedShips) || 
+        if (typeof metaProgress.credits !== 'number' ||
+            typeof metaProgress.highestSector !== 'number' ||
+            !Array.isArray(metaProgress.unlockedShips) ||
             !Array.isArray(metaProgress.unlockedUpgrades)) {
             return false;
         }
-        
+
         return true;
     }
-    
+
     /**
      * Show save/load feedback message
      * @param {string} message - Message to display
@@ -385,9 +385,9 @@ class SaveManager {
     showSaveFeedback(message, isError = false) {
         // Get active scene
         const scene = this.game.scene.getScene('MainMenuScene');
-        
+
         if (!scene) return;
-        
+
         // Create feedback text
         const feedbackText = scene.add.text(
             scene.cameras.main.width / 2,
@@ -402,7 +402,7 @@ class SaveManager {
                 padding: { x: 10, y: 5 }
             }
         ).setOrigin(0.5).setDepth(100);
-        
+
         // Fade out after a delay
         scene.tweens.add({
             targets: feedbackText,
@@ -415,7 +415,7 @@ class SaveManager {
             }
         });
     }
-    
+
     /**
      * Get save data summary for display
      * @returns {Object} Save data summary
@@ -425,12 +425,12 @@ class SaveManager {
         if (!this.saveExists()) {
             return null;
         }
-        
+
         try {
             // Get save data
             const saveDataString = localStorage.getItem(this.saveKey);
             const saveData = JSON.parse(saveDataString);
-            
+
             // Create summary
             const summary = {
                 credits: saveData.metaProgress.credits,
@@ -439,7 +439,7 @@ class SaveManager {
                 timestamp: new Date(saveData.timestamp).toLocaleString(),
                 version: saveData.version
             };
-            
+
             return summary;
         } catch (error) {
             console.error('Error getting save summary:', error);

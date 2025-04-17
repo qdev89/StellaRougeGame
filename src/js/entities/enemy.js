@@ -285,19 +285,19 @@ class Enemy extends Phaser.Physics.Arcade.Sprite {
         // Rotate laser to face direction
         laser.rotation = angle + Math.PI / 2;
 
-        // Set damage based on enemy type
+        // Set damage based on enemy type (reduced by 50%)
         switch (this.enemyType) {
             case 'DESTROYER':
-                laser.damage = 20;
+                laser.damage = 10; // Reduced from 20
                 laser.setScale(1.5);
                 break;
             case 'GUNSHIP':
-                laser.damage = 10;
+                laser.damage = 5; // Reduced from 10
                 laser.setScale(1.2);
                 break;
             case 'DRONE':
             default:
-                laser.damage = 5;
+                laser.damage = 3; // Reduced from 5
                 break;
         }
 
@@ -367,12 +367,8 @@ class Enemy extends Phaser.Physics.Arcade.Sprite {
                 });
             }
 
-            // Play explosion sound if available
-            if (this.scene.sound.exists && this.scene.sound.exists('explosion-sound')) {
-                this.scene.sound.play('explosion-sound', {
-                    volume: 0.3
-                });
-            }
+            // Sound is disabled
+            // No explosion sound will be played
         } catch (error) {
             console.warn('Error creating explosion effect:', error);
         }
@@ -385,18 +381,33 @@ class Enemy extends Phaser.Physics.Arcade.Sprite {
     }
 
     dropPowerup() {
-        // Chance to drop based on enemy type
+        // Chance to drop based on enemy type (increased for easier gameplay)
         let dropChance = 0;
 
         switch (this.enemyType) {
             case 'DESTROYER':
-                dropChance = 0.4; // 40% chance
+                dropChance = 0.8; // 80% chance (increased from 40%)
                 break;
             case 'GUNSHIP':
-                dropChance = 0.2; // 20% chance
+                dropChance = 0.4; // 40% chance (increased from 20%)
                 break;
             case 'DRONE':
-                dropChance = 0.05; // 5% chance
+                dropChance = 0.15; // 15% chance (increased from 5%)
+                break;
+            case 'INTERCEPTOR':
+                dropChance = 0.3; // 30% chance
+                break;
+            case 'BOMBER':
+                dropChance = 0.5; // 50% chance
+                break;
+            case 'STEALTH':
+                dropChance = 0.4; // 40% chance
+                break;
+            case 'TURRET':
+                dropChance = 0.6; // 60% chance
+                break;
+            case 'CARRIER':
+                dropChance = 0.7; // 70% chance
                 break;
         }
 

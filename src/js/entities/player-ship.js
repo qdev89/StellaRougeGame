@@ -28,6 +28,17 @@ class PlayerShip extends Phaser.Physics.Arcade.Sprite {
         this.weaponType = 'BASIC_LASER';
         this.projectiles = scene.physics.add.group();
 
+        // Synergy-related properties
+        this.damageMultiplier = 1;
+        this.energyConsumption = 1;
+        this.cooldownReduction = 0;
+        this.heatGeneration = 1;
+        this.shieldRegenRate = 1;
+        this.dashCooldown = CONSTANTS.PLAYER.DASH_COOLDOWN;
+        this.criticalChance = 0;
+        this.damageReduction = 0;
+        this.detectionRange = 300;
+
         // Engine effects
         this.createEngineEffects();
 
@@ -199,8 +210,8 @@ class PlayerShip extends Phaser.Physics.Arcade.Sprite {
             this.setInvincible(false);
         });
 
-        // Set cooldown for the dash ability
-        this.scene.time.delayedCall(CONSTANTS.PLAYER.DASH_COOLDOWN, () => {
+        // Set cooldown for the dash ability (affected by synergies)
+        this.scene.time.delayedCall(this.dashCooldown, () => {
             this.canDash = true;
         });
     }
@@ -252,16 +263,8 @@ class PlayerShip extends Phaser.Physics.Arcade.Sprite {
                 break;
         }
 
-        // Play weapon sound if available
-        try {
-            if (this.scene.cache.audio.exists('laser-sound')) {
-                this.scene.sound.play('laser-sound', {
-                    volume: 0.3
-                });
-            }
-        } catch (error) {
-            // Silently fail if sound can't be played
-        }
+        // Sound is disabled
+        // No weapon sound will be played
     }
 
     fireBasicLaser(settings) {
@@ -274,7 +277,7 @@ class PlayerShip extends Phaser.Physics.Arcade.Sprite {
         laser.setVisible(true);
 
         // Store damage value for collision handling
-        laser.damage = settings.DAMAGE;
+        laser.damage = settings.DAMAGE * this.damageMultiplier;
 
         // Auto-destroy when out of bounds
         this.scene.time.delayedCall(settings.LIFESPAN, () => {
@@ -300,7 +303,7 @@ class PlayerShip extends Phaser.Physics.Arcade.Sprite {
             projectile.setVelocity(velocityX, velocityY);
             projectile.setActive(true);
             projectile.setVisible(true);
-            projectile.damage = settings.DAMAGE;
+            projectile.damage = settings.DAMAGE * this.damageMultiplier;
 
             // Auto-destroy when out of bounds
             this.scene.time.delayedCall(settings.LIFESPAN, () => {
@@ -322,7 +325,7 @@ class PlayerShip extends Phaser.Physics.Arcade.Sprite {
         plasma.setScale(1.5);
 
         // Store damage value for collision handling
-        plasma.damage = settings.DAMAGE;
+        plasma.damage = settings.DAMAGE * this.damageMultiplier;
 
         // Auto-destroy when out of bounds
         this.scene.time.delayedCall(settings.LIFESPAN, () => {
@@ -342,7 +345,7 @@ class PlayerShip extends Phaser.Physics.Arcade.Sprite {
         missile.setVisible(true);
 
         // Store damage and homing properties
-        missile.damage = settings.DAMAGE;
+        missile.damage = settings.DAMAGE * this.damageMultiplier;
         missile.tracking = true;
         missile.trackingSpeed = settings.TRACKING_SPEED;
 
@@ -386,6 +389,11 @@ class PlayerShip extends Phaser.Physics.Arcade.Sprite {
             return false;
         }
 
+        // Apply damage reduction from synergies
+        if (this.damageReduction > 0) {
+            amount = Math.max(1, Math.floor(amount * (1 - this.damageReduction)));
+        }
+
         // Apply damage to shields first
         if (this.shields > 0) {
             if (this.shields >= amount) {
@@ -418,16 +426,8 @@ class PlayerShip extends Phaser.Physics.Arcade.Sprite {
             });
         }
 
-        // Play hit sound if available
-        try {
-            if (this.scene.cache.audio.exists('hit-sound')) {
-                this.scene.sound.play('hit-sound', {
-                    volume: 0.5
-                });
-            }
-        } catch (error) {
-            console.warn('Could not play hit sound:', error);
-        }
+        // Sound is disabled
+        // No hit sound will be played
 
         return true;
     }
@@ -456,16 +456,14 @@ class PlayerShip extends Phaser.Physics.Arcade.Sprite {
 
     heal(amount) {
         this.health = Math.min(this.health + amount, this.maxHealth);
-
-        // Play heal sound or effect
-        // this.scene.sound.play('heal-sound');
+        // Sound is disabled
     }
 
     rechargeShields(amount) {
-        this.shields = Math.min(this.shields + amount, this.maxShields);
-
-        // Play shield recharge sound or effect
-        // this.scene.sound.play('shield-sound');
+        // Apply shield regen rate from synergies
+        const adjustedAmount = amount * this.shieldRegenRate;
+        this.shields = Math.min(this.shields + adjustedAmount, this.maxShields);
+        // Sound is disabled
     }
 
     die() {
@@ -493,16 +491,8 @@ class PlayerShip extends Phaser.Physics.Arcade.Sprite {
                 });
             }
 
-            // Play explosion sound if available
-            try {
-                if (this.scene.cache.audio.exists('explosion-sound')) {
-                    this.scene.sound.play('explosion-sound', {
-                        volume: 0.7
-                    });
-                }
-            } catch (error) {
-                // Silently fail if sound can't be played
-            }
+            // Sound is disabled
+            // No explosion sound will be played
         } catch (error) {
             console.warn('Error creating explosion effect:', error);
         }
@@ -541,16 +531,8 @@ class PlayerShip extends Phaser.Physics.Arcade.Sprite {
             // Add more upgrade types as needed
         }
 
-        // Play powerup sound if available
-        try {
-            if (this.scene.cache.audio.exists('powerup-sound')) {
-                this.scene.sound.play('powerup-sound', {
-                    volume: 0.5
-                });
-            }
-        } catch (error) {
-            // Silently fail if sound can't be played
-        }
+        // Sound is disabled
+        // No powerup sound will be played
     }
 
     applyPenalty(penalty) {

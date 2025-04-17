@@ -67,6 +67,7 @@
     <script src="src/js/scenes/ship-status-scene.js"></script>
     <script src="src/js/scenes/inventory-scene.js"></script>
     <script src="src/js/scenes/profile-scene.js"></script>
+    <script src="src/js/scenes/subsystem-grid-scene.js"></script>
     <script src="src/js/entities/player-ship.js"></script>
     <script src="src/js/entities/enemy.js"></script>
     <script src="src/js/entities/enemy-drone.js"></script>
@@ -86,6 +87,7 @@
     <script src="src/js/systems/choice-system.js"></script>
     <script src="src/js/systems/sound-manager.js"></script>
     <script src="src/js/systems/save-manager.js"></script>
+    <script src="src/js/systems/synergy-system.js"></script>
 
     <script>
         // Global game state
@@ -96,7 +98,8 @@
                 shipType: 'fighter',
                 upgrades: [],
                 penalties: [],
-                inventory: {}
+                inventory: {},
+                subsystemGrid: []
             },
             metaProgress: {
                 credits: CONSTANTS.META.STARTING_CREDITS,
@@ -159,7 +162,8 @@
                 GameOverScene,
                 ShipStatusScene,
                 InventoryScene,
-                ProfileScene
+                ProfileScene,
+                SubsystemGridScene
             ],
             scale: {
                 mode: Phaser.Scale.FIT,

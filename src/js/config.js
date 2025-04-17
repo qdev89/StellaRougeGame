@@ -56,11 +56,11 @@ const gameState = {
         permanentUpgrades: []
     },
 
-    // Audio settings
+    // Audio settings - completely disabled
     audio: {
-        music: true,
-        sfx: true,
-        volume: 0.7
+        music: false,
+        sfx: false,
+        volume: 0
     },
 
     // Debug settings - disable in production

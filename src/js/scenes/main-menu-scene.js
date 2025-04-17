@@ -201,10 +201,8 @@ class MainMenuScene extends Phaser.Scene {
         });
 
         button.on('pointerdown', () => {
-            // Play click sound if available
-            if (this.sound.get('click-sound')) {
-                this.sound.play('click-sound');
-            }
+            // Sound is disabled
+            // No click sound will be played
 
             // Call the provided click handler
             clickHandler();
@@ -294,9 +292,10 @@ class MainMenuScene extends Phaser.Scene {
     openOptions() {
         console.log('Opening options menu...');
         // This would open an options menu
-        // For now, just toggle sound
-        this.game.sound.mute = !this.game.sound.mute;
-        console.log('Sound muted:', this.game.sound.mute);
+        // Sound is permanently disabled
+        this.game.sound.mute = true;
+        this.game.sound.volume = 0;
+        console.log('Sound is permanently disabled');
     }
 
     debugStartGame() {
@@ -310,21 +309,9 @@ class MainMenuScene extends Phaser.Scene {
     }
 
     tryPlayBackgroundMusic() {
-        // Try to play main theme music if it exists
-        try {
-            if (!this.sound.get('main-theme')) {
-                if (this.cache.audio.exists('main-theme')) {
-                    const music = this.sound.add('main-theme', {
-                        volume: 0.5,
-                        loop: true
-                    });
-
-                    music.play();
-                }
-            }
-        } catch (e) {
-            console.warn('Could not play background music:', e);
-        }
+        // Sound is disabled
+        console.log('Sound is disabled - skipping background music');
+        return;
     }
 
     update() {

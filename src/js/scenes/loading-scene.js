@@ -146,8 +146,8 @@ class LoadingScene extends Phaser.Scene {
             console.warn('Error loading images:', e);
         }
 
-        // Audio loading is disabled for this phase
-        console.log('Audio loading skipped - sound disabled for this phase');
+        // Audio loading is completely disabled
+        console.log('Audio loading completely disabled - all sound functionality has been removed');
     }
 
     createPlaceholderTextures() {
@@ -495,10 +495,8 @@ class LoadingScene extends Phaser.Scene {
 
     // Helper method to try loading audio with fallback
     tryLoadAudio(key, file) {
-        try {
-            this.cache.audio.exists(key) || this.load.audio(key, file);
-        } catch (e) {
-            console.warn(`Failed to load audio: ${key}. Will be silent.`);
-        }
+        // Sound is disabled, so don't try to load audio files
+        console.log(`Sound is disabled - skipping audio load: ${key}`);
+        return;
     }
 }

@@ -1,12 +1,18 @@
 /**
  * Sound Manager
  * Centralized system for handling all game audio
- * Currently disabled for this phase of development
+ * SOUND IS COMPLETELY DISABLED
  */
 class SoundManager {
     constructor(scene) {
         this.scene = scene;
-        this.enabled = false; // Sound is disabled for now
+        this.enabled = false; // Sound is disabled
+
+        // Make sure global sound is muted
+        if (scene && scene.game && scene.game.sound) {
+            scene.game.sound.mute = true;
+            scene.game.sound.volume = 0;
+        }
     }
 
     /**

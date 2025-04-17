@@ -26,13 +26,19 @@ class BootScene extends Phaser.Scene {
 
     initGameSettings() {
         // Set up any global game settings
-        this.game.sound.mute = true; // Sound is disabled for this phase
+        this.game.sound.mute = true; // Sound is completely disabled
         this.game.sound.volume = 0;
 
-        // Initialize the sound manager (disabled for now)
+        // Initialize the sound manager (completely disabled)
         this.game.soundManager = new SoundManager(this);
 
-        console.log('Game settings initialized');
+        // Disable all sound-related functionality
+        if (this.sound) {
+            this.sound.mute = true;
+            this.sound.volume = 0;
+        }
+
+        console.log('Game settings initialized - Sound disabled');
     }
 
     loadSaveData() {
