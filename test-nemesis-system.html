@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nemesis System Test</title>
+    <style>
+        body {
+            background-color: #000;
+            color: #fff;
+            font-family: monospace;
+            padding: 20px;
+        }
+        h1 {
+            color: #33ff33;
+        }
+        button {
+            background-color: #333;
+            color: #fff;
+            border: 1px solid #666;
+            padding: 10px 15px;
+            margin: 5px;
+            cursor: pointer;
+            font-family: monospace;
+        }
+        button:hover {
+            background-color: #444;
+        }
+        #output {
+            background-color: #111;
+            padding: 15px;
+            border: 1px solid #333;
+            margin-top: 20px;
+            min-height: 300px;
+            white-space: pre-wrap;
+        }
+        .info {
+            color: #33ccff;
+        }
+        .success {
+            color: #33ff33;
+        }
+        .error {
+            color: #ff3333;
+        }
+    </style>
+</head>
+<body>
+    <h1>Nemesis System Test</h1>
+    
+    <div>
+        <button id="initTest">Initialize Test</button>
+        <button id="recordDefeats">Simulate Boss Defeats</button>
+        <button id="showConfig">Show Nemesis Config</button>
+        <button id="resetSystem">Reset Nemesis System</button>
+    </div>
+    
+    <div id="output">Test output will appear here...</div>
+    
+    <!-- Load required scripts -->
+    <script src="src/js/utils/constants.js"></script>
+    <script src="src/js/systems/nemesis-system.js"></script>
+    
+    <script>
+        // Test functions
+        function log(message, type = 'normal') {
+            const output = document.getElementById('output');
+            const timestamp = new Date().toLocaleTimeString();
+            output.innerHTML += `[${timestamp}] <span class="${type}">${message}</span>\n`;
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        function initializeTest() {
+            log('Initializing Nemesis System test...', 'info');
+            
+            // Create mock game object
+            window.game = {
+                global: {
+                    nemesisData: null
+                }
+            };
+            
+            // Initialize Nemesis System
+            window.game.global.nemesisSystem = new NemesisSystem(window.game);
+            
+            log('Nemesis System initialized successfully!', 'success');
+            log('Current Nemesis Data:', 'info');
+            log(JSON.stringify(window.game.global.nemesisData, null, 2));
+        }
+        
+        function simulateBossDefeats() {
+            if (!window.game || !window.game.global.nemesisSystem) {
+                log('Error: Nemesis System not initialized. Click "Initialize Test" first.', 'error');
+                return;
+            }
+            
+            log('Simulating boss defeats...', 'info');
+            
+            const nemesisSystem = window.game.global.nemesisSystem;
+            
+            // Simulate defeating the Scout Commander with laser weapons
+            nemesisSystem.recordBossDefeat('SCOUT_COMMANDER', {
+                dominantWeapon: 'laser',
+                buildType: 'offensive',
+                timeToDefeat: 120000,
+                weaponUsage: {
+                    laser: 50,
+                    triBeam: 10,
+                    plasmaBolt: 5
+                },
+                buildStyle: {
+                    offensive: 3,
+                    defensive: 1,
+                    utility: 0,
+                    balanced: 1
+                }
+            });
+            
+            // Simulate defeating the Battle Carrier with tri-beam
+            nemesisSystem.recordBossDefeat('BATTLE_CARRIER', {
+                dominantWeapon: 'triBeam',
+                buildType: 'balanced',
+                timeToDefeat: 180000,
+                weaponUsage: {
+                    laser: 20,
+                    triBeam: 60,
+                    plasmaBolt: 10
+                },
+                buildStyle: {
+                    offensive: 2,
+                    defensive: 2,
+                    utility: 1,
+                    balanced: 3
+                }
+            });
+            
+            log('Boss defeats simulated successfully!', 'success');
+            log('Updated Nemesis Data:', 'info');
+            log(JSON.stringify(window.game.global.nemesisData, null, 2));
+        }
+        
+        function showNemesisConfig() {
+            if (!window.game || !window.game.global.nemesisSystem) {
+                log('Error: Nemesis System not initialized. Click "Initialize Test" first.', 'error');
+                return;
+            }
+            
+            log('Generating Nemesis configuration...', 'info');
+            
+            // Generate Nemesis configuration
+            const nemesisConfig = window.game.global.nemesisSystem.generateNemesisConfig();
+            
+            log('Nemesis Configuration:', 'success');
+            log(JSON.stringify(nemesisConfig, null, 2));
+        }
+        
+        function resetNemesisSystem() {
+            if (!window.game || !window.game.global.nemesisSystem) {
+                log('Error: Nemesis System not initialized. Click "Initialize Test" first.', 'error');
+                return;
+            }
+            
+            log('Resetting Nemesis System...', 'info');
+            
+            // Reset the nemesis data
+            window.game.global.nemesisSystem.resetNemesisData();
+            
+            log('Nemesis System reset successfully!', 'success');
+            log('Reset Nemesis Data:', 'info');
+            log(JSON.stringify(window.game.global.nemesisData, null, 2));
+        }
+        
+        // Set up event listeners
+        document.getElementById('initTest').addEventListener('click', initializeTest);
+        document.getElementById('recordDefeats').addEventListener('click', simulateBossDefeats);
+        document.getElementById('showConfig').addEventListener('click', showNemesisConfig);
+        document.getElementById('resetSystem').addEventListener('click', resetNemesisSystem);
+        
+        // Initialize on page load
+        window.onload = function() {
+            log('Test page loaded. Click "Initialize Test" to begin.', 'info');
+        };
+    </script>
+</body>
+</html>

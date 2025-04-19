@@ -76,229 +76,448 @@ class MainMenuScene extends Phaser.Scene {
     }
 
     createBackground() {
-        // Check if background assets were loaded
-        if (this.textures.exists('bg-stars')) {
-            // Create parallax background layers
-            this.bgStars = this.add.tileSprite(0, 0, this.cameras.main.width, this.cameras.main.height, 'bg-stars')
-                .setOrigin(0, 0)
-                .setScrollFactor(0);
+        // Create an enhanced space background
+        this.createEnhancedBackground();
+    }
 
-            if (this.textures.exists('bg-nebula')) {
-                this.bgNebula = this.add.tileSprite(0, 0, this.cameras.main.width, this.cameras.main.height, 'bg-nebula')
-                    .setOrigin(0, 0)
-                    .setScrollFactor(0)
-                    .setAlpha(0.5);
-            }
+    createEnhancedBackground() {
+        console.log('Creating enhanced space background');
 
-            if (this.textures.exists('bg-planets')) {
-                this.bgPlanets = this.add.tileSprite(0, 0, this.cameras.main.width, this.cameras.main.height, 'bg-planets')
-                    .setOrigin(0, 0)
-                    .setScrollFactor(0)
-                    .setAlpha(0.8);
-            }
-        } else {
-            // Fallback: create an enhanced space background
-            console.log('Using enhanced fallback background');
+        // Create a gradient background
+        const width = this.cameras.main.width;
+        const height = this.cameras.main.height;
 
-            // Create a gradient background
-            const width = this.cameras.main.width;
-            const height = this.cameras.main.height;
+        // Create a container for all background elements
+        this.bgContainer = this.add.container(0, 0);
 
-            // Deep space background with gradient
-            const bg = this.add.graphics();
-            bg.fillGradientStyle(0x000022, 0x000022, 0x000044, 0x000033, 1);
-            bg.fillRect(0, 0, width, height);
+        // Deep space background with gradient
+        const bg = this.add.graphics();
+        bg.fillGradientStyle(0x000022, 0x000033, 0x000066, 0x000044, 1);
+        bg.fillRect(0, 0, width, height);
+        this.bgContainer.add(bg);
 
-            // Create distant stars (small, many)
-            for (let i = 0; i < 200; i++) {
-                const x = Phaser.Math.Between(0, width);
-                const y = Phaser.Math.Between(0, height);
-                const size = Phaser.Math.FloatBetween(0.5, 2);
-                const alpha = Phaser.Math.FloatBetween(0.3, 0.9);
+        // Create a large nebula in the background
+        const nebulaColors = [
+            { color: 0x3366cc, alpha: 0.05 },
+            { color: 0x6633cc, alpha: 0.04 },
+            { color: 0x3399ff, alpha: 0.03 }
+        ];
 
-                const star = this.add.circle(x, y, size, 0xffffff, alpha);
-
-                // Add subtle twinkling effect to some stars
-                if (Math.random() > 0.7) {
-                    this.tweens.add({
-                        targets: star,
-                        alpha: 0.2,
-                        duration: Phaser.Math.Between(1000, 3000),
-                        yoyo: true,
-                        repeat: -1,
-                        ease: 'Sine.easeInOut'
-                    });
-                }
-            }
-
-            // Create a few brighter stars
-            for (let i = 0; i < 30; i++) {
-                const x = Phaser.Math.Between(0, width);
-                const y = Phaser.Math.Between(0, height);
-                const size = Phaser.Math.FloatBetween(1.5, 3);
-
-                // Create star with glow effect
-                const star = this.add.circle(x, y, size, 0xffffff, 1);
-                const glow = this.add.circle(x, y, size * 2, 0x3399ff, 0.3);
-
-                // Add pulsing effect
-                this.tweens.add({
-                    targets: glow,
-                    alpha: 0.1,
-                    scale: 1.5,
-                    duration: Phaser.Math.Between(2000, 4000),
-                    yoyo: true,
-                    repeat: -1,
-                    ease: 'Sine.easeInOut'
-                });
-            }
-
-            // Add a few nebula-like clouds
-            for (let i = 0; i < 5; i++) {
-                const x = Phaser.Math.Between(0, width);
-                const y = Phaser.Math.Between(0, height);
-                const size = Phaser.Math.Between(100, 200);
-
-                // Create a nebula cloud with random color
-                const colors = [0x3366ff, 0x6633ff, 0x3399ff, 0x33ccff];
-                const color = colors[Math.floor(Math.random() * colors.length)];
+        // Create multiple overlapping nebula layers
+        nebulaColors.forEach(({ color, alpha }) => {
+            for (let i = 0; i < 3; i++) {
+                const x = Phaser.Math.Between(width * 0.2, width * 0.8);
+                const y = Phaser.Math.Between(height * 0.2, height * 0.8);
+                const size = Phaser.Math.Between(200, 400);
 
                 const nebula = this.add.graphics();
-                nebula.fillStyle(color, 0.05);
+                nebula.fillStyle(color, alpha);
                 nebula.fillCircle(x, y, size);
+                this.bgContainer.add(nebula);
 
                 // Add subtle movement
                 this.tweens.add({
                     targets: nebula,
-                    x: x + Phaser.Math.Between(-20, 20),
-                    y: y + Phaser.Math.Between(-20, 20),
-                    duration: 10000,
+                    x: x + Phaser.Math.Between(-30, 30),
+                    y: y + Phaser.Math.Between(-30, 30),
+                    duration: Phaser.Math.Between(15000, 25000),
                     yoyo: true,
                     repeat: -1,
                     ease: 'Sine.easeInOut'
                 });
             }
+        });
 
-            // Set a property to handle updates in our update method
-            this.usingFallbackBackground = true;
+        // Create distant stars (small, many)
+        this.stars = [];
+        for (let i = 0; i < 300; i++) {
+            const x = Phaser.Math.Between(0, width);
+            const y = Phaser.Math.Between(0, height);
+            const size = Phaser.Math.FloatBetween(0.5, 2);
+            const alpha = Phaser.Math.FloatBetween(0.4, 1);
+
+            const star = this.add.circle(x, y, size, 0xffffff, alpha);
+            this.bgContainer.add(star);
+            this.stars.push(star);
+
+            // Add subtle twinkling effect to some stars
+            if (Math.random() > 0.6) {
+                this.tweens.add({
+                    targets: star,
+                    alpha: 0.2,
+                    duration: Phaser.Math.Between(1000, 3000),
+                    yoyo: true,
+                    repeat: -1,
+                    ease: 'Sine.easeInOut'
+                });
+            }
         }
+
+        // Create a few brighter stars with glow effects
+        for (let i = 0; i < 40; i++) {
+            const x = Phaser.Math.Between(0, width);
+            const y = Phaser.Math.Between(0, height);
+            const size = Phaser.Math.FloatBetween(1.5, 3);
+
+            // Create star with glow effect
+            const star = this.add.circle(x, y, size, 0xffffff, 1);
+            const glow = this.add.circle(x, y, size * 3, 0x3399ff, 0.3);
+            this.bgContainer.add(star);
+            this.bgContainer.add(glow);
+
+            // Add pulsing effect
+            this.tweens.add({
+                targets: glow,
+                alpha: { from: 0.3, to: 0.1 },
+                scale: { from: 1, to: 1.5 },
+                duration: Phaser.Math.Between(2000, 4000),
+                yoyo: true,
+                repeat: -1,
+                ease: 'Sine.easeInOut'
+            });
+        }
+
+        // Add a few shooting stars that appear occasionally
+        this.time.addEvent({
+            delay: 3000,
+            callback: this.createShootingStar,
+            callbackScope: this,
+            loop: true
+        });
+
+        // Create a few distant planets
+        for (let i = 0; i < 2; i++) {
+            const x = Phaser.Math.Between(width * 0.1, width * 0.9);
+            const y = Phaser.Math.Between(height * 0.1, height * 0.4);
+            const size = Phaser.Math.Between(15, 30);
+
+            // Planet colors
+            const planetColors = [0x3366cc, 0x33ccff, 0x66cc99, 0xcc6666];
+            const color = planetColors[Math.floor(Math.random() * planetColors.length)];
+
+            // Create planet
+            const planet = this.add.circle(x, y, size, color, 1);
+            this.bgContainer.add(planet);
+
+            // Add a subtle glow
+            const planetGlow = this.add.circle(x, y, size * 1.3, color, 0.2);
+            this.bgContainer.add(planetGlow);
+        }
+
+        // Set a property to handle updates in our update method
+        this.usingEnhancedBackground = true;
+    }
+
+    createShootingStar() {
+        const width = this.cameras.main.width;
+        const height = this.cameras.main.height;
+
+        // Only create a shooting star 30% of the time
+        if (Math.random() > 0.3) return;
+
+        // Create a shooting star
+        const startX = Phaser.Math.Between(0, width);
+        const startY = Phaser.Math.Between(0, height/3);
+        const angle = Phaser.Math.FloatBetween(Math.PI * 0.1, Math.PI * 0.4);
+        const length = Phaser.Math.Between(50, 150);
+
+        // Calculate end point
+        const endX = startX + Math.cos(angle) * length;
+        const endY = startY + Math.sin(angle) * length;
+
+        // Create the shooting star
+        const shootingStar = this.add.graphics();
+        shootingStar.lineStyle(2, 0xffffff, 1);
+        shootingStar.lineBetween(startX, startY, startX, startY); // Start with a point
+        this.bgContainer.add(shootingStar);
+
+        // Create a glow effect
+        const glow = this.add.graphics();
+        glow.lineStyle(4, 0xffffff, 0.3);
+        glow.lineBetween(startX, startY, startX, startY); // Start with a point
+        this.bgContainer.add(glow);
+
+        // Animate the shooting star
+        this.tweens.add({
+            targets: [shootingStar, glow],
+            x: endX - startX,
+            y: endY - startY,
+            duration: 500,
+            ease: 'Cubic.easeIn',
+            onUpdate: (tween, target) => {
+                const progress = tween.progress;
+                const currentX = startX + (endX - startX) * progress;
+                const currentY = startY + (endY - startY) * progress;
+
+                if (target === shootingStar) {
+                    shootingStar.clear();
+                    shootingStar.lineStyle(2, 0xffffff, 1);
+                    shootingStar.lineBetween(currentX, currentY, currentX - (endX - startX) * 0.2, currentY - (endY - startY) * 0.2);
+                } else {
+                    glow.clear();
+                    glow.lineStyle(4, 0xffffff, 0.3);
+                    glow.lineBetween(currentX, currentY, currentX - (endX - startX) * 0.3, currentY - (endY - startY) * 0.3);
+                }
+            },
+            onComplete: () => {
+                shootingStar.destroy();
+                glow.destroy();
+            }
+        });
     }
 
     createMenuButtons(width, height) {
-        // Create a modern menu panel
-        const panelWidth = 300;
-        const panelHeight = 400;
+        // Create a modern menu panel with a more futuristic design
+        const panelWidth = 320;
+        const panelHeight = 420;
         const panelX = width / 2;
         const panelY = height / 2 + 50;
 
-        // Create a semi-transparent panel background with rounded corners
-        const panel = this.add.graphics();
-        panel.fillStyle(0x000033, 0.7);
-        panel.fillRoundedRect(panelX - panelWidth/2, panelY - panelHeight/2, panelWidth, panelHeight, 15);
+        // Create a container for the menu
+        const menuContainer = this.add.container(0, 0);
 
-        // Add a glowing border
+        // Create a semi-transparent panel background with rounded corners and gradient
+        const panel = this.add.graphics();
+        const gradientColors = [0x000033, 0x000044, 0x000066, 0x000055];
+        panel.fillGradientStyle(gradientColors[0], gradientColors[1], gradientColors[2], gradientColors[3], 0.8);
+        panel.fillRoundedRect(panelX - panelWidth/2, panelY - panelHeight/2, panelWidth, panelHeight, 15);
+        menuContainer.add(panel);
+
+        // Add a glowing border with animation
         const border = this.add.graphics();
         border.lineStyle(2, 0x33aaff, 0.8);
         border.strokeRoundedRect(panelX - panelWidth/2, panelY - panelHeight/2, panelWidth, panelHeight, 15);
+        menuContainer.add(border);
 
-        // Add a decorative header to the panel
-        const headerHeight = 50;
+        // Add a pulsing effect to the border
+        this.tweens.add({
+            targets: border,
+            alpha: { from: 0.8, to: 0.4 },
+            duration: 2000,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
+
+        // Add decorative elements to the panel
+        // Top header with gradient
+        const headerHeight = 60;
         const header = this.add.graphics();
-        header.fillStyle(0x33aaff, 0.3);
+        header.fillGradientStyle(0x3366cc, 0x3355aa, 0x3344aa, 0x3355aa, 0.6);
         header.fillRoundedRect(panelX - panelWidth/2, panelY - panelHeight/2, panelWidth, headerHeight, { tl: 15, tr: 15, bl: 0, br: 0 });
+        menuContainer.add(header);
 
-        // Add header text
-        const headerText = this.add.text(panelX, panelY - panelHeight/2 + headerHeight/2, 'MAIN MENU', {
+        // Add decorative lines to the panel
+        const decorLines = this.add.graphics();
+        decorLines.lineStyle(1, 0x33aaff, 0.3);
+
+        // Horizontal lines
+        for (let i = 1; i < 4; i++) {
+            const y = panelY - panelHeight/2 + headerHeight + i * 90;
+            decorLines.lineBetween(panelX - panelWidth/2 + 20, y, panelX + panelWidth/2 - 20, y);
+        }
+
+        // Vertical accent lines
+        decorLines.lineStyle(2, 0x33aaff, 0.2);
+        decorLines.lineBetween(panelX - panelWidth/2 + 15, panelY - panelHeight/2 + headerHeight,
+                              panelX - panelWidth/2 + 15, panelY + panelHeight/2 - 15);
+        decorLines.lineBetween(panelX + panelWidth/2 - 15, panelY - panelHeight/2 + headerHeight,
+                              panelX + panelWidth/2 - 15, panelY + panelHeight/2 - 15);
+        menuContainer.add(decorLines);
+
+        // Add header text with enhanced styling
+        const headerText = this.add.text(panelX, panelY - panelHeight/2 + headerHeight/2, 'COMMAND CONSOLE', {
             fontFamily: 'monospace',
-            fontSize: '20px',
+            fontSize: '22px',
+            fontStyle: 'bold',
             color: '#ffffff',
-            stroke: '#000000',
-            strokeThickness: 2
+            stroke: '#000033',
+            strokeThickness: 3,
+            shadow: { offsetX: 1, offsetY: 1, color: '#33aaff', blur: 3, stroke: true }
         }).setOrigin(0.5);
+        menuContainer.add(headerText);
 
-        // Button configs
+        // Add a subtle animation to the header text
+        this.tweens.add({
+            targets: headerText,
+            scale: { from: 1, to: 1.05 },
+            duration: 1500,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
+
+        // Adjust panel height to accommodate the new button
+        panelHeight = 500;
+
+        // Button configs with icons
         const buttonConfigs = [
             {
                 text: 'START MISSION',
+                icon: '🚀',
                 y: panelY - panelHeight/2 + headerHeight + 70,
                 handler: () => this.startGame()
             },
             {
-                text: 'PROFILE',
-                y: panelY - panelHeight/2 + headerHeight + 140,
+                text: 'PILOT PROFILE',
+                icon: '👨‍🚀',
+                y: panelY - panelHeight/2 + headerHeight + 150,
                 handler: () => this.openProfile()
             },
             {
+                text: 'NEMESIS INFO',
+                icon: '👾',
+                y: panelY - panelHeight/2 + headerHeight + 230,
+                handler: () => this.openNemesisInfo()
+            },
+            {
+                text: 'DIFFICULTY',
+                icon: '🎯',
+                y: panelY - panelHeight/2 + headerHeight + 310,
+                handler: () => this.openDifficultySelector()
+            },
+            {
                 text: 'HANGAR BAY',
-                y: panelY - panelHeight/2 + headerHeight + 210,
+                icon: '🛸',
+                y: panelY - panelHeight/2 + headerHeight + 390,
                 handler: () => this.openHangar()
             },
             {
-                text: 'OPTIONS',
-                y: panelY - panelHeight/2 + headerHeight + 280,
+                text: 'SYSTEM CONFIG',
+                icon: '⚙️',
+                y: panelY - panelHeight/2 + headerHeight + 470,
                 handler: () => this.openOptions()
             }
         ];
 
-        // Create modern, sleek buttons
+        // Create modern, futuristic buttons
         buttonConfigs.forEach(config => {
+            // Create button container
+            const buttonContainer = this.add.container(panelX, config.y);
+            menuContainer.add(buttonContainer);
+
             // Create button background with gradient
-            const buttonWidth = 240;
-            const buttonHeight = 50;
+            const buttonWidth = 260;
+            const buttonHeight = 60;
             const button = this.add.graphics();
 
-            // Default state
-            button.fillStyle(0x222244, 0.8);
-            button.fillRoundedRect(panelX - buttonWidth/2, config.y - buttonHeight/2, buttonWidth, buttonHeight, 10);
+            // Default state - gradient background
+            button.fillGradientStyle(0x222244, 0x222255, 0x222266, 0x222255, 0.8);
+            button.fillRoundedRect(-buttonWidth/2, -buttonHeight/2, buttonWidth, buttonHeight, 10);
             button.lineStyle(1, 0x33aaff, 0.5);
-            button.strokeRoundedRect(panelX - buttonWidth/2, config.y - buttonHeight/2, buttonWidth, buttonHeight, 10);
+            button.strokeRoundedRect(-buttonWidth/2, -buttonHeight/2, buttonWidth, buttonHeight, 10);
+            buttonContainer.add(button);
+
+            // Add a left accent bar
+            const accentBar = this.add.rectangle(-buttonWidth/2 + 5, 0, 3, buttonHeight - 10, 0x33aaff, 0.7)
+                .setOrigin(0.5);
+            buttonContainer.add(accentBar);
 
             // Create an invisible interactive area
-            const hitArea = this.add.rectangle(panelX, config.y, buttonWidth, buttonHeight)
+            const hitArea = this.add.rectangle(0, 0, buttonWidth, buttonHeight)
                 .setInteractive({ useHandCursor: true })
                 .setOrigin(0.5)
                 .setAlpha(0.001);
+            buttonContainer.add(hitArea);
 
-            // Button text with glow effect
-            const buttonText = this.add.text(panelX, config.y, config.text, {
+            // Add icon if available
+            if (config.icon) {
+                const iconText = this.add.text(-buttonWidth/2 + 25, 0, config.icon, {
+                    fontSize: '24px'
+                }).setOrigin(0.5);
+                buttonContainer.add(iconText);
+            }
+
+            // Button text with enhanced styling
+            const buttonText = this.add.text(config.icon ? -buttonWidth/2 + 60 : 0, 0, config.text, {
                 fontFamily: 'monospace',
                 fontSize: '18px',
+                fontStyle: 'bold',
                 color: '#ffffff',
                 stroke: '#000000',
-                strokeThickness: 1,
+                strokeThickness: 2,
                 shadow: { offsetX: 1, offsetY: 1, color: '#33aaff', blur: 5, stroke: true }
-            }).setOrigin(0.5);
+            }).setOrigin(config.icon ? 0 : 0.5, 0.5);
+            buttonContainer.add(buttonText);
+
+            // Add a subtle glow effect behind the button
+            const glow = this.add.rectangle(0, 0, buttonWidth, buttonHeight, 0x33aaff, 0)
+                .setOrigin(0.5);
+            buttonContainer.add(glow);
+            buttonContainer.sendToBack(glow);
 
             // Button hover and click effects
             hitArea.on('pointerover', () => {
+                // Clear and redraw with hover style
                 button.clear();
-                button.fillStyle(0x3344aa, 0.9);
-                button.fillRoundedRect(panelX - buttonWidth/2, config.y - buttonHeight/2, buttonWidth, buttonHeight, 10);
+                button.fillGradientStyle(0x3344aa, 0x3355bb, 0x3366cc, 0x3355bb, 0.9);
+                button.fillRoundedRect(-buttonWidth/2, -buttonHeight/2, buttonWidth, buttonHeight, 10);
                 button.lineStyle(2, 0x33ccff, 0.8);
-                button.strokeRoundedRect(panelX - buttonWidth/2, config.y - buttonHeight/2, buttonWidth, buttonHeight, 10);
+                button.strokeRoundedRect(-buttonWidth/2, -buttonHeight/2, buttonWidth, buttonHeight, 10);
+
+                // Enhance text glow
                 buttonText.setShadow(1, 1, '#33ccff', 10, true);
-                buttonText.setColor('#ffffff');
+
+                // Animate the accent bar
+                this.tweens.add({
+                    targets: accentBar,
+                    scaleY: 1.2,
+                    duration: 200
+                });
+
+                // Show the glow effect
+                this.tweens.add({
+                    targets: glow,
+                    alpha: 0.2,
+                    duration: 200
+                });
             });
 
             hitArea.on('pointerout', () => {
+                // Clear and redraw with default style
                 button.clear();
-                button.fillStyle(0x222244, 0.8);
-                button.fillRoundedRect(panelX - buttonWidth/2, config.y - buttonHeight/2, buttonWidth, buttonHeight, 10);
+                button.fillGradientStyle(0x222244, 0x222255, 0x222266, 0x222255, 0.8);
+                button.fillRoundedRect(-buttonWidth/2, -buttonHeight/2, buttonWidth, buttonHeight, 10);
                 button.lineStyle(1, 0x33aaff, 0.5);
-                button.strokeRoundedRect(panelX - buttonWidth/2, config.y - buttonHeight/2, buttonWidth, buttonHeight, 10);
+                button.strokeRoundedRect(-buttonWidth/2, -buttonHeight/2, buttonWidth, buttonHeight, 10);
+
+                // Reset text glow
                 buttonText.setShadow(1, 1, '#33aaff', 5, true);
-                buttonText.setColor('#ffffff');
+
+                // Reset the accent bar
+                this.tweens.add({
+                    targets: accentBar,
+                    scaleY: 1,
+                    duration: 200
+                });
+
+                // Hide the glow effect
+                this.tweens.add({
+                    targets: glow,
+                    alpha: 0,
+                    duration: 200
+                });
             });
 
             hitArea.on('pointerdown', () => {
+                // Clear and redraw with pressed style
                 button.clear();
-                button.fillStyle(0x2233aa, 1);
-                button.fillRoundedRect(panelX - buttonWidth/2, config.y - buttonHeight/2, buttonWidth, buttonHeight, 10);
-                buttonText.setY(config.y + 2); // Small press effect
+                button.fillGradientStyle(0x2233aa, 0x2244bb, 0x2255cc, 0x2244bb, 1);
+                button.fillRoundedRect(-buttonWidth/2, -buttonHeight/2, buttonWidth, buttonHeight, 10);
+
+                // Add press effect
+                buttonContainer.y += 2;
+
+                // Flash the glow
+                this.tweens.add({
+                    targets: glow,
+                    alpha: { from: 0.4, to: 0 },
+                    duration: 300
+                });
 
                 // Call the handler after a short delay for visual feedback
                 this.time.delayedCall(100, () => {
-                    buttonText.setY(config.y);
+                    buttonContainer.y -= 2;
                     config.handler();
                 });
             });
@@ -552,6 +771,58 @@ class MainMenuScene extends Phaser.Scene {
         console.log('Sound is permanently disabled');
     }
 
+    /**
+     * Open the difficulty selector
+     */
+    openDifficultySelector() {
+        console.log('Opening difficulty selector');
+
+        // Create difficulty selector if it doesn't exist
+        if (!this.difficultySelector) {
+            this.difficultySelector = new DifficultySelector(this, this.cameras.main.width / 2, this.cameras.main.height / 2);
+        }
+
+        // Show the difficulty selector
+        this.difficultySelector.show((selectedLevel) => {
+            console.log(`Selected difficulty: ${selectedLevel.key} (${selectedLevel.value})`);
+
+            // Initialize dynamic difficulty system if it doesn't exist
+            if (!this.game.global.dynamicDifficulty) {
+                this.game.global.dynamicDifficulty = new DynamicDifficultySystem(this.game);
+            }
+
+            // Apply selected difficulty
+            if (selectedLevel.key === 'adaptive') {
+                this.game.global.dynamicDifficulty.setAdaptiveDifficulty(true);
+                this.game.global.dynamicDifficulty.setBaseDifficulty(0.5); // Default to normal for adaptive
+            } else {
+                this.game.global.dynamicDifficulty.setAdaptiveDifficulty(false);
+                this.game.global.dynamicDifficulty.setBaseDifficulty(selectedLevel.value);
+            }
+
+            // Show confirmation message
+            this.showMessage(`Difficulty set to ${selectedLevel.label}`);
+        });
+    }
+
+    openNemesisInfo() {
+        console.log('Opening Nemesis information screen...');
+
+        // Initialize Nemesis systems if they don't exist
+        if (!this.game.global.nemesisSystem) {
+            this.game.global.nemesisSystem = new NemesisSystem(this.game);
+        }
+
+        if (!this.game.global.nemesisDifficulty) {
+            this.game.global.nemesisDifficulty = new NemesisDifficulty(this.game);
+        }
+
+        // Start the Nemesis info scene
+        this.scene.start(CONSTANTS.SCENES.NEMESIS_INFO, {
+            returnScene: CONSTANTS.SCENES.MAIN_MENU
+        });
+    }
+
     debugStartGame() {
         console.log('DEBUG: Starting game with direct scene transition...');
 
@@ -580,9 +851,85 @@ class MainMenuScene extends Phaser.Scene {
             if (this.bgPlanets) {
                 this.bgPlanets.tilePositionY -= 0.05;
             }
-        } else if (this.usingFallbackBackground) {
-            // Add some animation for fallback background if needed
+        } else if (this.usingEnhancedBackground) {
+            // Add subtle movement to stars for parallax effect
+            if (this.stars && this.stars.length > 0) {
+                for (let i = 0; i < this.stars.length; i++) {
+                    // Move stars at different speeds based on their size (smaller = further away = slower)
+                    const star = this.stars[i];
+                    const speed = star.width < 1 ? 0.05 : (star.width < 2 ? 0.1 : 0.2);
+                    star.y += speed;
+
+                    // Wrap stars around when they go off screen
+                    if (star.y > this.cameras.main.height) {
+                        star.y = 0;
+                        star.x = Phaser.Math.Between(0, this.cameras.main.width);
+                    }
+                }
+            }
         }
+    }
+
+    /**
+     * Show a message popup
+     * @param {string} message - The message to display
+     */
+    showMessage(message) {
+        // Create a container for the message
+        const container = this.add.container(this.cameras.main.width / 2, this.cameras.main.height / 2);
+        container.setDepth(1000);
+
+        // Create a semi-transparent background
+        const bg = this.add.rectangle(0, 0, 400, 150, 0x000000, 0.8);
+        bg.setStrokeStyle(2, 0x3399ff);
+        container.add(bg);
+
+        // Create the message text
+        const text = this.add.text(0, 0, message, {
+            fontFamily: 'monospace',
+            fontSize: '18px',
+            color: '#ffffff',
+            align: 'center',
+            wordWrap: { width: 380 }
+        }).setOrigin(0.5);
+        container.add(text);
+
+        // Create a close button
+        const closeButton = this.add.text(0, 60, 'OK', {
+            fontFamily: 'monospace',
+            fontSize: '16px',
+            color: '#3399ff'
+        }).setOrigin(0.5);
+        closeButton.setInteractive({ useHandCursor: true });
+        closeButton.on('pointerover', () => closeButton.setColor('#33ccff'));
+        closeButton.on('pointerout', () => closeButton.setColor('#3399ff'));
+        closeButton.on('pointerdown', () => {
+            // Destroy the container when clicked
+            container.destroy();
+        });
+        container.add(closeButton);
+
+        // Add a fade-in animation
+        container.setAlpha(0);
+        this.tweens.add({
+            targets: container,
+            alpha: 1,
+            duration: 200,
+            ease: 'Power2'
+        });
+
+        // Auto-close after 5 seconds
+        this.time.delayedCall(5000, () => {
+            if (container.active) {
+                this.tweens.add({
+                    targets: container,
+                    alpha: 0,
+                    duration: 200,
+                    ease: 'Power2',
+                    onComplete: () => container.destroy()
+                });
+            }
+        });
     }
 
     createDefaultInventory() {

@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nemesis System Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: #111;
+            color: #eee;
+            font-family: monospace;
+        }
+        h1 {
+            color: #33ff33;
+        }
+        button {
+            background-color: #333;
+            color: #fff;
+            border: 1px solid #555;
+            padding: 10px 15px;
+            margin: 5px;
+            cursor: pointer;
+            font-family: monospace;
+        }
+        button:hover {
+            background-color: #444;
+        }
+        #output {
+            background-color: #222;
+            padding: 15px;
+            border: 1px solid #444;
+            margin-top: 20px;
+            height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .success {
+            color: #33ff33;
+        }
+        .error {
+            color: #ff3333;
+        }
+        .info {
+            color: #3399ff;
+        }
+    </style>
+</head>
+<body>
+    <h1>Nemesis System Test</h1>
+    
+    <div>
+        <button id="initTest">Initialize Test</button>
+        <button id="recordDefeats">Simulate Boss Defeats</button>
+        <button id="showConfig">Show Nemesis Config</button>
+        <button id="resetSystem">Reset Nemesis System</button>
+    </div>
+    
+    <div id="output">Test output will appear here...</div>
+    
+    <!-- Load required scripts -->
+    <script src="src/js/utils/constants.js"></script>
+    <script src="src/js/systems/nemesis-system.js"></script>
+    
+    <script>
+        // Create a mock game object
+        const mockGame = {
+            global: {
+                saveManager: {
+                    saveGame: function(autoSave) {
+                        log('Save game called (mock)', 'info');
+                    }
+                },
+                nemesisData: null
+            }
+        };
+        
+        // Output log
+        function log(message, type = 'info') {
+            const output = document.getElementById('output');
+            const timestamp = new Date().toLocaleTimeString();
+            output.innerHTML += `<div class="${type}">[${timestamp}] ${message}</div>`;
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        // Test functions
+        function initializeTest() {
+            try {
+                log('Initializing Nemesis System test...', 'info');
+                
+                // Create Nemesis System
+                window.nemesisSystem = new NemesisSystem(mockGame);
+                
+                log('Nemesis System initialized successfully!', 'success');
+                log('Initial nemesis data:', 'info');
+                log(JSON.stringify(mockGame.global.nemesisData, null, 2), 'info');
+                
+                return true;
+            } catch (error) {
+                log(`Error initializing test: ${error.message}`, 'error');
+                console.error(error);
+                return false;
+            }
+        }
+        
+        function simulateBossDefeats() {
+            try {
+                if (!window.nemesisSystem) {
+                    if (!initializeTest()) {
+                        return false;
+                    }
+                }
+                
+                log('Simulating boss defeats...', 'info');
+                
+                // Simulate defeating the Scout Commander
+                window.nemesisSystem.recordBossDefeat('SCOUT_COMMANDER', {
+                    dominantWeapon: 'laser',
+                    buildType: 'offensive',
+                    timeToDefeat: 120000,
+                    weaponUsage: {
+                        laser: 50,
+                        triBeam: 10,
+                        plasmaBolt: 5,
+                        homingMissile: 0,
+                        dualCannon: 0,
+                        beamLaser: 0,
+                        scatterBomb: 0
+                    },
+                    buildStyle: {
+                        offensive: 3,
+                        defensive: 1,
+                        utility: 0,
+                        balanced: 1
+                    }
+                });
+                
+                log('Scout Commander defeated', 'success');
+                
+                // Simulate defeating the Battle Carrier
+                window.nemesisSystem.recordBossDefeat('BATTLE_CARRIER', {
+                    dominantWeapon: 'homingMissile',
+                    buildType: 'balanced',
+                    timeToDefeat: 180000,
+                    weaponUsage: {
+                        laser: 10,
+                        triBeam: 5,
+                        plasmaBolt: 0,
+                        homingMissile: 40,
+                        dualCannon: 0,
+                        beamLaser: 0,
+                        scatterBomb: 5
+                    },
+                    buildStyle: {
+                        offensive: 1,
+                        defensive: 1,
+                        utility: 1,
+                        balanced: 2
+                    }
+                });
+                
+                log('Battle Carrier defeated', 'success');
+                
+                // Simulate defeating the Destroyer Prime
+                window.nemesisSystem.recordBossDefeat('DESTROYER_PRIME', {
+                    dominantWeapon: 'beamLaser',
+                    buildType: 'defensive',
+                    timeToDefeat: 240000,
+                    weaponUsage: {
+                        laser: 5,
+                        triBeam: 0,
+                        plasmaBolt: 0,
+                        homingMissile: 10,
+                        dualCannon: 0,
+                        beamLaser: 60,
+                        scatterBomb: 0
+                    },
+                    buildStyle: {
+                        offensive: 0,
+                        defensive: 4,
+                        utility: 1,
+                        balanced: 0
+                    }
+                });
+                
+                log('Destroyer Prime defeated', 'success');
+                
+                log('All boss defeats simulated successfully!', 'success');
+                log('Updated nemesis data:', 'info');
+                log(JSON.stringify(mockGame.global.nemesisData, null, 2), 'info');
+                
+                return true;
+            } catch (error) {
+                log(`Error simulating boss defeats: ${error.message}`, 'error');
+                console.error(error);
+                return false;
+            }
+        }
+        
+        function showNemesisConfig() {
+            try {
+                if (!window.nemesisSystem) {
+                    if (!initializeTest()) {
+                        return false;
+                    }
+                }
+                
+                log('Generating Nemesis configuration...', 'info');
+                
+                // Generate Nemesis configuration
+                const config = window.nemesisSystem.generateNemesisConfig();
+                
+                log('Nemesis configuration generated successfully!', 'success');
+                log('Configuration:', 'info');
+                log(JSON.stringify(config, null, 2), 'info');
+                
+                // Display a more readable summary
+                let summary = 'Nemesis Summary:\n';
+                summary += `Health: ${config.health}\n`;
+                summary += `Phases: ${config.phases}\n`;
+                summary += `Phase Thresholds: ${config.phaseThresholds.join(', ')}\n`;
+                
+                summary += 'Resistances:\n';
+                Object.entries(config.resistances).forEach(([weapon, value]) => {
+                    if (value > 0) {
+                        summary += `  ${weapon}: ${value * 100}%\n`;
+                    }
+                });
+                
+                summary += 'Attack Patterns:\n';
+                config.attackPatterns.forEach(pattern => {
+                    summary += `  ${pattern}\n`;
+                });
+                
+                summary += 'Appearance:\n';
+                summary += `  Base Color: ${config.appearance.baseColor}\n`;
+                summary += `  Highlights: ${config.appearance.highlights.join(', ')}\n`;
+                summary += `  Parts: ${config.appearance.parts.join(', ')}\n`;
+                
+                log(summary, 'info');
+                
+                return true;
+            } catch (error) {
+                log(`Error showing Nemesis config: ${error.message}`, 'error');
+                console.error(error);
+                return false;
+            }
+        }
+        
+        function resetNemesisSystem() {
+            try {
+                if (!window.nemesisSystem) {
+                    if (!initializeTest()) {
+                        return false;
+                    }
+                }
+                
+                log('Resetting Nemesis System...', 'info');
+                
+                // Reset the nemesis data
+                window.nemesisSystem.resetNemesisData();
+                
+                log('Nemesis System reset successfully!', 'success');
+                log('Reset nemesis data:', 'info');
+                log(JSON.stringify(mockGame.global.nemesisData, null, 2), 'info');
+                
+                return true;
+            } catch (error) {
+                log(`Error resetting Nemesis System: ${error.message}`, 'error');
+                console.error(error);
+                return false;
+            }
+        }
+        
+        // Set up event listeners
+        document.getElementById('initTest').addEventListener('click', initializeTest);
+        document.getElementById('recordDefeats').addEventListener('click', simulateBossDefeats);
+        document.getElementById('showConfig').addEventListener('click', showNemesisConfig);
+        document.getElementById('resetSystem').addEventListener('click', resetNemesisSystem);
+        
+        // Initialize on page load
+        window.onload = function() {
+            log('Test page loaded. Click "Initialize Test" to begin.', 'info');
+        };
+    </script>
+</body>
+</html>

@@ -131,7 +131,7 @@ class LoadingScene extends Phaser.Scene {
 
     createSpaceshipSprite() {
         try {
-            // Create a simple, clean spaceship texture
+            // Create an improved spaceship texture based on space.jfif design
             const width = 120;
             const height = 160;
 
@@ -145,119 +145,330 @@ class LoadingScene extends Phaser.Scene {
             // Center coordinates
             const centerX = width / 2;
 
-            // Draw the main body of the ship
-            context.fillStyle = '#4488ff'; // Blue
-            context.beginPath();
-            context.moveTo(centerX, 20);           // Nose of the ship
-            context.lineTo(centerX + 40, height - 60); // Right side
-            context.lineTo(centerX + 20, height - 40); // Right corner
-            context.lineTo(centerX - 20, height - 40); // Left corner
-            context.lineTo(centerX - 40, height - 60); // Left side
-            context.closePath();
-            context.fill();
+            // Create a metallic gradient for the ship body - enhanced with more vibrant colors
+            const bodyGradient = context.createLinearGradient(0, 0, width, 0);
+            bodyGradient.addColorStop(0, '#2255bb');   // Darker blue on left
+            bodyGradient.addColorStop(0.5, '#5599ff'); // Lighter blue in center
+            bodyGradient.addColorStop(1, '#2255bb');   // Darker blue on right
 
-            // Add a cockpit
-            context.fillStyle = '#99ccff'; // Light blue
+            // Draw the main body of the ship - more streamlined and aerodynamic design
+            context.fillStyle = bodyGradient;
             context.beginPath();
-            context.moveTo(centerX, 40);           // Top of cockpit
-            context.lineTo(centerX + 15, 80);      // Right side
-            context.lineTo(centerX, 90);           // Bottom
-            context.lineTo(centerX - 15, 80);      // Left side
-            context.closePath();
-            context.fill();
-
-            // Add engine section
-            context.fillStyle = '#2244aa'; // Darker blue
-            context.beginPath();
-            context.moveTo(centerX - 20, height - 40); // Left top
-            context.lineTo(centerX + 20, height - 40); // Right top
-            context.lineTo(centerX + 15, height - 20); // Right bottom
-            context.lineTo(centerX - 15, height - 20); // Left bottom
-            context.closePath();
-            context.fill();
-
-            // Add engine glow
-            const engineGradient = context.createLinearGradient(
-                centerX, height - 20,
-                centerX, height
+            context.moveTo(centerX, 10);              // Nose of the ship (sharper)
+            context.quadraticCurveTo(                 // Right curved side
+                centerX + 55, height/2 - 20,
+                centerX + 35, height - 45
             );
-            engineGradient.addColorStop(0, '#ffcc33'); // Yellow
-            engineGradient.addColorStop(1, 'rgba(255, 204, 51, 0)');
+            context.lineTo(centerX + 20, height - 25); // Right corner
+            context.lineTo(centerX - 20, height - 25); // Left corner
+            context.lineTo(centerX - 35, height - 45); // Left side
+            context.quadraticCurveTo(                 // Left curved side
+                centerX - 55, height/2 - 20,
+                centerX, 10
+            );
+            context.closePath();
+            context.fill();
+
+            // Add a metallic stroke to the body with enhanced glow
+            context.strokeStyle = '#99ccff';
+            context.lineWidth = 1.5;
+            context.stroke();
+
+            // Add a cockpit with enhanced gradient for more depth
+            const cockpitGradient = context.createLinearGradient(
+                centerX - 20, 40,
+                centerX + 20, 40
+            );
+            cockpitGradient.addColorStop(0, '#99ccff');   // Light blue
+            cockpitGradient.addColorStop(0.5, '#ddeeff'); // Almost white
+            cockpitGradient.addColorStop(1, '#99ccff');   // Light blue
+
+            context.fillStyle = cockpitGradient;
+            context.beginPath();
+            context.moveTo(centerX, 30);           // Top of cockpit
+            context.quadraticCurveTo(              // Right curved side
+                centerX + 25, 45,
+                centerX + 15, 75
+            );
+            context.lineTo(centerX, 85);           // Bottom
+            context.lineTo(centerX - 15, 75);      // Left side
+            context.quadraticCurveTo(              // Left curved side
+                centerX - 25, 45,
+                centerX, 30
+            );
+            context.closePath();
+            context.fill();
+            context.strokeStyle = '#ffffff';
+            context.lineWidth = 0.8;
+            context.stroke();
+
+            // Add engine section with enhanced gradient for more depth
+            const engineGradient = context.createLinearGradient(
+                0, height - 40,
+                0, height - 20
+            );
+            engineGradient.addColorStop(0, '#1133aa'); // Darker blue
+            engineGradient.addColorStop(1, '#2244cc'); // Medium blue
 
             context.fillStyle = engineGradient;
             context.beginPath();
-            context.moveTo(centerX - 15, height - 20); // Left top
-            context.lineTo(centerX + 15, height - 20); // Right top
-            context.lineTo(centerX + 10, height);      // Right bottom
-            context.lineTo(centerX - 10, height);      // Left bottom
+            context.moveTo(centerX - 30, height - 40); // Left top
+            context.lineTo(centerX + 30, height - 40); // Right top
+            context.quadraticCurveTo(                 // Right curved bottom
+                centerX + 25, height - 20,
+                centerX + 20, height - 20
+            );
+            context.lineTo(centerX - 20, height - 20); // Left bottom
+            context.quadraticCurveTo(                 // Left curved bottom
+                centerX - 25, height - 20,
+                centerX - 30, height - 40
+            );
             context.closePath();
             context.fill();
-
-            // Add wing details
-            context.fillStyle = '#3366cc'; // Medium blue
-
-            // Left wing
-            context.beginPath();
-            context.moveTo(centerX - 40, height - 60); // Inner top
-            context.lineTo(centerX - 50, height - 80); // Outer top
-            context.lineTo(centerX - 45, height - 50); // Outer bottom
-            context.lineTo(centerX - 20, height - 40); // Inner bottom
-            context.closePath();
-            context.fill();
-
-            // Right wing
-            context.beginPath();
-            context.moveTo(centerX + 40, height - 60); // Inner top
-            context.lineTo(centerX + 50, height - 80); // Outer top
-            context.lineTo(centerX + 45, height - 50); // Outer bottom
-            context.lineTo(centerX + 20, height - 40); // Inner bottom
-            context.closePath();
-            context.fill();
-
-            // Add some highlights
-            context.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+            context.strokeStyle = '#4477dd';
             context.lineWidth = 1;
-
-            // Highlight on the body
-            context.beginPath();
-            context.moveTo(centerX - 10, 40);
-            context.lineTo(centerX - 25, height - 70);
             context.stroke();
 
-            // Add some details (lights)
+            // Add engine glow with enhanced gradient for more realistic thruster effect
+            const engineGlowGradient = context.createLinearGradient(
+                centerX, height - 20,
+                centerX, height
+            );
+            engineGlowGradient.addColorStop(0, '#ffdd44');          // Bright yellow
+            engineGlowGradient.addColorStop(0.5, '#ff7733');        // Orange
+            engineGlowGradient.addColorStop(1, 'rgba(255, 102, 51, 0)');
+
+            context.fillStyle = engineGlowGradient;
+            context.beginPath();
+            context.moveTo(centerX - 20, height - 20); // Left top
+            context.lineTo(centerX + 20, height - 20); // Right top
+            context.lineTo(centerX + 12, height);      // Right bottom
+            context.lineTo(centerX - 12, height);      // Left bottom
+            context.closePath();
+            context.fill();
+
+            // Add secondary engine exhausts
+            const smallEngineGlow = context.createLinearGradient(
+                centerX - 25, height - 30,
+                centerX - 25, height - 10
+            );
+            smallEngineGlow.addColorStop(0, '#ffcc33');
+            smallEngineGlow.addColorStop(1, 'rgba(255, 102, 51, 0)');
+
+            // Left small engine
+            context.fillStyle = smallEngineGlow;
+            context.beginPath();
+            context.moveTo(centerX - 25, height - 30);
+            context.lineTo(centerX - 20, height - 30);
+            context.lineTo(centerX - 18, height - 10);
+            context.lineTo(centerX - 27, height - 10);
+            context.closePath();
+            context.fill();
+
+            // Right small engine
+            const smallEngineGlow2 = context.createLinearGradient(
+                centerX + 25, height - 30,
+                centerX + 25, height - 10
+            );
+            smallEngineGlow2.addColorStop(0, '#ffcc33');
+            smallEngineGlow2.addColorStop(1, 'rgba(255, 102, 51, 0)');
+
+            context.fillStyle = smallEngineGlow2;
+            context.beginPath();
+            context.moveTo(centerX + 25, height - 30);
+            context.lineTo(centerX + 20, height - 30);
+            context.lineTo(centerX + 18, height - 10);
+            context.lineTo(centerX + 27, height - 10);
+            context.closePath();
+            context.fill();
+
+            // Add wing details with enhanced gradient for more depth
+            const wingGradient = context.createLinearGradient(
+                0, height - 80,
+                0, height - 40
+            );
+            wingGradient.addColorStop(0, '#2255bb'); // Medium blue
+            wingGradient.addColorStop(1, '#3366dd'); // Lighter blue
+
+            // Left wing - more aerodynamic and detailed
+            context.fillStyle = wingGradient;
+            context.beginPath();
+            context.moveTo(centerX - 35, height - 60); // Inner top
+            context.lineTo(centerX - 70, height - 95); // Outer top (extended)
+            context.lineTo(centerX - 75, height - 75); // Outer tip
+            context.lineTo(centerX - 65, height - 55); // Outer bottom
+            context.lineTo(centerX - 30, height - 40); // Inner bottom
+            context.closePath();
+            context.fill();
+
+            // Add metallic edge to left wing
+            context.strokeStyle = '#99ccff';
+            context.lineWidth = 1.2;
+            context.stroke();
+
+            // Right wing - more aerodynamic and detailed
+            context.fillStyle = wingGradient;
+            context.beginPath();
+            context.moveTo(centerX + 35, height - 60); // Inner top
+            context.lineTo(centerX + 70, height - 95); // Outer top (extended)
+            context.lineTo(centerX + 75, height - 75); // Outer tip
+            context.lineTo(centerX + 65, height - 55); // Outer bottom
+            context.lineTo(centerX + 30, height - 40); // Inner bottom
+            context.closePath();
+            context.fill();
+
+            // Add metallic edge to right wing
+            context.strokeStyle = '#99ccff';
+            context.lineWidth = 1.2;
+            context.stroke();
+
+            // Add wing details - small fins
+            context.fillStyle = '#1144aa';
+
+            // Left fin
+            context.beginPath();
+            context.moveTo(centerX - 60, height - 85); // Base
+            context.lineTo(centerX - 80, height - 100); // Tip
+            context.lineTo(centerX - 70, height - 75); // Back
+            context.closePath();
+            context.fill();
+            context.strokeStyle = '#5588dd';
+            context.lineWidth = 0.8;
+            context.stroke();
+
+            // Right fin
+            context.beginPath();
+            context.moveTo(centerX + 60, height - 85); // Base
+            context.lineTo(centerX + 80, height - 100); // Tip
+            context.lineTo(centerX + 70, height - 75); // Back
+            context.closePath();
+            context.fill();
+            context.strokeStyle = '#5588dd';
+            context.lineWidth = 0.8;
+            context.stroke();
+
+            // Add some highlights and panel details for more realism
+            context.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+            context.lineWidth = 0.7;
+
+            // Highlight on the body - curved
+            context.beginPath();
+            context.moveTo(centerX - 10, 40);
+            context.quadraticCurveTo(
+                centerX - 20, height/2,
+                centerX - 25, height - 70
+            );
+            context.stroke();
+
+            // Add panel lines to body
+            context.beginPath();
+            context.moveTo(centerX, 10);  // From nose
+            context.lineTo(centerX, 30);  // To cockpit
+            context.stroke();
+
+            // Panel lines on wings
+            context.beginPath();
+            context.moveTo(centerX - 35, height - 60);
+            context.lineTo(centerX - 65, height - 75);
+            context.stroke();
+
+            context.beginPath();
+            context.moveTo(centerX + 35, height - 60);
+            context.lineTo(centerX + 65, height - 75);
+            context.stroke();
+
+            // Add some details (lights) with enhanced glow
             context.fillStyle = '#ffffff';
 
             // Front light
             context.beginPath();
-            context.arc(centerX, 30, 2, 0, Math.PI * 2);
+            context.arc(centerX, 15, 2, 0, Math.PI * 2);
             context.fill();
 
-            // Wing lights
-            context.beginPath();
-            context.arc(centerX - 45, height - 65, 2, 0, Math.PI * 2);
-            context.fill();
-
-            context.beginPath();
-            context.arc(centerX + 45, height - 65, 2, 0, Math.PI * 2);
-            context.fill();
-
-            // Add a subtle glow around the ship
-            const shipGlow = context.createRadialGradient(
-                centerX, height/2, 10,
-                centerX, height/2, 70
+            // Front light glow
+            const frontLightGlow = context.createRadialGradient(
+                centerX, 15, 0,
+                centerX, 15, 8
             );
-            shipGlow.addColorStop(0, 'rgba(68, 136, 255, 0.2)');
-            shipGlow.addColorStop(1, 'rgba(68, 136, 255, 0)');
+            frontLightGlow.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
+            frontLightGlow.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+            context.fillStyle = frontLightGlow;
+            context.beginPath();
+            context.arc(centerX, 15, 8, 0, Math.PI * 2);
+            context.fill();
+
+            // Wing lights - with enhanced glow
+            for (const x of [centerX - 70, centerX + 70]) {
+                // Light
+                context.fillStyle = '#ffffff';
+                context.beginPath();
+                context.arc(x, height - 85, 2, 0, Math.PI * 2);
+                context.fill();
+
+                // Glow
+                const lightGlow = context.createRadialGradient(
+                    x, height - 85, 0,
+                    x, height - 85, 8
+                );
+                lightGlow.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
+                lightGlow.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+                context.fillStyle = lightGlow;
+                context.beginPath();
+                context.arc(x, height - 85, 8, 0, Math.PI * 2);
+                context.fill();
+            }
+
+            // Add engine lights with enhanced glow
+            for (const x of [centerX - 12, centerX, centerX + 12]) {
+                // Engine light
+                context.fillStyle = '#ffee66';
+                context.beginPath();
+                context.arc(x, height - 20, 2.5, 0, Math.PI * 2);
+                context.fill();
+
+                // Engine light glow
+                const engineLightGlow = context.createRadialGradient(
+                    x, height - 20, 0,
+                    x, height - 20, 6
+                );
+                engineLightGlow.addColorStop(0, 'rgba(255, 238, 102, 0.8)');
+                engineLightGlow.addColorStop(1, 'rgba(255, 238, 102, 0)');
+
+                context.fillStyle = engineLightGlow;
+                context.beginPath();
+                context.arc(x, height - 20, 6, 0, Math.PI * 2);
+                context.fill();
+            }
+
+            // Add small engine lights
+            context.fillStyle = '#ffcc33';
+            context.beginPath();
+            context.arc(centerX - 25, height - 25, 1.5, 0, Math.PI * 2);
+            context.fill();
+
+            context.beginPath();
+            context.arc(centerX + 25, height - 25, 1.5, 0, Math.PI * 2);
+            context.fill();
+
+            // Add a subtle glow around the ship for enhanced visual effect
+            const shipGlow = context.createRadialGradient(
+                centerX, height/2, 20,
+                centerX, height/2, 100
+            );
+            shipGlow.addColorStop(0, 'rgba(102, 170, 255, 0.3)');
+            shipGlow.addColorStop(1, 'rgba(102, 170, 255, 0)');
 
             context.fillStyle = shipGlow;
             context.beginPath();
-            context.arc(centerX, height/2, 60, 0, Math.PI * 2);
+            context.arc(centerX, height/2, 100, 0, Math.PI * 2);
             context.fill();
 
             // Update the texture
             texture.refresh();
 
-            console.log('Created basic spaceship sprite');
+            console.log('Created enhanced spaceship sprite with improved details');
         } catch (error) {
             console.warn('Failed to create spaceship sprite:', error);
         }
@@ -336,8 +547,40 @@ class LoadingScene extends Phaser.Scene {
         }
 
         // Different shapes based on entity type
-        if (key.includes('ship') || key.includes('enemy')) {
-            // Ship/enemy shape (triangle)
+        if (key.includes('enemy-drone')) {
+            // Create a detailed enemy drone sprite
+            this.createEnemyDroneSprite(key);
+            return;
+        } else if (key.includes('enemy-gunship')) {
+            // Create a detailed enemy gunship sprite
+            this.createEnemyGunshipSprite(key);
+            return;
+        } else if (key.includes('enemy-destroyer')) {
+            // Create a detailed enemy destroyer sprite
+            this.createEnemyDestroyerSprite(key);
+            return;
+        } else if (key.includes('enemy-interceptor')) {
+            // Create a detailed enemy interceptor sprite
+            this.createEnemyInterceptorSprite(key);
+            return;
+        } else if (key.includes('enemy-bomber')) {
+            // Create a detailed enemy bomber sprite
+            this.createEnemyBomberSprite(key);
+            return;
+        } else if (key.includes('enemy-stealth')) {
+            // Create a detailed enemy stealth ship sprite
+            this.createEnemyStealthSprite(key);
+            return;
+        } else if (key.includes('enemy-turret')) {
+            // Create a detailed enemy turret sprite
+            this.createEnemyTurretSprite(key);
+            return;
+        } else if (key.includes('enemy-carrier')) {
+            // Create a detailed enemy carrier sprite
+            this.createEnemyCarrierSprite(key);
+            return;
+        } else if (key.includes('ship') || key.includes('enemy')) {
+            // Generic ship/enemy shape (triangle) as fallback
             graphics.fillStyle(color);
             graphics.fillTriangle(width/2, 0, width, height, 0, height);
 
@@ -345,19 +588,13 @@ class LoadingScene extends Phaser.Scene {
             graphics.fillStyle(0xffffff);
             graphics.fillRect(width/2 - 5, height - 15, 10, 10);
         } else if (key.includes('laser')) {
-            // Laser shape (thin rectangle)
-            graphics.fillStyle(color);
-            graphics.fillRect(width/2 - 2, 0, 4, height);
+            // Create enhanced laser beam
+            this.createEnhancedLaserSprite(key, color);
+            return;
         } else if (key.includes('powerup')) {
-            // Powerup shape (circle)
-            graphics.fillStyle(bgColor);
-            graphics.fillCircle(width/2, height/2, width/2);
-            graphics.fillStyle(color);
-            graphics.fillCircle(width/2, height/2, width/2 - 4);
-
-            // Add a glow
-            graphics.fillStyle(0xffffff);
-            graphics.fillCircle(width/2 - 8, height/2 - 8, 5);
+            // Create enhanced powerup sprite
+            this.createEnhancedPowerupSprite(key, color, bgColor);
+            return;
         } else if (key.includes('button')) {
             // Button shape (rounded rectangle)
             graphics.fillStyle(color);
@@ -938,6 +1175,428 @@ class LoadingScene extends Phaser.Scene {
                 });
                 console.log('Created enhanced engine thrust animation');
             }
+        }
+    }
+
+    // Create enhanced enemy ship sprites
+    createEnemyDroneSprite(key) {
+        try {
+            // Create a small, fast drone ship
+            const width = 48;
+            const height = 48;
+
+            // Create a canvas for the sprite
+            const texture = this.textures.createCanvas(key, width, height);
+            const context = texture.getContext();
+
+            // Clear the canvas
+            context.clearRect(0, 0, width, height);
+
+            // Center coordinates
+            const centerX = width / 2;
+            const centerY = height / 2;
+
+            // Create a metallic red gradient for the ship body
+            const bodyGradient = context.createLinearGradient(0, 0, width, 0);
+            bodyGradient.addColorStop(0, '#aa3333');   // Darker red on left
+            bodyGradient.addColorStop(0.5, '#ff5555'); // Lighter red in center
+            bodyGradient.addColorStop(1, '#aa3333');   // Darker red on right
+
+            // Draw the main body of the drone - small triangular shape
+            context.fillStyle = bodyGradient;
+            context.beginPath();
+            context.moveTo(centerX, 10);              // Nose of the ship
+            context.lineTo(centerX + 15, height - 15); // Right corner
+            context.lineTo(centerX - 15, height - 15); // Left corner
+            context.closePath();
+            context.fill();
+
+            // Add a metallic stroke to the body
+            context.strokeStyle = '#ff9999';
+            context.lineWidth = 1;
+            context.stroke();
+
+            // Add wing details
+            context.fillStyle = '#992222';
+
+            // Left wing
+            context.beginPath();
+            context.moveTo(centerX - 15, height - 15); // Inner corner
+            context.lineTo(centerX - 25, height - 20); // Outer point
+            context.lineTo(centerX - 10, height - 10); // Back point
+            context.closePath();
+            context.fill();
+
+            // Right wing
+            context.beginPath();
+            context.moveTo(centerX + 15, height - 15); // Inner corner
+            context.lineTo(centerX + 25, height - 20); // Outer point
+            context.lineTo(centerX + 10, height - 10); // Back point
+            context.closePath();
+            context.fill();
+
+            // Add engine glow
+            const engineGlow = context.createRadialGradient(
+                centerX, height - 12, 0,
+                centerX, height - 12, 10
+            );
+            engineGlow.addColorStop(0, 'rgba(255, 200, 50, 0.8)');
+            engineGlow.addColorStop(1, 'rgba(255, 100, 50, 0)');
+
+            context.fillStyle = engineGlow;
+            context.beginPath();
+            context.arc(centerX, height - 12, 10, 0, Math.PI * 2);
+            context.fill();
+
+            // Add cockpit/sensor array
+            context.fillStyle = '#ffcccc';
+            context.beginPath();
+            context.arc(centerX, centerY - 5, 4, 0, Math.PI * 2);
+            context.fill();
+
+            // Add panel lines
+            context.strokeStyle = '#ff6666';
+            context.lineWidth = 0.5;
+
+            // Center line
+            context.beginPath();
+            context.moveTo(centerX, 10);
+            context.lineTo(centerX, centerY + 5);
+            context.stroke();
+
+            // Wing lines
+            context.beginPath();
+            context.moveTo(centerX - 5, centerY);
+            context.lineTo(centerX - 15, height - 15);
+            context.stroke();
+
+            context.beginPath();
+            context.moveTo(centerX + 5, centerY);
+            context.lineTo(centerX + 15, height - 15);
+            context.stroke();
+
+            // Update the texture
+            texture.refresh();
+
+            console.log(`Created enhanced ${key} sprite`);
+        } catch (error) {
+            console.warn(`Failed to create ${key} sprite:`, error);
+
+            // Fallback to simple shape
+            const graphics = this.make.graphics();
+            graphics.fillStyle(0xff3333);
+            graphics.fillTriangle(24, 0, 48, 48, 0, 48);
+            graphics.generateTexture(key, 48, 48);
+            graphics.clear();
+        }
+    }
+
+    createEnemyGunshipSprite(key) {
+        try {
+            // Create a medium-sized gunship with weapon pods
+            const width = 64;
+            const height = 64;
+
+            // Create a canvas for the sprite
+            const texture = this.textures.createCanvas(key, width, height);
+            const context = texture.getContext();
+
+            // Clear the canvas
+            context.clearRect(0, 0, width, height);
+
+            // Center coordinates
+            const centerX = width / 2;
+            const centerY = height / 2;
+
+            // Create a metallic red gradient for the ship body
+            const bodyGradient = context.createLinearGradient(0, 0, width, 0);
+            bodyGradient.addColorStop(0, '#992222');   // Darker red on left
+            bodyGradient.addColorStop(0.5, '#dd4444'); // Lighter red in center
+            bodyGradient.addColorStop(1, '#992222');   // Darker red on right
+
+            // Draw the main body of the gunship - wider triangular shape
+            context.fillStyle = bodyGradient;
+            context.beginPath();
+            context.moveTo(centerX, 8);               // Nose of the ship
+            context.lineTo(centerX + 25, height - 18); // Right corner
+            context.lineTo(centerX - 25, height - 18); // Left corner
+            context.closePath();
+            context.fill();
+
+            // Add a metallic stroke to the body
+            context.strokeStyle = '#ff6666';
+            context.lineWidth = 1;
+            context.stroke();
+
+            // Add weapon pods
+            context.fillStyle = '#661111';
+
+            // Left weapon pod
+            context.beginPath();
+            context.moveTo(centerX - 20, height - 25); // Top
+            context.lineTo(centerX - 30, height - 20); // Outer
+            context.lineTo(centerX - 28, height - 10); // Bottom
+            context.lineTo(centerX - 15, height - 15); // Inner
+            context.closePath();
+            context.fill();
+
+            // Right weapon pod
+            context.beginPath();
+            context.moveTo(centerX + 20, height - 25); // Top
+            context.lineTo(centerX + 30, height - 20); // Outer
+            context.lineTo(centerX + 28, height - 10); // Bottom
+            context.lineTo(centerX + 15, height - 15); // Inner
+            context.closePath();
+            context.fill();
+
+            // Add engine glow
+            const engineGlow = context.createRadialGradient(
+                centerX, height - 15, 0,
+                centerX, height - 15, 12
+            );
+            engineGlow.addColorStop(0, 'rgba(255, 200, 50, 0.8)');
+            engineGlow.addColorStop(1, 'rgba(255, 100, 50, 0)');
+
+            context.fillStyle = engineGlow;
+            context.beginPath();
+            context.arc(centerX, height - 15, 12, 0, Math.PI * 2);
+            context.fill();
+
+            // Add weapon glow
+            const weaponGlow = context.createRadialGradient(
+                centerX - 25, height - 15, 0,
+                centerX - 25, height - 15, 5
+            );
+            weaponGlow.addColorStop(0, 'rgba(255, 50, 50, 0.8)');
+            weaponGlow.addColorStop(1, 'rgba(255, 50, 50, 0)');
+
+            // Left weapon glow
+            context.fillStyle = weaponGlow;
+            context.beginPath();
+            context.arc(centerX - 25, height - 15, 5, 0, Math.PI * 2);
+            context.fill();
+
+            // Right weapon glow
+            const weaponGlow2 = context.createRadialGradient(
+                centerX + 25, height - 15, 0,
+                centerX + 25, height - 15, 5
+            );
+            weaponGlow2.addColorStop(0, 'rgba(255, 50, 50, 0.8)');
+            weaponGlow2.addColorStop(1, 'rgba(255, 50, 50, 0)');
+
+            context.fillStyle = weaponGlow2;
+            context.beginPath();
+            context.arc(centerX + 25, height - 15, 5, 0, Math.PI * 2);
+            context.fill();
+
+            // Add cockpit
+            context.fillStyle = '#ffaaaa';
+            context.beginPath();
+            context.arc(centerX, centerY - 10, 6, 0, Math.PI * 2);
+            context.fill();
+
+            // Add panel lines
+            context.strokeStyle = '#ff6666';
+            context.lineWidth = 0.5;
+
+            // Center line
+            context.beginPath();
+            context.moveTo(centerX, 8);
+            context.lineTo(centerX, centerY + 10);
+            context.stroke();
+
+            // Wing lines
+            context.beginPath();
+            context.moveTo(centerX - 10, centerY - 5);
+            context.lineTo(centerX - 25, height - 18);
+            context.stroke();
+
+            context.beginPath();
+            context.moveTo(centerX + 10, centerY - 5);
+            context.lineTo(centerX + 25, height - 18);
+            context.stroke();
+
+            // Update the texture
+            texture.refresh();
+
+            console.log(`Created enhanced ${key} sprite`);
+        } catch (error) {
+            console.warn(`Failed to create ${key} sprite:`, error);
+
+            // Fallback to simple shape
+            const graphics = this.make.graphics();
+            graphics.fillStyle(0xff3333);
+            graphics.fillTriangle(32, 0, 64, 64, 0, 64);
+            graphics.generateTexture(key, 64, 64);
+            graphics.clear();
+        }
+    }
+
+    createEnemyDestroyerSprite(key) {
+        try {
+            // Create a large, heavily armored destroyer
+            const width = 80;
+            const height = 80;
+
+            // Create a canvas for the sprite
+            const texture = this.textures.createCanvas(key, width, height);
+            const context = texture.getContext();
+
+            // Clear the canvas
+            context.clearRect(0, 0, width, height);
+
+            // Center coordinates
+            const centerX = width / 2;
+            const centerY = height / 2;
+
+            // Create a metallic dark red gradient for the ship body
+            const bodyGradient = context.createLinearGradient(0, 0, width, 0);
+            bodyGradient.addColorStop(0, '#771111');   // Darker red on left
+            bodyGradient.addColorStop(0.5, '#aa2222'); // Lighter red in center
+            bodyGradient.addColorStop(1, '#771111');   // Darker red on right
+
+            // Draw the main body of the destroyer - bulky shape
+            context.fillStyle = bodyGradient;
+            context.beginPath();
+            context.moveTo(centerX, 10);               // Nose of the ship
+            context.lineTo(centerX + 15, 25);          // Right shoulder
+            context.lineTo(centerX + 35, height - 20); // Right corner
+            context.lineTo(centerX - 35, height - 20); // Left corner
+            context.lineTo(centerX - 15, 25);          // Left shoulder
+            context.closePath();
+            context.fill();
+
+            // Add a metallic stroke to the body
+            context.strokeStyle = '#cc3333';
+            context.lineWidth = 1.5;
+            context.stroke();
+
+            // Add armor plating
+            context.fillStyle = '#550000';
+
+            // Left armor plate
+            context.beginPath();
+            context.moveTo(centerX - 15, 25);          // Top
+            context.lineTo(centerX - 25, 35);          // Outer top
+            context.lineTo(centerX - 30, height - 25); // Outer bottom
+            context.lineTo(centerX - 20, height - 20); // Inner bottom
+            context.closePath();
+            context.fill();
+
+            // Right armor plate
+            context.beginPath();
+            context.moveTo(centerX + 15, 25);          // Top
+            context.lineTo(centerX + 25, 35);          // Outer top
+            context.lineTo(centerX + 30, height - 25); // Outer bottom
+            context.lineTo(centerX + 20, height - 20); // Inner bottom
+            context.closePath();
+            context.fill();
+
+            // Add engine glow
+            const engineGlow = context.createRadialGradient(
+                centerX, height - 20, 0,
+                centerX, height - 20, 15
+            );
+            engineGlow.addColorStop(0, 'rgba(255, 150, 50, 0.8)');
+            engineGlow.addColorStop(1, 'rgba(255, 100, 50, 0)');
+
+            context.fillStyle = engineGlow;
+            context.beginPath();
+            context.arc(centerX, height - 20, 15, 0, Math.PI * 2);
+            context.fill();
+
+            // Add weapon turrets
+            context.fillStyle = '#aa0000';
+
+            // Main turret
+            context.beginPath();
+            context.arc(centerX, centerY - 5, 8, 0, Math.PI * 2);
+            context.fill();
+
+            // Side turrets
+            context.beginPath();
+            context.arc(centerX - 20, centerY + 10, 5, 0, Math.PI * 2);
+            context.fill();
+
+            context.beginPath();
+            context.arc(centerX + 20, centerY + 10, 5, 0, Math.PI * 2);
+            context.fill();
+
+            // Add turret details
+            context.strokeStyle = '#ff4444';
+            context.lineWidth = 1;
+
+            // Main gun barrel
+            context.beginPath();
+            context.moveTo(centerX, centerY - 10);
+            context.lineTo(centerX, centerY - 20);
+            context.stroke();
+
+            // Side gun barrels
+            context.beginPath();
+            context.moveTo(centerX - 20, centerY + 7);
+            context.lineTo(centerX - 25, centerY);
+            context.stroke();
+
+            context.beginPath();
+            context.moveTo(centerX + 20, centerY + 7);
+            context.lineTo(centerX + 25, centerY);
+            context.stroke();
+
+            // Add shield generator dome
+            context.fillStyle = '#cc6666';
+            context.beginPath();
+            context.arc(centerX, centerY + 15, 6, 0, Math.PI, true);
+            context.closePath();
+            context.fill();
+
+            // Add panel lines and details
+            context.strokeStyle = '#cc3333';
+            context.lineWidth = 0.5;
+
+            // Center line
+            context.beginPath();
+            context.moveTo(centerX, 10);
+            context.lineTo(centerX, centerY + 25);
+            context.stroke();
+
+            // Armor plate details
+            context.beginPath();
+            context.moveTo(centerX - 20, 30);
+            context.lineTo(centerX - 25, height - 30);
+            context.stroke();
+
+            context.beginPath();
+            context.moveTo(centerX + 20, 30);
+            context.lineTo(centerX + 25, height - 30);
+            context.stroke();
+
+            // Add a subtle glow around the ship
+            const shipGlow = context.createRadialGradient(
+                centerX, centerY, 20,
+                centerX, centerY, 50
+            );
+            shipGlow.addColorStop(0, 'rgba(255, 50, 50, 0.1)');
+            shipGlow.addColorStop(1, 'rgba(255, 50, 50, 0)');
+
+            context.fillStyle = shipGlow;
+            context.beginPath();
+            context.arc(centerX, centerY, 50, 0, Math.PI * 2);
+            context.fill();
+
+            // Update the texture
+            texture.refresh();
+
+            console.log(`Created enhanced ${key} sprite`);
+        } catch (error) {
+            console.warn(`Failed to create ${key} sprite:`, error);
+
+            // Fallback to simple shape
+            const graphics = this.make.graphics();
+            graphics.fillStyle(0xff3333);
+            graphics.fillTriangle(40, 0, 80, 80, 0, 80);
+            graphics.generateTexture(key, 80, 80);
+            graphics.clear();
         }
     }
 

@@ -31,51 +31,52 @@ class PlayerShip extends Phaser.Physics.Arcade.Sprite {
         this.weaponType = 'BASIC_LASER';
         this.projectiles = scene.physics.add.group();
 
-        // Ammo system
+        // Ammo system - increased ammo capacity for all weapons
         this.ammo = {
-            BASIC_LASER: 100,
-            SPREAD_SHOT: 60,
-            PLASMA_BOLT: 40,
-            HOMING_MISSILE: 20,
-            DUAL_CANNON: 80,
-            LASER_BEAM: 50,
-            SCATTER_BOMB: 30
+            BASIC_LASER: Infinity, // Basic laser now has infinite ammo
+            SPREAD_SHOT: 100,     // Increased from 60
+            PLASMA_BOLT: 60,      // Increased from 40
+            HOMING_MISSILE: 30,   // Increased from 20
+            DUAL_CANNON: 120,     // Increased from 80
+            LASER_BEAM: 80,       // Increased from 50
+            SCATTER_BOMB: 50      // Increased from 30
         };
 
-        // Maximum ammo capacity
+        // Maximum ammo capacity - increased for all weapons
         this.maxAmmo = {
-            BASIC_LASER: 100,
-            SPREAD_SHOT: 60,
-            PLASMA_BOLT: 40,
-            HOMING_MISSILE: 20,
-            DUAL_CANNON: 80,
-            LASER_BEAM: 50,
-            SCATTER_BOMB: 30
+            BASIC_LASER: Infinity, // Basic laser now has infinite ammo
+            SPREAD_SHOT: 100,     // Increased from 60
+            PLASMA_BOLT: 60,      // Increased from 40
+            HOMING_MISSILE: 30,   // Increased from 20
+            DUAL_CANNON: 120,     // Increased from 80
+            LASER_BEAM: 80,       // Increased from 50
+            SCATTER_BOMB: 50      // Increased from 30
         };
 
-        // Ammo regeneration rates (ammo per second)
+        // Ammo regeneration rates (ammo per second) - increased for better gameplay
         this.ammoRegenRate = {
-            BASIC_LASER: 0.5,
-            SPREAD_SHOT: 0.3,
-            PLASMA_BOLT: 0.2,
-            HOMING_MISSILE: 0.1,
-            DUAL_CANNON: 0.4,
-            LASER_BEAM: 0.25,
-            SCATTER_BOMB: 0.15
+            BASIC_LASER: 0,        // No regen needed for infinite ammo
+            SPREAD_SHOT: 0.6,     // Doubled from 0.3
+            PLASMA_BOLT: 0.4,     // Doubled from 0.2
+            HOMING_MISSILE: 0.2,  // Doubled from 0.1
+            DUAL_CANNON: 0.8,     // Doubled from 0.4
+            LASER_BEAM: 0.5,      // Doubled from 0.25
+            SCATTER_BOMB: 0.3     // Doubled from 0.15
         };
 
         // Weapon unlocks (which weapons the player has access to)
-        this.unlockedWeapons = ['BASIC_LASER'];
+        // Start with more weapons unlocked for better gameplay
+        this.unlockedWeapons = ['BASIC_LASER', 'SPREAD_SHOT', 'DUAL_CANNON'];
 
-        // Ammo consumption per shot
+        // Ammo consumption per shot - reduced for better gameplay
         this.ammoConsumption = {
-            BASIC_LASER: 1,
-            SPREAD_SHOT: 3,
-            PLASMA_BOLT: 5,
-            HOMING_MISSILE: 8,
-            DUAL_CANNON: 2,
-            LASER_BEAM: 10, // Per second of continuous fire
-            SCATTER_BOMB: 10
+            BASIC_LASER: 0,        // No consumption for basic laser
+            SPREAD_SHOT: 2,       // Reduced from 3
+            PLASMA_BOLT: 3,       // Reduced from 5
+            HOMING_MISSILE: 5,    // Reduced from 8
+            DUAL_CANNON: 1,       // Reduced from 2
+            LASER_BEAM: 6,        // Reduced from 10 per second
+            SCATTER_BOMB: 6       // Reduced from 10
         };
 
         // Synergy-related properties
@@ -345,16 +346,28 @@ class PlayerShip extends Phaser.Physics.Arcade.Sprite {
 
         // Regenerate ammo for all weapon types
         Object.keys(this.ammo).forEach(weaponType => {
+            // Skip infinite ammo weapons
+            if (this.ammo[weaponType] === Infinity || this.maxAmmo[weaponType] === Infinity) {
+                return;
+            }
+
             // Only regenerate if below max capacity
             if (this.ammo[weaponType] < this.maxAmmo[weaponType]) {
                 // Calculate regeneration amount based on rate and time
-                const regenAmount = this.ammoRegenRate[weaponType] * deltaSeconds;
+                // Apply a boost factor to make regeneration faster
+                const boostFactor = 1.5; // 50% faster regeneration
+                const regenAmount = this.ammoRegenRate[weaponType] * deltaSeconds * boostFactor;
 
                 // Add regenerated ammo (capped at max capacity)
                 this.ammo[weaponType] = Math.min(
                     this.ammo[weaponType] + regenAmount,
                     this.maxAmmo[weaponType]
                 );
+
+                // Update UI if this is the current weapon
+                if (weaponType === this.weaponType && this.scene.updateAmmoUI) {
+                    this.scene.updateAmmoUI();
+                }
             }
         });
     }
@@ -460,14 +473,17 @@ class PlayerShip extends Phaser.Physics.Arcade.Sprite {
     handleWeapons() {
         // Fire weapons with spacebar
         if ((this.cursors.space.isDown || this.keys.space.isDown) && this.canFire) {
-            // Check if we have enough ammo (basic laser is always available)
-            const ammoRequired = this.weaponType === 'BASIC_LASER' ? 0 : (this.ammoConsumption[this.weaponType] || 1);
+            // Get ammo required for current weapon
+            const ammoRequired = this.ammoConsumption[this.weaponType] || 0;
 
-            if (this.weaponType === 'BASIC_LASER' || this.ammo[this.weaponType] >= ammoRequired) {
-                // Consume ammo and fire (but not for basic laser)
-                if (this.weaponType !== 'BASIC_LASER') {
+            // Check if we have enough ammo
+            if (this.ammo[this.weaponType] === Infinity || this.ammo[this.weaponType] >= ammoRequired) {
+                // Consume ammo if not infinite
+                if (this.ammo[this.weaponType] !== Infinity) {
                     this.ammo[this.weaponType] -= ammoRequired;
                 }
+
+                // Fire the weapon
                 this.fireWeapon();
 
                 // Update UI if available
@@ -475,14 +491,33 @@ class PlayerShip extends Phaser.Physics.Arcade.Sprite {
                     this.scene.updateAmmoUI();
                 }
 
-                // Set fire rate cooldown
+                // Set fire rate cooldown based on weapon type
                 this.canFire = false;
-                this.scene.time.delayedCall(this.fireRate, () => {
+
+                // Get weapon settings
+                const weaponSettings = CONSTANTS.WEAPONS[this.weaponType];
+                const fireRate = weaponSettings?.FIRE_RATE || this.fireRate;
+
+                // Apply fire rate cooldown
+                this.scene.time.delayedCall(fireRate, () => {
                     this.canFire = true;
                 });
             } else {
                 // Not enough ammo - play feedback
                 this.playNoAmmoFeedback();
+
+                // Try to auto-switch to basic laser if out of ammo
+                if (this.weaponType !== 'BASIC_LASER') {
+                    this.weaponType = 'BASIC_LASER';
+
+                    // Show weapon switch feedback
+                    this.showWeaponSwitchFeedback('BASIC_LASER');
+
+                    // Update UI
+                    if (this.scene.updateAmmoUI) {
+                        this.scene.updateAmmoUI();
+                    }
+                }
 
                 // Set a shorter cooldown for the no-ammo click
                 this.canFire = false;
@@ -1335,11 +1370,110 @@ class PlayerShip extends Phaser.Physics.Arcade.Sprite {
                     });
                 }
                 break;
+            case 'damageMultiplier':
+                // Increase damage multiplier
+                this.damageMultiplier += upgrade.value;
+                break;
+            case 'shieldRegenRate':
+                // Increase shield regeneration rate
+                this.shieldRegenRate += upgrade.value;
+                break;
+            case 'cooldownReduction':
+                // Reduce cooldowns (dash, special abilities)
+                this.cooldownReduction += upgrade.value;
+                this.dashCooldown = Math.max(CONSTANTS.PLAYER.DASH_COOLDOWN * (1 - this.cooldownReduction), 500);
+                break;
+            case 'criticalChance':
+                // Increase critical hit chance
+                this.criticalChance += upgrade.value;
+                break;
+            case 'damageReduction':
+                // Increase damage reduction percentage
+                this.damageReduction += upgrade.value;
+                break;
+            case 'special':
+                // Apply special upgrade effects
+                this.applySpecialUpgrade(upgrade);
+                break;
+            case 'ammoRegen':
+                // Increase ammo regeneration rate
+                this.ammoRegenRate = (this.ammoRegenRate || 1) + upgrade.value;
+                break;
+            case 'projectileSize':
+                // Increase projectile size
+                this.projectileSizeMultiplier = (this.projectileSizeMultiplier || 1) + upgrade.value;
+                break;
+            case 'projectileSpeed':
+                // Increase projectile speed
+                this.projectileSpeedMultiplier = (this.projectileSpeedMultiplier || 1) + upgrade.value;
+                break;
             // Add more upgrade types as needed
         }
 
         // Sound is disabled
         // No powerup sound will be played
+    }
+
+    /**
+     * Apply special upgrade effects
+     * @param {object} upgrade - The special upgrade to apply
+     */
+    applySpecialUpgrade(upgrade) {
+        switch (upgrade.value) {
+            case 'energyConverter':
+                // Converts excess shield energy to weapon power
+                this.hasEnergyConverter = true;
+                break;
+            case 'shieldRecharge':
+                // Enhances shield recharge rate
+                this.shieldRegenRate += 0.5;
+                break;
+            case 'emergencyThrusters':
+                // Boosts speed when health is low
+                this.hasEmergencyThrusters = true;
+                break;
+            case 'secondaryWeapon':
+                // Adds a secondary auto-firing weapon
+                this.hasSecondaryWeapon = true;
+                break;
+            case 'pointDefense':
+                // Adds point defense system
+                this.hasPointDefense = true;
+                break;
+            case 'phaseShift':
+                // Adds phase shift ability
+                this.hasPhaseShift = true;
+                this.phaseShiftCooldown = 0;
+                break;
+            case 'temporaryInvulnerability':
+                // Temporary invulnerability
+                this.setInvincible(true);
+                this.scene.time.delayedCall(3000, () => {
+                    this.setInvincible(false);
+                });
+                break;
+            case 'powerSurge':
+                // Temporary damage boost
+                const oldMultiplier = this.damageMultiplier;
+                this.damageMultiplier += 0.5;
+                this.scene.time.delayedCall(10000, () => {
+                    this.damageMultiplier = oldMultiplier;
+                });
+                break;
+            case 'multiShot':
+                // Adds multi-shot capability
+                this.hasMultiShot = true;
+                break;
+            case 'projectilePenetration':
+                // Projectiles can penetrate through enemies
+                this.hasProjectilePenetration = true;
+                break;
+            case 'shieldBurst':
+                // Adds shield burst ability
+                this.hasShieldBurst = true;
+                this.shieldBurstCooldown = 0;
+                break;
+        }
     }
 
     addAmmo(weaponType, amount) {
@@ -1411,7 +1545,121 @@ class PlayerShip extends Phaser.Physics.Arcade.Sprite {
             case 'fireRate':
                 this.fireRate += penalty.value;
                 break;
+            case 'weakness':
+                // Apply specific weakness effects
+                this.weaknesses = this.weaknesses || [];
+                this.weaknesses.push(penalty.value);
+                break;
+            case 'damageMultiplier':
+                // Decrease damage multiplier
+                this.damageMultiplier = Math.max((this.damageMultiplier || 1) - penalty.value, 0.5); // Minimum 50% damage
+                break;
+            case 'ammoCapacity':
+                // Reduce ammo capacity for all weapons
+                Object.keys(this.maxAmmo).forEach(weaponType => {
+                    this.maxAmmo[weaponType] = Math.max(this.maxAmmo[weaponType] - penalty.value, 1);
+                    this.ammo[weaponType] = Math.min(this.ammo[weaponType], this.maxAmmo[weaponType]);
+                });
+                break;
+            case 'cooldownIncrease':
+                // Increase cooldowns (dash, special abilities)
+                this.cooldownIncrease = (this.cooldownIncrease || 0) + penalty.value;
+                this.dashCooldown = CONSTANTS.PLAYER.DASH_COOLDOWN * (1 + this.cooldownIncrease);
+                break;
+            case 'projectileSize':
+                // Decrease projectile size
+                this.projectileSizeMultiplier = Math.max((this.projectileSizeMultiplier || 1) - penalty.value, 0.5);
+                break;
+            case 'projectileSpeed':
+                // Decrease projectile speed
+                this.projectileSpeedMultiplier = Math.max((this.projectileSpeedMultiplier || 1) - penalty.value, 0.5);
+                break;
+            case 'criticalVulnerability':
+                // Increase chance of taking critical damage
+                this.criticalVulnerability = (this.criticalVulnerability || 0) + penalty.value;
+                break;
+            case 'systemFailure':
+                // Apply system failure effects
+                this.applySystemFailure(penalty);
+                break;
             // Add more penalty types as needed
+        }
+    }
+
+    /**
+     * Apply system failure effects
+     * @param {object} penalty - The system failure penalty to apply
+     */
+    applySystemFailure(penalty) {
+        switch (penalty.value) {
+            case 'weaponMalfunction':
+                // Weapons occasionally jam
+                this.hasWeaponMalfunction = true;
+                this.weaponMalfunctionChance = 0.05; // 5% chance per shot
+                break;
+            case 'shieldFluctuation':
+                // Shields occasionally flicker
+                this.hasShieldFluctuation = true;
+                this.shieldFluctuationChance = 0.1; // 10% chance when hit
+                break;
+            case 'engineStutter':
+                // Engines occasionally stutter
+                this.hasEngineStutter = true;
+                this.engineStutterChance = 0.08; // 8% chance when moving
+                break;
+            case 'powerSurges':
+                // Random power surges affect all systems
+                this.hasPowerSurges = true;
+                // Set up periodic power surges
+                this.scene.time.addEvent({
+                    delay: 15000, // Every 15 seconds
+                    callback: this.triggerPowerSurge,
+                    callbackScope: this,
+                    loop: true
+                });
+                break;
+            case 'sensorGlitches':
+                // Sensors occasionally show false readings
+                this.hasSensorGlitches = true;
+                break;
+        }
+    }
+
+    /**
+     * Trigger a power surge effect
+     */
+    triggerPowerSurge() {
+        if (!this.hasPowerSurges || !this.active) return;
+
+        // Randomly affect one system
+        const systems = ['weapons', 'shields', 'engines'];
+        const affectedSystem = systems[Math.floor(Math.random() * systems.length)];
+
+        // Apply temporary effect
+        switch (affectedSystem) {
+            case 'weapons':
+                // Disable weapons temporarily
+                this.canFire = false;
+                this.scene.time.delayedCall(2000, () => {
+                    this.canFire = true;
+                });
+                break;
+            case 'shields':
+                // Disable shields temporarily
+                const oldShields = this.shields;
+                this.shields = 0;
+                this.scene.time.delayedCall(2000, () => {
+                    this.shields = oldShields;
+                });
+                break;
+            case 'engines':
+                // Reduce speed temporarily
+                const oldSpeed = this.speed;
+                this.speed = this.speed * 0.5;
+                this.scene.time.delayedCall(2000, () => {
+                    this.speed = oldSpeed;
+                });
+                break;
         }
     }
 

@@ -685,6 +685,13 @@ class ChoiceSystem {
                 description: 'Standard issue laser weapon with balanced properties.',
                 tier: 1
             },
+            {
+                type: 'weapon',
+                value: 'DUAL_CANNON',
+                name: 'Dual Cannon',
+                description: 'Fires two projectiles in quick succession with good accuracy.',
+                tier: 1
+            },
             // Weapons - Tier 2
             {
                 type: 'weapon',
@@ -698,6 +705,13 @@ class ChoiceSystem {
                 value: 'PLASMA_BOLT',
                 name: 'Plasma Accelerator',
                 description: 'Fires high-damage plasma projectiles at a slower rate.',
+                tier: 2
+            },
+            {
+                type: 'weapon',
+                value: 'LASER_BEAM',
+                name: 'Continuous Laser Beam',
+                description: 'Fires a continuous beam that deals damage over time.',
                 tier: 2
             },
             // Weapons - Tier 3
@@ -715,6 +729,13 @@ class ChoiceSystem {
                 description: 'Fires a continuous beam that penetrates through enemies.',
                 tier: 3
             },
+            {
+                type: 'weapon',
+                value: 'SCATTER_BOMB',
+                name: 'Scatter Bomb Launcher',
+                description: 'Launches bombs that explode into multiple projectiles.',
+                tier: 3
+            },
 
             // Hull Upgrades - Tier 1
             {
@@ -722,6 +743,13 @@ class ChoiceSystem {
                 value: 25,
                 name: 'Hull Reinforcement I',
                 description: 'Basic reinforced hull plating increases maximum health.',
+                tier: 1
+            },
+            {
+                type: 'health',
+                value: 35,
+                name: 'Reactive Armor Plating',
+                description: 'Armor that hardens on impact, increasing maximum health.',
                 tier: 1
             },
             // Hull Upgrades - Tier 2
@@ -732,12 +760,26 @@ class ChoiceSystem {
                 description: 'Advanced composite plating significantly increases maximum health.',
                 tier: 2
             },
+            {
+                type: 'health',
+                value: 60,
+                name: 'Ablative Armor System',
+                description: 'Multi-layered armor that absorbs damage, significantly increasing maximum health.',
+                tier: 2
+            },
             // Hull Upgrades - Tier 3
             {
                 type: 'health',
                 value: 100,
                 name: 'Adaptive Hull Matrix',
                 description: 'Self-repairing nanomaterial hull dramatically increases maximum health.',
+                tier: 3
+            },
+            {
+                type: 'health',
+                value: 120,
+                name: 'Quantum-Locked Hull',
+                description: 'Hull reinforced with quantum-locked materials, dramatically increasing maximum health.',
                 tier: 3
             },
 
@@ -749,6 +791,13 @@ class ChoiceSystem {
                 description: 'Enhanced shield generators increase maximum shield capacity.',
                 tier: 1
             },
+            {
+                type: 'shield',
+                value: 25,
+                name: 'Deflector Array',
+                description: 'Specialized shield geometry increases maximum shield capacity.',
+                tier: 1
+            },
             // Shield Upgrades - Tier 2
             {
                 type: 'shield',
@@ -757,12 +806,26 @@ class ChoiceSystem {
                 description: 'Advanced shield harmonics significantly increase maximum shield capacity.',
                 tier: 2
             },
+            {
+                type: 'shield',
+                value: 50,
+                name: 'Resonance Barrier',
+                description: 'Shield that resonates at enemy weapon frequencies, significantly increasing maximum shield capacity.',
+                tier: 2
+            },
             // Shield Upgrades - Tier 3
             {
                 type: 'shield',
                 value: 80,
                 name: 'Quantum Shield Matrix',
                 description: 'Experimental shield technology dramatically increases maximum shield capacity.',
+                tier: 3
+            },
+            {
+                type: 'shield',
+                value: 100,
+                name: 'Dimensional Barrier',
+                description: 'Shield that exists partially in another dimension, dramatically increasing maximum shield capacity.',
                 tier: 3
             },
 
@@ -774,6 +837,13 @@ class ChoiceSystem {
                 description: 'Upgraded engine components increase overall speed.',
                 tier: 1
             },
+            {
+                type: 'speed',
+                value: 40,
+                name: 'Thruster Optimization',
+                description: 'Recalibrated thrusters increase overall speed.',
+                tier: 1
+            },
             // Engine Upgrades - Tier 2
             {
                 type: 'speed',
@@ -782,12 +852,26 @@ class ChoiceSystem {
                 description: 'Advanced propulsion system significantly increases overall speed.',
                 tier: 2
             },
+            {
+                type: 'speed',
+                value: 70,
+                name: 'Plasma Injection System',
+                description: 'High-energy plasma injectors significantly increase overall speed.',
+                tier: 2
+            },
             // Engine Upgrades - Tier 3
             {
                 type: 'speed',
                 value: 100,
                 name: 'Quantum Propulsion',
                 description: 'Experimental drive technology dramatically increases overall speed.',
+                tier: 3
+            },
+            {
+                type: 'speed',
+                value: 120,
+                name: 'Subspace Drive',
+                description: 'Engine that warps local space-time, dramatically increasing overall speed.',
                 tier: 3
             },
 
@@ -799,12 +883,26 @@ class ChoiceSystem {
                 description: 'Optimized weapon cooling decreases time between shots.',
                 tier: 1
             },
+            {
+                type: 'fireRate',
+                value: 20,
+                name: 'Rapid Cycling Mechanism',
+                description: 'Enhanced weapon cycling decreases time between shots.',
+                tier: 1
+            },
             // Weapon System Upgrades - Tier 2
             {
                 type: 'fireRate',
                 value: 30,
                 name: 'Firing System Upgrade II',
                 description: 'Advanced cooling system significantly decreases time between shots.',
+                tier: 2
+            },
+            {
+                type: 'fireRate',
+                value: 40,
+                name: 'Accelerated Weapon Matrix',
+                description: 'Synchronized weapon systems significantly decrease time between shots.',
                 tier: 2
             },
             // Weapon System Upgrades - Tier 3
@@ -815,6 +913,213 @@ class ChoiceSystem {
                 description: 'Experimental weapon system dramatically decreases time between shots.',
                 tier: 3
             },
+            {
+                type: 'fireRate',
+                value: 60,
+                name: 'Temporal Acceleration Field',
+                description: 'Localized time dilation dramatically decreases time between shots.',
+                tier: 3
+            },
+
+            // Damage Multiplier Upgrades - Tier 1
+            {
+                type: 'damageMultiplier',
+                value: 0.1,
+                name: 'Weapon Calibration',
+                description: 'Fine-tuned weapon systems increase damage output by 10%.',
+                tier: 1
+            },
+            // Damage Multiplier Upgrades - Tier 2
+            {
+                type: 'damageMultiplier',
+                value: 0.25,
+                name: 'Overcharged Weapons',
+                description: 'Overcharged power systems increase damage output by 25%.',
+                tier: 2
+            },
+            // Damage Multiplier Upgrades - Tier 3
+            {
+                type: 'damageMultiplier',
+                value: 0.5,
+                name: 'Quantum Amplification',
+                description: 'Quantum-enhanced weapon systems increase damage output by 50%.',
+                tier: 3
+            },
+
+            // Shield Regeneration Upgrades - Tier 1
+            {
+                type: 'shieldRegenRate',
+                value: 0.2,
+                name: 'Shield Capacitor',
+                description: 'Enhanced shield capacitors improve shield regeneration rate.',
+                tier: 1
+            },
+            // Shield Regeneration Upgrades - Tier 2
+            {
+                type: 'shieldRegenRate',
+                value: 0.4,
+                name: 'Advanced Shield Capacitor',
+                description: 'Advanced shield capacitors significantly improve shield regeneration rate.',
+                tier: 2
+            },
+            // Shield Regeneration Upgrades - Tier 3
+            {
+                type: 'shieldRegenRate',
+                value: 0.8,
+                name: 'Quantum Shield Capacitor',
+                description: 'Experimental shield capacitors dramatically improve shield regeneration rate.',
+                tier: 3
+            },
+
+            // Cooldown Reduction Upgrades - Tier 1
+            {
+                type: 'cooldownReduction',
+                value: 0.1,
+                name: 'Coolant Injection System',
+                description: 'Improved cooling reduces ability cooldowns by 10%.',
+                tier: 1
+            },
+            // Cooldown Reduction Upgrades - Tier 2
+            {
+                type: 'cooldownReduction',
+                value: 0.2,
+                name: 'Advanced Coolant System',
+                description: 'Advanced cooling significantly reduces ability cooldowns by 20%.',
+                tier: 2
+            },
+            // Cooldown Reduction Upgrades - Tier 3
+            {
+                type: 'cooldownReduction',
+                value: 0.3,
+                name: 'Cryogenic Cooling Matrix',
+                description: 'Experimental cooling dramatically reduces ability cooldowns by 30%.',
+                tier: 3
+            },
+
+            // Critical Chance Upgrades - Tier 1
+            {
+                type: 'criticalChance',
+                value: 0.05,
+                name: 'Targeting Computer',
+                description: 'Enhanced targeting increases critical hit chance by 5%.',
+                tier: 1
+            },
+            // Critical Chance Upgrades - Tier 2
+            {
+                type: 'criticalChance',
+                value: 0.1,
+                name: 'Advanced Targeting System',
+                description: 'Advanced targeting significantly increases critical hit chance by 10%.',
+                tier: 2
+            },
+            // Critical Chance Upgrades - Tier 3
+            {
+                type: 'criticalChance',
+                value: 0.2,
+                name: 'Quantum Targeting System',
+                description: 'Experimental targeting dramatically increases critical hit chance by 20%.',
+                tier: 3
+            },
+
+            // Damage Reduction Upgrades - Tier 1
+            {
+                type: 'damageReduction',
+                value: 0.1,
+                name: 'Structural Reinforcement',
+                description: 'Reinforced structure reduces incoming damage by 10%.',
+                tier: 1
+            },
+            // Damage Reduction Upgrades - Tier 2
+            {
+                type: 'damageReduction',
+                value: 0.2,
+                name: 'Advanced Structural Matrix',
+                description: 'Advanced structural reinforcement reduces incoming damage by 20%.',
+                tier: 2
+            },
+            // Damage Reduction Upgrades - Tier 3
+            {
+                type: 'damageReduction',
+                value: 0.3,
+                name: 'Quantum Structural Field',
+                description: 'Experimental structural field reduces incoming damage by 30%.',
+                tier: 3
+            },
+
+            // Ammo Regeneration Upgrades - Tier 1
+            {
+                type: 'ammoRegen',
+                value: 0.2,
+                name: 'Ammo Synthesizer',
+                description: 'Basic synthesizer increases ammo regeneration rate.',
+                tier: 1
+            },
+            // Ammo Regeneration Upgrades - Tier 2
+            {
+                type: 'ammoRegen',
+                value: 0.4,
+                name: 'Advanced Ammo Synthesizer',
+                description: 'Advanced synthesizer significantly increases ammo regeneration rate.',
+                tier: 2
+            },
+            // Ammo Regeneration Upgrades - Tier 3
+            {
+                type: 'ammoRegen',
+                value: 0.8,
+                name: 'Quantum Ammo Synthesizer',
+                description: 'Experimental synthesizer dramatically increases ammo regeneration rate.',
+                tier: 3
+            },
+
+            // Projectile Size Upgrades - Tier 1
+            {
+                type: 'projectileSize',
+                value: 0.2,
+                name: 'Expanded Munitions',
+                description: 'Enlarged projectiles increase hit area by 20%.',
+                tier: 1
+            },
+            // Projectile Size Upgrades - Tier 2
+            {
+                type: 'projectileSize',
+                value: 0.4,
+                name: 'Heavy Munitions',
+                description: 'Significantly enlarged projectiles increase hit area by 40%.',
+                tier: 2
+            },
+            // Projectile Size Upgrades - Tier 3
+            {
+                type: 'projectileSize',
+                value: 0.6,
+                name: 'Massive Munitions',
+                description: 'Dramatically enlarged projectiles increase hit area by 60%.',
+                tier: 3
+            },
+
+            // Projectile Speed Upgrades - Tier 1
+            {
+                type: 'projectileSpeed',
+                value: 0.2,
+                name: 'Accelerated Munitions',
+                description: 'Enhanced propellant increases projectile speed by 20%.',
+                tier: 1
+            },
+            // Projectile Speed Upgrades - Tier 2
+            {
+                type: 'projectileSpeed',
+                value: 0.4,
+                name: 'High-Velocity Munitions',
+                description: 'Advanced propellant significantly increases projectile speed by 40%.',
+                tier: 2
+            },
+            // Projectile Speed Upgrades - Tier 3
+            {
+                type: 'projectileSpeed',
+                value: 0.6,
+                name: 'Hypersonic Munitions',
+                description: 'Experimental propellant dramatically increases projectile speed by 60%.',
+                tier: 3
+            },
 
             // Special Upgrades - Tier 1
             {
@@ -822,6 +1127,13 @@ class ChoiceSystem {
                 value: 'energyConverter',
                 name: 'Energy Converter',
                 description: 'Converts excess shield energy to weapon power, increasing damage when shields are full.',
+                tier: 1
+            },
+            {
+                type: 'special',
+                value: 'temporaryInvulnerability',
+                name: 'Emergency Shield Burst',
+                description: 'Provides brief invulnerability when activated.',
                 tier: 1
             },
             // Special Upgrades - Tier 2
@@ -837,6 +1149,13 @@ class ChoiceSystem {
                 value: 'emergencyThrusters',
                 name: 'Emergency Thrusters',
                 description: 'Automatically boosts speed when health is low.',
+                tier: 2
+            },
+            {
+                type: 'special',
+                value: 'powerSurge',
+                name: 'Power Surge',
+                description: 'Temporarily boosts weapon damage when activated.',
                 tier: 2
             },
             // Special Upgrades - Tier 3
@@ -860,6 +1179,27 @@ class ChoiceSystem {
                 name: 'Phase Shift Device',
                 description: 'Briefly makes your ship intangible when taking fatal damage. Has a long cooldown.',
                 tier: 3
+            },
+            {
+                type: 'special',
+                value: 'multiShot',
+                name: 'Multi-Shot System',
+                description: 'Weapons occasionally fire multiple projectiles at once.',
+                tier: 3
+            },
+            {
+                type: 'special',
+                value: 'projectilePenetration',
+                name: 'Penetrator Rounds',
+                description: 'Projectiles can pass through enemies, hitting multiple targets.',
+                tier: 3
+            },
+            {
+                type: 'special',
+                value: 'shieldBurst',
+                name: 'Shield Burst Generator',
+                description: 'Releases a damaging energy wave when shields are depleted.',
+                tier: 3
             }
         ];
     }
@@ -877,6 +1217,13 @@ class ChoiceSystem {
                 description: 'Minor structural damage decreases maximum health.',
                 severity: 'minor'
             },
+            {
+                type: 'health',
+                value: 15,
+                name: 'Hull Micro-fractures',
+                description: 'Small cracks in the hull structure decrease maximum health.',
+                severity: 'minor'
+            },
             // Hull Penalties - Moderate
             {
                 type: 'health',
@@ -885,12 +1232,26 @@ class ChoiceSystem {
                 description: 'Significant structural damage decreases maximum health.',
                 severity: 'moderate'
             },
+            {
+                type: 'health',
+                value: 35,
+                name: 'Compromised Hull Integrity',
+                description: 'Weakened structural supports significantly decrease maximum health.',
+                severity: 'moderate'
+            },
             // Hull Penalties - Severe
             {
                 type: 'health',
                 value: 50,
                 name: 'Severe Hull Damage',
                 description: 'Critical structural damage significantly decreases maximum health.',
+                severity: 'severe'
+            },
+            {
+                type: 'health',
+                value: 70,
+                name: 'Catastrophic Hull Failure',
+                description: 'Major breaches in hull integrity critically decrease maximum health.',
                 severity: 'severe'
             },
 
@@ -902,6 +1263,13 @@ class ChoiceSystem {
                 description: 'Minor power fluctuations decrease maximum shield capacity.',
                 severity: 'minor'
             },
+            {
+                type: 'shield',
+                value: 20,
+                name: 'Shield Emitter Misalignment',
+                description: 'Misaligned emitters decrease maximum shield capacity.',
+                severity: 'minor'
+            },
             // Shield Penalties - Moderate
             {
                 type: 'shield',
@@ -910,12 +1278,26 @@ class ChoiceSystem {
                 description: 'Significant power fluctuations decrease maximum shield capacity.',
                 severity: 'moderate'
             },
+            {
+                type: 'shield',
+                value: 40,
+                name: 'Shield Generator Damage',
+                description: 'Damaged generator components significantly decrease maximum shield capacity.',
+                severity: 'moderate'
+            },
             // Shield Penalties - Severe
             {
                 type: 'shield',
                 value: 60,
                 name: 'Severe Shield Interference',
                 description: 'Critical power fluctuations significantly decrease maximum shield capacity.',
+                severity: 'severe'
+            },
+            {
+                type: 'shield',
+                value: 80,
+                name: 'Shield Matrix Collapse',
+                description: 'Collapsed shield matrix critically decreases maximum shield capacity.',
                 severity: 'severe'
             },
 
@@ -927,6 +1309,13 @@ class ChoiceSystem {
                 description: 'Minor engine degradation decreases movement speed.',
                 severity: 'minor'
             },
+            {
+                type: 'speed',
+                value: 35,
+                name: 'Thruster Misalignment',
+                description: 'Misaligned thrusters decrease movement speed.',
+                severity: 'minor'
+            },
             // Engine Penalties - Moderate
             {
                 type: 'speed',
@@ -935,12 +1324,26 @@ class ChoiceSystem {
                 description: 'Significant engine degradation decreases movement speed.',
                 severity: 'moderate'
             },
+            {
+                type: 'speed',
+                value: 65,
+                name: 'Propulsion System Damage',
+                description: 'Damaged propulsion components significantly decrease movement speed.',
+                severity: 'moderate'
+            },
             // Engine Penalties - Severe
             {
                 type: 'speed',
                 value: 100,
                 name: 'Severe Engine Strain',
                 description: 'Critical engine degradation significantly decreases movement speed.',
+                severity: 'severe'
+            },
+            {
+                type: 'speed',
+                value: 120,
+                name: 'Engine Core Meltdown',
+                description: 'Overheated engine core critically decreases movement speed.',
                 severity: 'severe'
             },
 
@@ -952,12 +1355,26 @@ class ChoiceSystem {
                 description: 'Minor weapon system instability increases time between shots.',
                 severity: 'minor'
             },
+            {
+                type: 'fireRate',
+                value: 40,
+                name: 'Targeting System Glitch',
+                description: 'Targeting computer glitches increase time between shots.',
+                severity: 'minor'
+            },
             // Weapon Penalties - Moderate
             {
                 type: 'fireRate',
                 value: 60,
                 name: 'Moderate Weapon Destabilization',
                 description: 'Significant weapon system instability increases time between shots.',
+                severity: 'moderate'
+            },
+            {
+                type: 'fireRate',
+                value: 80,
+                name: 'Weapon Capacitor Damage',
+                description: 'Damaged weapon capacitors significantly increase time between shots.',
                 severity: 'moderate'
             },
             // Weapon Penalties - Severe
@@ -967,6 +1384,188 @@ class ChoiceSystem {
                 name: 'Severe Weapon Destabilization',
                 description: 'Critical weapon system instability significantly increases time between shots.',
                 severity: 'severe'
+            },
+            {
+                type: 'fireRate',
+                value: 150,
+                name: 'Weapon System Failure',
+                description: 'Failed weapon systems critically increase time between shots.',
+                severity: 'severe'
+            },
+
+            // Damage Multiplier Penalties - Minor to Severe
+            {
+                type: 'damageMultiplier',
+                value: 0.1,
+                name: 'Weapon Power Fluctuation',
+                description: 'Power fluctuations reduce weapon damage output by 10%.',
+                severity: 'minor'
+            },
+            {
+                type: 'damageMultiplier',
+                value: 0.2,
+                name: 'Weapon Alignment Failure',
+                description: 'Misaligned weapon components reduce damage output by 20%.',
+                severity: 'moderate'
+            },
+            {
+                type: 'damageMultiplier',
+                value: 0.3,
+                name: 'Critical Weapon Malfunction',
+                description: 'Severe weapon malfunctions reduce damage output by 30%.',
+                severity: 'severe'
+            },
+
+            // Ammo Capacity Penalties - Minor to Severe
+            {
+                type: 'ammoCapacity',
+                value: 10,
+                name: 'Ammo Storage Damage',
+                description: 'Damaged ammo storage reduces maximum ammo capacity.',
+                severity: 'minor'
+            },
+            {
+                type: 'ammoCapacity',
+                value: 25,
+                name: 'Ammo Fabricator Malfunction',
+                description: 'Malfunctioning fabricators significantly reduce maximum ammo capacity.',
+                severity: 'moderate'
+            },
+            {
+                type: 'ammoCapacity',
+                value: 40,
+                name: 'Critical Ammo System Failure',
+                description: 'Failed ammo systems severely reduce maximum ammo capacity.',
+                severity: 'severe'
+            },
+
+            // Cooldown Increase Penalties - Minor to Severe
+            {
+                type: 'cooldownIncrease',
+                value: 0.2,
+                name: 'Cooling System Damage',
+                description: 'Damaged cooling systems increase ability cooldowns by 20%.',
+                severity: 'minor'
+            },
+            {
+                type: 'cooldownIncrease',
+                value: 0.4,
+                name: 'Coolant Leak',
+                description: 'Leaking coolant significantly increases ability cooldowns by 40%.',
+                severity: 'moderate'
+            },
+            {
+                type: 'cooldownIncrease',
+                value: 0.6,
+                name: 'Cooling System Failure',
+                description: 'Failed cooling systems severely increase ability cooldowns by 60%.',
+                severity: 'severe'
+            },
+
+            // Projectile Size Penalties - Minor to Severe
+            {
+                type: 'projectileSize',
+                value: 0.1,
+                name: 'Munition Compressor Damage',
+                description: 'Damaged compressors reduce projectile size by 10%.',
+                severity: 'minor'
+            },
+            {
+                type: 'projectileSize',
+                value: 0.2,
+                name: 'Munition Fabrication Error',
+                description: 'Fabrication errors significantly reduce projectile size by 20%.',
+                severity: 'moderate'
+            },
+            {
+                type: 'projectileSize',
+                value: 0.3,
+                name: 'Critical Munition Failure',
+                description: 'Severe munition failures reduce projectile size by 30%.',
+                severity: 'severe'
+            },
+
+            // Projectile Speed Penalties - Minor to Severe
+            {
+                type: 'projectileSpeed',
+                value: 0.1,
+                name: 'Propellant Degradation',
+                description: 'Degraded propellant reduces projectile speed by 10%.',
+                severity: 'minor'
+            },
+            {
+                type: 'projectileSpeed',
+                value: 0.2,
+                name: 'Accelerator Damage',
+                description: 'Damaged accelerators significantly reduce projectile speed by 20%.',
+                severity: 'moderate'
+            },
+            {
+                type: 'projectileSpeed',
+                value: 0.3,
+                name: 'Propulsion System Failure',
+                description: 'Failed propulsion systems severely reduce projectile speed by 30%.',
+                severity: 'severe'
+            },
+
+            // Critical Vulnerability Penalties - Minor to Severe
+            {
+                type: 'criticalVulnerability',
+                value: 0.05,
+                name: 'Hull Weak Points',
+                description: 'Structural weak points increase chance of taking critical damage by 5%.',
+                severity: 'minor'
+            },
+            {
+                type: 'criticalVulnerability',
+                value: 0.1,
+                name: 'Exposed Power Conduits',
+                description: 'Exposed conduits significantly increase chance of taking critical damage by 10%.',
+                severity: 'moderate'
+            },
+            {
+                type: 'criticalVulnerability',
+                value: 0.2,
+                name: 'Critical System Exposure',
+                description: 'Exposed critical systems severely increase chance of taking critical damage by 20%.',
+                severity: 'severe'
+            },
+
+            // System Failure Penalties - Various Severities
+            {
+                type: 'systemFailure',
+                value: 'weaponMalfunction',
+                name: 'Weapon Malfunction',
+                description: 'Weapons occasionally jam during combat.',
+                severity: 'moderate'
+            },
+            {
+                type: 'systemFailure',
+                value: 'shieldFluctuation',
+                name: 'Shield Fluctuation',
+                description: 'Shields occasionally flicker when hit.',
+                severity: 'moderate'
+            },
+            {
+                type: 'systemFailure',
+                value: 'engineStutter',
+                name: 'Engine Stutter',
+                description: 'Engines occasionally stutter during movement.',
+                severity: 'moderate'
+            },
+            {
+                type: 'systemFailure',
+                value: 'powerSurges',
+                name: 'Power Core Instability',
+                description: 'Unstable power core causes random system failures.',
+                severity: 'severe'
+            },
+            {
+                type: 'systemFailure',
+                value: 'sensorGlitches',
+                name: 'Sensor Array Damage',
+                description: 'Damaged sensors occasionally show false readings.',
+                severity: 'moderate'
             },
 
             // Environmental Weaknesses
@@ -984,6 +1583,13 @@ class ChoiceSystem {
                 description: 'Damaged radiation shielding causes increased damage in radiation zones.',
                 severity: 'moderate'
             },
+            {
+                type: 'weakness',
+                value: 'thermalVulnerability',
+                name: 'Thermal Regulation Failure',
+                description: 'Failed thermal systems cause increased damage in extreme temperature zones.',
+                severity: 'moderate'
+            },
 
             // Combat Weaknesses
             {
@@ -998,6 +1604,13 @@ class ChoiceSystem {
                 value: 'eliteVulnerability',
                 name: 'Elite Enemy Vulnerability',
                 description: 'Ship systems are particularly vulnerable to elite enemy weapons.',
+                severity: 'severe'
+            },
+            {
+                type: 'weakness',
+                value: 'bossVulnerability',
+                name: 'Boss Weapon Vulnerability',
+                description: 'Ship defenses are particularly vulnerable to boss weapons.',
                 severity: 'severe'
             },
 
@@ -1023,6 +1636,13 @@ class ChoiceSystem {
                 description: 'Engines have a small chance to temporarily stall during rapid maneuvers.',
                 severity: 'severe'
             },
+            {
+                type: 'weakness',
+                value: 'ammoLeakage',
+                name: 'Ammo Storage Leak',
+                description: 'Ammo occasionally leaks, reducing available ammunition during combat.',
+                severity: 'moderate'
+            },
 
             // Critical Weaknesses
             {
@@ -1037,6 +1657,13 @@ class ChoiceSystem {
                 value: 'powerFluctuation',
                 name: 'Power Core Fluctuation',
                 description: 'Ship occasionally experiences power surges that temporarily disable shields.',
+                severity: 'severe'
+            },
+            {
+                type: 'weakness',
+                value: 'cascadingFailure',
+                name: 'Cascading System Failure',
+                description: 'When one system fails, others have an increased chance of failing as well.',
                 severity: 'severe'
             }
         ];

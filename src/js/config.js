@@ -29,7 +29,8 @@ const config = {
         GameOverScene,
         ShipStatusScene,
         InventoryScene,
-        ProfileScene
+        ProfileScene,
+        NemesisInfoScene
     ],
     scale: {
         mode: Phaser.Scale.FIT,

@@ -1,0 +1,35 @@
+{
+  "name": "stellar-rogue",
+  "version": "0.5.0",
+  "description": "A roguelike space shooter with procedurally generated sectors and adaptive difficulty",
+  "main": "index.html",
+  "scripts": {
+    "start": "http-server -o",
+    "build": "node simple-build.js",
+    "test": "echo \"No tests configured\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/qdev89/StellaRougeGame.git"
+  },
+  "keywords": [
+    "game",
+    "roguelike",
+    "space",
+    "shooter",
+    "phaser"
+  ],
+  "author": "qdev89",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/qdev89/StellaRougeGame/issues"
+  },
+  "homepage": "https://github.com/qdev89/StellaRougeGame#readme",
+  "dependencies": {
+    "phaser": "^3.55.2"
+  },
+  "devDependencies": {
+    "archiver": "^5.3.2",
+    "http-server": "^14.1.1"
+  }
+}

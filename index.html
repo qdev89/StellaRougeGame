@@ -50,7 +50,7 @@
         <h1>STELLAR ROGUE</h1>
         <p>Loading...</p>
     </div>
-    <div id="version">v0.1.2 Alpha</div>
+    <div id="version">v0.5.0 Beta</div>
 
     <!-- Phaser library -->
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.js"></script>
@@ -82,12 +82,39 @@
     <script src="src/js/systems/state-machine.js"></script>
     <script src="src/js/entities/boss-enemy.js"></script>
     <script src="src/js/entities/boss-guardian.js"></script>
+    <script src="src/js/entities/nemesis-effects.js"></script>
+    <script src="src/js/entities/boss-nemesis.js"></script>
+    <script src="src/js/systems/nemesis-system.js"></script>
     <script src="src/js/systems/procedural-generator.js"></script>
     <script src="src/js/systems/sector-map-generator.js"></script>
     <script src="src/js/systems/choice-system.js"></script>
     <script src="src/js/systems/sound-manager.js"></script>
     <script src="src/js/systems/save-manager.js"></script>
     <script src="src/js/systems/synergy-system.js"></script>
+    <script src="src/js/systems/nemesis-difficulty.js"></script>
+    <script src="src/js/systems/nemesis-rewards.js"></script>
+    <script src="src/js/ui/nemesis-health-bar.js"></script>
+    <script src="src/js/ui/nemesis-icons.js"></script>
+    <script src="src/js/ui/nemesis-reward-display.js"></script>
+    <script src="src/js/ui/nemesis-attack-telegraph.js"></script>
+    <script src="src/js/ui/nemesis-tutorial.js"></script>
+    <script src="src/js/ui/nemesis-performance-summary.js"></script>
+    <script src="src/js/ui/nemesis-difficulty-selector.js"></script>
+    <script src="src/js/ui/nemesis-attack-guide.js"></script>
+    <script src="src/js/audio/nemesis-sound-manager.js"></script>
+    <script src="src/js/systems/nemesis-adaptive-difficulty.js"></script>
+    <script src="src/js/systems/balance-config.js"></script>
+    <script src="src/js/systems/dynamic-difficulty-system.js"></script>
+    <script src="src/js/ui/difficulty-selector.js"></script>
+    <script src="src/js/utils/debug-tools.js"></script>
+    <script src="src/js/utils/analytics.js"></script>
+    <script src="src/js/systems/visual-effects.js"></script>
+    <script src="src/js/entities/nemesis-enhanced-effects.js"></script>
+    <script src="src/js/entities/nemesis-attack-patterns.js"></script>
+    <script src="src/js/entities/nemesis-combo-attacks.js"></script>
+    <script src="src/js/entities/nemesis-situation-combos.js"></script>
+    <script src="src/js/scenes/nemesis-info-scene.js"></script>
+    <script src="src/js/debug-nemesis.js"></script>
 
     <script>
         // Global game state
@@ -163,7 +190,8 @@
                 ShipStatusScene,
                 InventoryScene,
                 ProfileScene,
-                SubsystemGridScene
+                SubsystemGridScene,
+                NemesisInfoScene
             ],
             scale: {
                 mode: Phaser.Scale.FIT,
@@ -182,6 +210,12 @@
 
                 // Attach global state
                 game.global = gameState;
+
+                // Initialize debug tools
+                game.global.debugTools = new DebugTools(game);
+
+                // Initialize analytics
+                game.global.analytics = new GameAnalytics();
 
                 console.log('Game initialized successfully');
             } catch (error) {

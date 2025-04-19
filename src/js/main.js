@@ -17,6 +17,12 @@ window.onload = function() {
     // Attach global game state
     game.global = gameState;
 
+    // Initialize debug tools
+    game.global.debugTools = new DebugTools(game);
+
+    // Initialize analytics
+    game.global.analytics = new GameAnalytics();
+
     // Add event listeners for browser visibility changes
     document.addEventListener('visibilitychange', function() {
         if (document.hidden) {

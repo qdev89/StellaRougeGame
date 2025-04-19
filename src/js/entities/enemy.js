@@ -348,23 +348,42 @@ class Enemy extends Phaser.Physics.Arcade.Sprite {
         }
 
         try {
-            // Play explosion animation
-            const explosion = this.scene.add.sprite(this.x, this.y, 'explosion');
+            // Use visual effects system if available
+            if (this.scene.visualEffects) {
+                // Determine explosion size based on enemy type
+                let explosionSize = 'small';
 
-            // Check if animation exists before trying to play it
-            if (this.scene.anims.exists('explosion-anim')) {
-                explosion.play('explosion-anim');
+                // Larger enemies get bigger explosions
+                if (this.type === 'DESTROYER' || this.type === 'BOMBER' || this.type === 'CARRIER') {
+                    explosionSize = 'medium';
+                }
+
+                // Elite enemies get bigger explosions
+                if (this.isElite) {
+                    explosionSize = explosionSize === 'medium' ? 'large' : 'medium';
+                }
+
+                // Create explosion effect
+                this.scene.visualEffects.createExplosion(this.x, this.y, explosionSize);
             } else {
-                // Simple fallback explosion effect
-                this.scene.tweens.add({
-                    targets: explosion,
-                    alpha: 0,
-                    scale: 2,
-                    duration: 600,
-                    onComplete: () => {
-                        explosion.destroy();
-                    }
-                });
+                // Fallback to simple explosion animation
+                const explosion = this.scene.add.sprite(this.x, this.y, 'explosion');
+
+                // Check if animation exists before trying to play it
+                if (this.scene.anims.exists('explosion-anim')) {
+                    explosion.play('explosion-anim');
+                } else {
+                    // Simple fallback explosion effect
+                    this.scene.tweens.add({
+                        targets: explosion,
+                        alpha: 0,
+                        scale: 2,
+                        duration: 600,
+                        onComplete: () => {
+                            explosion.destroy();
+                        }
+                    });
+                }
             }
 
             // Sound is disabled
@@ -381,39 +400,39 @@ class Enemy extends Phaser.Physics.Arcade.Sprite {
     }
 
     dropPowerup() {
-        // Chance to drop based on enemy type (increased for easier gameplay)
+        // Chance to drop based on enemy type (further increased for easier gameplay)
         let dropChance = 0;
 
         switch (this.enemyType) {
             case 'DESTROYER':
-                dropChance = 0.8; // 80% chance (increased from 40%)
+                dropChance = 1.0; // 100% chance (increased from 80%)
                 break;
             case 'GUNSHIP':
-                dropChance = 0.4; // 40% chance (increased from 20%)
+                dropChance = 0.6; // 60% chance (increased from 40%)
                 break;
             case 'DRONE':
-                dropChance = 0.15; // 15% chance (increased from 5%)
+                dropChance = 0.25; // 25% chance (increased from 15%)
                 break;
             case 'INTERCEPTOR':
-                dropChance = 0.3; // 30% chance
+                dropChance = 0.5; // 50% chance (increased from 30%)
                 break;
             case 'BOMBER':
-                dropChance = 0.5; // 50% chance
+                dropChance = 0.7; // 70% chance (increased from 50%)
                 break;
             case 'STEALTH':
-                dropChance = 0.4; // 40% chance
+                dropChance = 0.6; // 60% chance (increased from 40%)
                 break;
             case 'TURRET':
-                dropChance = 0.6; // 60% chance
+                dropChance = 0.8; // 80% chance (increased from 60%)
                 break;
             case 'CARRIER':
-                dropChance = 0.7; // 70% chance
+                dropChance = 0.9; // 90% chance (increased from 70%)
                 break;
         }
 
-        // Elite enemies have doubled drop chance
+        // Elite enemies always drop powerups
         if (this.isElite) {
-            dropChance *= 2;
+            dropChance = 1.0; // 100% chance for elite enemies
         }
 
         // Roll for drop

@@ -9,8 +9,8 @@ class ProceduralGenerator {
         // Sector properties
         this.currentSector = 1;
         this.sectorLength = CONSTANTS.SECTOR.LENGTH;
-        this.difficultyMultiplier = 0.5; // Reduced to 50% for easier gameplay
-        this.enemyReductionFactor = 0.5; // Reduce enemy count by 50%
+        this.difficultyMultiplier = 0.4; // Further reduced from 0.5 (originally 1.0)
+        this.enemyReductionFactor = 0.4; // Further reduced from 0.5 (originally 1.0)
 
         // Wave generation parameters
         this.enemyPool = ['DRONE', 'GUNSHIP', 'DESTROYER', 'INTERCEPTOR', 'BOMBER', 'STEALTH', 'TURRET', 'CARRIER'];
@@ -392,24 +392,36 @@ class ProceduralGenerator {
         // Different boss types for different sectors
         let bossType;
 
-        switch (sectorNumber % 5) {
-            case 1:
-                bossType = 'SCOUT_COMMANDER';
-                break;
-            case 2:
-                bossType = 'BATTLE_CARRIER';
-                break;
-            case 3:
-                bossType = 'DESTROYER_PRIME';
-                break;
-            case 4:
-                bossType = 'DREADNOUGHT';
-                break;
-            case 0: // Every 5th sector has the nemesis
-                bossType = 'NEMESIS';
-                break;
-            default:
-                bossType = 'SCOUT_COMMANDER';
+        // Check if this is the final sector (sector 10)
+        if (sectorNumber === 10) {
+            // Final sector always has the Nemesis boss
+            bossType = 'NEMESIS';
+        } else {
+            // For other sectors, rotate through boss types
+            switch (sectorNumber % 5) {
+                case 1:
+                    bossType = 'SCOUT_COMMANDER';
+                    break;
+                case 2:
+                    bossType = 'BATTLE_CARRIER';
+                    break;
+                case 3:
+                    bossType = 'DESTROYER_PRIME';
+                    break;
+                case 4:
+                    bossType = 'STEALTH_OVERLORD';
+                    break;
+                case 0: // Every 5th sector (except 10) has the Dreadnought
+                    bossType = 'DREADNOUGHT';
+                    break;
+                default:
+                    bossType = 'SCOUT_COMMANDER';
+            }
+
+            // Sector 8 has the Bomber Titan
+            if (sectorNumber === 8) {
+                bossType = 'BOMBER_TITAN';
+            }
         }
 
         // Each boss has a different arena
@@ -517,35 +529,37 @@ class ProceduralGenerator {
                 break;
 
             case 'NEMESIS':
-                // The ultimate challenge - all hazards at maximum difficulty
+                // The Nemesis has adaptive hazards based on defeated bosses
+                // This will be handled by the Nemesis System in the game scene
+
+                // Add phase shift field (teleports around)
                 hazards.push({
-                    type: 'asteroid',
-                    density: 0.5,
-                    size: { min: 40, max: 70 },
-                    speed: { min: 100, max: 150 },
-                    damage: 20
+                    type: 'phase_shift',
+                    interval: 10000, // ms between shifts
+                    duration: 500    // ms to complete shift
                 });
 
+                // Add adaptive shield
                 hazards.push({
-                    type: 'energy_barrier',
-                    pattern: 'spiral',
-                    activationTime: 2000,
-                    cooldownTime: 1000
+                    type: 'adaptive_shield',
+                    activationThreshold: 0.2, // Activates at 20% damage
+                    duration: 3000,           // ms active
+                    cooldown: 15000           // ms between activations
                 });
 
+                // Add reality distortion (warps projectiles)
                 hazards.push({
-                    type: 'laser_grid',
-                    pattern: 'adaptive', // Adapts to player position
-                    activationTime: 1000,
-                    cooldownTime: 1500,
-                    damage: 30
+                    type: 'reality_distortion',
+                    radius: 200,
+                    strength: 0.5 // 0-1 scale of distortion strength
                 });
 
+                // Add all previous boss hazards at reduced intensity
+                // This makes the Nemesis arena incorporate elements from all previous bosses
                 hazards.push({
-                    type: 'drone_spawner',
-                    count: 3,
-                    spawnRate: 4000,
-                    maxDrones: 6
+                    type: 'composite',
+                    elements: ['asteroid', 'drone_spawner', 'laser_grid', 'energy_barrier'],
+                    intensity: 0.3 // 30% intensity of normal hazards
                 });
                 break;
         }

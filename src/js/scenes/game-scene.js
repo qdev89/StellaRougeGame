@@ -92,6 +92,12 @@ class GameScene extends Phaser.Scene {
                 };
             }
 
+            // Initialize dynamic difficulty system
+            this.initializeDynamicDifficulty();
+
+            // Initialize visual effects system
+            this.initializeVisualEffects();
+
             // Set up physics and collisions
             this.setupPhysics();
 
@@ -152,6 +158,94 @@ class GameScene extends Phaser.Scene {
         this.sectorProgress = 0;
     }
 
+    /**
+     * Initialize or get the dynamic difficulty system
+     */
+    initializeDynamicDifficulty() {
+        try {
+            // Check if dynamic difficulty system already exists in game.global
+            if (!this.game.global.dynamicDifficulty) {
+                console.log('Creating new dynamic difficulty system');
+                this.game.global.dynamicDifficulty = new DynamicDifficultySystem(this.game);
+            }
+
+            // Store reference to the dynamic difficulty system
+            this.dynamicDifficulty = this.game.global.dynamicDifficulty;
+
+            // Reset metrics for a new game if this is sector 1
+            if (this.currentSector === 1) {
+                this.dynamicDifficulty.resetMetrics();
+            }
+
+            // Record sector start time for difficulty metrics
+            this.sectorStartTime = this.time.now;
+
+            console.log(`Dynamic difficulty initialized: ${this.dynamicDifficulty.getDifficultyName()}`);
+        } catch (error) {
+            console.error('Error initializing dynamic difficulty system:', error);
+            // Create a dummy difficulty system if initialization fails
+            this.dynamicDifficulty = {
+                applyEnemyScaling: (enemy) => enemy,
+                applyBossScaling: (boss) => boss,
+                getAdjustedAmmoDropChance: (chance) => chance,
+                getAdjustedEnemyCount: (count) => count,
+                recordPlayerHit: () => {},
+                recordPlayerAvoid: () => {},
+                recordEnemyDefeated: () => {},
+                recordPlayerDeath: () => {},
+                recordSectorCompleted: () => {},
+                recordBossDefeated: () => {},
+                updateDifficulty: () => {}
+            };
+        }
+    }
+
+    /**
+     * Initialize visual effects system
+     */
+    initializeVisualEffects() {
+        try {
+            // Create visual effects system
+            this.visualEffects = new VisualEffects(this);
+
+            // Create space dust particles
+            this.visualEffects.createSpaceDust();
+
+            // Create nebula effect for certain sectors
+            if (this.currentSector % 2 === 0) { // Even-numbered sectors have nebula
+                const sectorColors = {
+                    2: [0x3399ff, 0x0066cc, 0x66ccff], // Blue nebula
+                    4: [0xff9933, 0xcc6600, 0xffcc66], // Orange nebula
+                    6: [0x99ff33, 0x66cc00, 0xccff66], // Green nebula
+                    8: [0xff3399, 0xcc0066, 0xff66cc]  // Pink nebula
+                };
+
+                const colors = sectorColors[this.currentSector] || [0x9933ff, 0x6600cc, 0x3399ff];
+                this.visualEffects.createNebula(30, colors);
+            }
+
+            console.log('Visual effects system initialized');
+        } catch (error) {
+            console.error('Error initializing visual effects system:', error);
+            // Create a dummy visual effects system if initialization fails
+            this.visualEffects = {
+                createExplosion: () => {},
+                createThruster: () => () => {},
+                createWeaponImpact: () => {},
+                createShieldImpact: () => {},
+                createHullImpact: () => {},
+                createMissileTrail: () => () => {},
+                createScreenShake: () => {},
+                createFlash: () => {},
+                createPowerupEffect: () => {},
+                createLevelUpEffect: () => {},
+                createBossEntranceEffect: () => {},
+                createTeleportEffect: () => {},
+                cleanup: () => {}
+            };
+        }
+    }
+
     update(time, delta) {
         if (this.isPaused || this.isGameOver) return;
 
@@ -166,6 +260,16 @@ class GameScene extends Phaser.Scene {
 
             // Update health and shield UI
             this.updateHealthUI();
+        }
+
+        // Update dynamic difficulty system
+        if (this.dynamicDifficulty && time % 10000 < 16) { // Update roughly every 10 seconds
+            this.dynamicDifficulty.updateDifficulty(this);
+        }
+
+        // Update Nemesis health bar if it exists
+        if (this.nemesisHealthBar) {
+            this.nemesisHealthBar.update();
         }
 
         // Update enemies
@@ -507,57 +611,159 @@ class GameScene extends Phaser.Scene {
 
         this.uiContainer.add(this.scoreText);
 
-        // Enhanced health bar with gradient and border
-        // Background with rounded corners
-        const healthBarWidth = 200;
-        const healthBarHeight = 20;
-        const healthBarRadius = 4;
+        // Enhanced health bar with improved visibility and effects
+        const healthBarWidth = 250;
+        const healthBarHeight = 30; // Increased height for better visibility
+        const healthBarRadius = 8;  // Increased radius for more rounded corners
 
-        // Create health bar background
-        this.healthBarBg = this.add.rectangle(20, 60, healthBarWidth, healthBarHeight, 0x222233)
-            .setOrigin(0, 0.5)
-            .setScrollFactor(0)
-            .setStrokeStyle(1, 0x33ff33, 0.3);
+        // Create health bar container
+        this.healthBarContainer = this.add.container(20, 60).setScrollFactor(0);
 
-        // Create health bar fill
-        this.healthBar = this.add.rectangle(20, 60, healthBarWidth, healthBarHeight, 0x33ff33)
+        // Create health bar label with enhanced styling
+        this.healthLabel = this.add.text(-10, 0, 'HULL', { // Changed from HEALTH to HULL for space theme
+            fontFamily: 'monospace',
+            fontSize: '16px', // Larger font
+            color: '#33ff33',
+            stroke: '#000000',
+            strokeThickness: 3,
+            fontWeight: 'bold',
+            shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 3, fill: true }
+        }).setScrollFactor(0).setOrigin(0, 0.5);
+        this.healthBarContainer.add(this.healthLabel);
+
+        // Create health bar outer border with glow effect
+        this.healthBarOuterBorder = this.add.rectangle(40, 0, healthBarWidth + 6, healthBarHeight + 6, 0x000000)
             .setOrigin(0, 0.5)
             .setScrollFactor(0);
+        this.healthBarContainer.add(this.healthBarOuterBorder);
 
-        // Add health text
-        this.healthText = this.add.text(25, 60, `${CONSTANTS.PLAYER.STARTING_HEALTH}/${CONSTANTS.PLAYER.STARTING_HEALTH}`, {
+        // Add glow effect to health bar border
+        this.healthBarGlow = this.add.rectangle(40, 0, healthBarWidth + 10, healthBarHeight + 10, 0x33ff33, 0.2)
+            .setOrigin(0, 0.5)
+            .setScrollFactor(0);
+        this.healthBarContainer.add(this.healthBarGlow);
+        this.healthBarContainer.sendToBack(this.healthBarGlow);
+
+        // Create health bar background with pattern
+        this.healthBarBg = this.add.rectangle(42, 0, healthBarWidth, healthBarHeight, 0x222233)
+            .setOrigin(0, 0.5)
+            .setScrollFactor(0)
+            .setStrokeStyle(2, 0x33ff33, 0.7); // Thicker, more visible stroke
+        this.healthBarContainer.add(this.healthBarBg);
+
+        // Add pattern to health bar background
+        const healthBarPattern = this.add.graphics().setScrollFactor(0);
+        healthBarPattern.lineStyle(1, 0x33ff33, 0.2);
+        for (let i = 0; i < healthBarWidth; i += 10) {
+            healthBarPattern.lineBetween(42 + i, -healthBarHeight/2, 42 + i, healthBarHeight/2);
+        }
+        this.healthBarContainer.add(healthBarPattern);
+
+        // Create health bar fill with gradient
+        const healthBarGraphics = this.add.graphics().setScrollFactor(0);
+        this.healthBarGraphics = healthBarGraphics;
+        this.healthBarContainer.add(healthBarGraphics);
+
+        // Add health text with enhanced styling
+        this.healthText = this.add.text(healthBarWidth / 2 + 42, 0, `${CONSTANTS.PLAYER.STARTING_HEALTH}/${CONSTANTS.PLAYER.STARTING_HEALTH}`, {
             fontFamily: 'monospace',
-            fontSize: '12px',
+            fontSize: '16px', // Larger font
             color: '#ffffff',
             stroke: '#000000',
-            strokeThickness: 2
+            strokeThickness: 3,
+            fontWeight: 'bold',
+            shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 2, fill: true }
+        }).setScrollFactor(0).setOrigin(0.5, 0.5);
+        this.healthBarContainer.add(this.healthText);
+
+        // Add a subtle animation to the health bar
+        this.tweens.add({
+            targets: this.healthBarGlow,
+            alpha: { from: 0.2, to: 0.4 },
+            duration: 1500,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
+
+        this.uiContainer.add(this.healthBarContainer);
+
+        // Enhanced shield bar with improved visibility and effects
+        const shieldBarWidth = 250;
+        const shieldBarHeight = 20; // Increased height for better visibility
+        const shieldBarRadius = 6;  // Increased radius for more rounded corners
+
+        // Create shield bar container
+        this.shieldBarContainer = this.add.container(20, 100).setScrollFactor(0); // Moved down slightly
+
+        // Create shield bar label with enhanced styling
+        this.shieldLabel = this.add.text(-10, 0, 'SHIELD', {
+            fontFamily: 'monospace',
+            fontSize: '16px', // Larger font
+            color: '#3388ff',
+            stroke: '#000000',
+            strokeThickness: 3,
+            fontWeight: 'bold',
+            shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 3, fill: true }
         }).setScrollFactor(0).setOrigin(0, 0.5);
+        this.shieldBarContainer.add(this.shieldLabel);
 
-        this.uiContainer.add([this.healthBarBg, this.healthBar, this.healthText]);
+        // Create shield bar outer border with glow effect
+        this.shieldBarOuterBorder = this.add.rectangle(40, 0, shieldBarWidth + 6, shieldBarHeight + 6, 0x000000)
+            .setOrigin(0, 0.5)
+            .setScrollFactor(0);
+        this.shieldBarContainer.add(this.shieldBarOuterBorder);
 
-        // Enhanced shield bar with gradient and glow effect
-        const shieldBarWidth = 200;
-        const shieldBarHeight = 10;
-        const shieldBarRadius = 3;
+        // Add glow effect to shield bar border
+        this.shieldBarGlow = this.add.rectangle(40, 0, shieldBarWidth + 10, shieldBarHeight + 10, 0x3388ff, 0.2)
+            .setOrigin(0, 0.5)
+            .setScrollFactor(0);
+        this.shieldBarContainer.add(this.shieldBarGlow);
+        this.shieldBarContainer.sendToBack(this.shieldBarGlow);
 
-        // Create shield bar background
-        this.shieldBarBg = this.add.rectangle(20, 85, shieldBarWidth, shieldBarHeight, 0x222233)
+        // Create shield bar background with pattern
+        this.shieldBarBg = this.add.rectangle(42, 0, shieldBarWidth, shieldBarHeight, 0x222233)
             .setOrigin(0, 0.5)
             .setScrollFactor(0)
-            .setStrokeStyle(1, 0x3388ff, 0.3);
+            .setStrokeStyle(2, 0x3388ff, 0.7); // Thicker, more visible stroke
+        this.shieldBarContainer.add(this.shieldBarBg);
 
-        // Create shield bar fill
-        this.shieldBar = this.add.rectangle(20, 85, shieldBarWidth, shieldBarHeight, 0x3388ff)
-            .setOrigin(0, 0.5)
-            .setScrollFactor(0);
+        // Add pattern to shield bar background
+        const shieldBarPattern = this.add.graphics().setScrollFactor(0);
+        shieldBarPattern.lineStyle(1, 0x3388ff, 0.2);
+        for (let i = 0; i < shieldBarWidth; i += 10) {
+            shieldBarPattern.lineBetween(42 + i, -shieldBarHeight/2, 42 + i, shieldBarHeight/2);
+        }
+        this.shieldBarContainer.add(shieldBarPattern);
 
-        // Create shield glow effect
-        this.shieldGlow = this.add.rectangle(20, 85, shieldBarWidth + 4, shieldBarHeight + 4, 0x66ccff, 0.3)
-            .setOrigin(0, 0.5)
-            .setScrollFactor(0);
-        this.shieldGlow.x -= 2; // Offset for glow effect
+        // Create shield bar fill with gradient
+        const shieldBarGraphics = this.add.graphics().setScrollFactor(0);
+        this.shieldBarGraphics = shieldBarGraphics;
+        this.shieldBarContainer.add(shieldBarGraphics);
 
-        this.uiContainer.add([this.shieldGlow, this.shieldBarBg, this.shieldBar]);
+        // Add shield text with enhanced styling
+        this.shieldText = this.add.text(shieldBarWidth / 2 + 42, 0, `${CONSTANTS.PLAYER.STARTING_SHIELDS}/${CONSTANTS.PLAYER.STARTING_SHIELDS}`, {
+            fontFamily: 'monospace',
+            fontSize: '16px', // Larger font
+            color: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 3,
+            fontWeight: 'bold',
+            shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 2, fill: true }
+        }).setScrollFactor(0).setOrigin(0.5, 0.5);
+        this.shieldBarContainer.add(this.shieldText);
+
+        // Add a subtle animation to the shield bar with electric effect
+        this.tweens.add({
+            targets: this.shieldBarGlow,
+            alpha: { from: 0.2, to: 0.5 },
+            duration: 1200,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
+
+        this.uiContainer.add(this.shieldBarContainer);
 
         // Enhanced sector progress bar with gradient
         const progressBarWidth = 200;
@@ -1138,8 +1344,54 @@ class GameScene extends Phaser.Scene {
     }
 
     spawnWave(wave) {
-        // Create enemies from the wave data
-        wave.enemies.forEach(enemyData => {
+        // Apply dynamic difficulty to adjust enemy count
+        let enemiesToSpawn = wave.enemies;
+
+        // Adjust enemy count based on dynamic difficulty if available
+        if (this.dynamicDifficulty) {
+            // Get base enemy count
+            const baseCount = wave.enemies.length;
+
+            // Get adjusted count
+            const adjustedCount = this.dynamicDifficulty.getAdjustedEnemyCount(baseCount);
+
+            // If adjusted count is different, modify the enemies array
+            if (adjustedCount !== baseCount) {
+                if (adjustedCount < baseCount) {
+                    // Reduce enemies by randomly removing some
+                    const toRemove = baseCount - adjustedCount;
+                    for (let i = 0; i < toRemove; i++) {
+                        if (enemiesToSpawn.length > 1) { // Always keep at least one enemy
+                            const randomIndex = Math.floor(Math.random() * enemiesToSpawn.length);
+                            enemiesToSpawn.splice(randomIndex, 1);
+                        }
+                    }
+                } else if (adjustedCount > baseCount) {
+                    // Add more enemies by duplicating existing ones with slight position offsets
+                    const toAdd = adjustedCount - baseCount;
+                    for (let i = 0; i < toAdd; i++) {
+                        if (enemiesToSpawn.length > 0) {
+                            const randomIndex = Math.floor(Math.random() * enemiesToSpawn.length);
+                            const enemyToDuplicate = enemiesToSpawn[randomIndex];
+
+                            // Create a copy with slightly different position
+                            const newEnemy = {
+                                ...enemyToDuplicate,
+                                position: {
+                                    x: enemyToDuplicate.position.x + Phaser.Math.Between(-50, 50),
+                                    y: enemyToDuplicate.position.y + Phaser.Math.Between(-50, 50)
+                                }
+                            };
+
+                            enemiesToSpawn.push(newEnemy);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Create enemies from the adjusted wave data
+        enemiesToSpawn.forEach(enemyData => {
             // Create the enemy based on its type
             let enemy;
 
@@ -1224,6 +1476,11 @@ class GameScene extends Phaser.Scene {
             if (enemyData.isElite) {
                 enemy.isElite = true;
                 enemy.applyEliteBuffs();
+            }
+
+            // Apply dynamic difficulty scaling to enemy stats
+            if (this.dynamicDifficulty) {
+                enemy = this.dynamicDifficulty.applyEnemyScaling(enemy);
             }
 
             // Add to the enemies physics group
@@ -1796,6 +2053,11 @@ class GameScene extends Phaser.Scene {
         // Create a boss based on the type
         let boss;
 
+        // Initialize nemesis system if it doesn't exist
+        if (!this.game.global.nemesisSystem && bossData.type === 'NEMESIS') {
+            this.game.global.nemesisSystem = new NemesisSystem(this.game);
+        }
+
         // Create the appropriate boss based on sector and type
         switch (bossData.type) {
             case 'SCOUT_COMMANDER':
@@ -1806,7 +2068,86 @@ class GameScene extends Phaser.Scene {
                 );
                 break;
 
-            // For other boss types, use a placeholder for now
+            case 'BATTLE_CARRIER':
+                // Placeholder - will be implemented later
+                boss = new BossGuardian(
+                    this,
+                    this.cameras.main.width / 2,
+                    this.cameras.main.scrollY - 200
+                );
+                break;
+
+            case 'DESTROYER_PRIME':
+                // Placeholder - will be implemented later
+                boss = new BossGuardian(
+                    this,
+                    this.cameras.main.width / 2,
+                    this.cameras.main.scrollY - 200
+                );
+                break;
+
+            case 'STEALTH_OVERLORD':
+                // Placeholder - will be implemented later
+                boss = new BossGuardian(
+                    this,
+                    this.cameras.main.width / 2,
+                    this.cameras.main.scrollY - 200
+                );
+                break;
+
+            case 'DREADNOUGHT':
+                // Placeholder - will be implemented later
+                boss = new BossGuardian(
+                    this,
+                    this.cameras.main.width / 2,
+                    this.cameras.main.scrollY - 200
+                );
+                break;
+
+            case 'BOMBER_TITAN':
+                // Placeholder - will be implemented later
+                boss = new BossGuardian(
+                    this,
+                    this.cameras.main.width / 2,
+                    this.cameras.main.scrollY - 200
+                );
+                break;
+
+            case 'NEMESIS':
+                // Create the Nemesis boss with adaptive configuration
+                if (this.game.global.nemesisSystem) {
+                    // Generate base Nemesis configuration
+                    let nemesisConfig = this.game.global.nemesisSystem.generateNemesisConfig();
+
+                    // Initialize Nemesis difficulty system if it doesn't exist
+                    if (!this.game.global.nemesisDifficulty) {
+                        this.game.global.nemesisDifficulty = new NemesisDifficulty(this.game);
+                    }
+
+                    // Apply difficulty scaling to Nemesis configuration
+                    if (this.game.global.nemesisDifficulty) {
+                        nemesisConfig = this.game.global.nemesisDifficulty.applyDifficultyToConfig(nemesisConfig);
+                        console.log('Applied difficulty scaling to Nemesis boss:', nemesisConfig.difficultyMultipliers);
+                    }
+
+                    // Create the Nemesis boss with the scaled configuration
+                    boss = new BossNemesis(
+                        this,
+                        this.cameras.main.width / 2,
+                        this.cameras.main.scrollY - 200,
+                        nemesisConfig
+                    );
+                } else {
+                    // Fallback if nemesis system is not available
+                    boss = new BossNemesis(
+                        this,
+                        this.cameras.main.width / 2,
+                        this.cameras.main.scrollY - 200
+                    );
+                }
+                break;
+
+            // Default fallback
             default:
                 boss = new BossGuardian(
                     this,
@@ -1819,6 +2160,11 @@ class GameScene extends Phaser.Scene {
         // Apply health multiplier based on sector difficulty
         boss.health *= bossData.healthMultiplier;
         boss.maxHealth *= bossData.healthMultiplier;
+
+        // Apply dynamic difficulty scaling to boss stats
+        if (this.dynamicDifficulty && boss.type !== 'NEMESIS') { // Skip for Nemesis which has its own scaling
+            boss = this.dynamicDifficulty.applyBossScaling(boss);
+        }
 
         // Add to enemies physics group
         this.enemies.add(boss);
@@ -1984,6 +2330,11 @@ class GameScene extends Phaser.Scene {
             // Update UI
             this.updateHealthUI();
 
+            // Track hit for dynamic difficulty
+            if (this.dynamicDifficulty) {
+                this.dynamicDifficulty.recordPlayerHit(damage);
+            }
+
             // Apply damage to enemy
             enemy.takeDamage(50);
 
@@ -2003,6 +2354,11 @@ class GameScene extends Phaser.Scene {
 
             // Chance to drop ammo based on enemy type
             this.tryDropAmmo(enemy);
+
+            // Track enemy defeated for dynamic difficulty
+            if (this.dynamicDifficulty) {
+                this.dynamicDifficulty.recordEnemyDefeated(enemy, damage);
+            }
         }
 
         // Create hit effect at impact point
@@ -2059,6 +2415,11 @@ class GameScene extends Phaser.Scene {
             dropChance += 0.15;
         }
 
+        // Apply dynamic difficulty adjustment to drop chance
+        if (this.dynamicDifficulty) {
+            dropChance = this.dynamicDifficulty.getAdjustedAmmoDropChance(dropChance);
+        }
+
         // Roll for ammo drop
         if (Math.random() < dropChance) {
             // Create ammo powerup at enemy position
@@ -2074,6 +2435,16 @@ class GameScene extends Phaser.Scene {
         // Update UI
         if (hitSuccess) {
             this.updateHealthUI();
+
+            // Track hit for dynamic difficulty
+            if (this.dynamicDifficulty) {
+                this.dynamicDifficulty.recordPlayerHit(damage);
+            }
+        } else {
+            // Player avoided damage (invincible)
+            if (this.dynamicDifficulty) {
+                this.dynamicDifficulty.recordPlayerAvoid();
+            }
         }
 
         // Create hit effect at impact point
@@ -2084,82 +2455,105 @@ class GameScene extends Phaser.Scene {
     }
 
     createHitEffect(x, y, color = 0x33ff33) {
-        // Create a simple particle effect for projectile hits
-        try {
-            const particles = this.add.particles('star-particle');
-
-            const emitter = particles.createEmitter({
-                x: x,
-                y: y,
-                speed: { min: 50, max: 150 },
-                scale: { start: 0.5, end: 0 },
-                lifespan: 300,
-                blendMode: 'ADD',
-                quantity: 5
-            });
-
-            // Set particle color
-            if (color) {
-                emitter.setTint(color);
+        // Use visual effects system if available
+        if (this.visualEffects) {
+            // Determine weapon type based on color
+            let weaponType = 'laser';
+            if (color === 0x9933ff || color === 0x6600cc) {
+                weaponType = 'plasma';
+            } else if (color === 0xff9900 || color === 0xff6600) {
+                weaponType = 'missile';
             }
 
-            // Add a small flash effect
-            const flash = this.add.circle(x, y, 10, color, 0.7);
-            this.tweens.add({
-                targets: flash,
-                alpha: 0,
-                scale: 2,
-                duration: 200,
-                onComplete: () => {
-                    flash.destroy();
-                }
-            });
+            // Create weapon impact effect
+            this.visualEffects.createWeaponImpact(x, y, weaponType);
+        } else {
+            // Fallback to simple particle effect
+            try {
+                const particles = this.add.particles('star-particle');
 
-            // Auto-destroy after particles are done
-            this.time.delayedCall(300, () => {
-                particles.destroy();
-            });
-        } catch (error) {
-            console.warn('Could not create hit effect:', error);
+                const emitter = particles.createEmitter({
+                    x: x,
+                    y: y,
+                    speed: { min: 50, max: 150 },
+                    scale: { start: 0.5, end: 0 },
+                    lifespan: 300,
+                    blendMode: 'ADD',
+                    quantity: 5
+                });
+
+                // Set particle color
+                if (color) {
+                    emitter.setTint(color);
+                }
+
+                // Add a small flash effect
+                const flash = this.add.circle(x, y, 10, color, 0.7);
+                this.tweens.add({
+                    targets: flash,
+                    alpha: 0,
+                    scale: 2,
+                    duration: 200,
+                    onComplete: () => {
+                        flash.destroy();
+                    }
+                });
+
+                // Auto-destroy after particles are done
+                this.time.delayedCall(300, () => {
+                    particles.destroy();
+                });
+            } catch (error) {
+                console.warn('Could not create hit effect:', error);
+            }
         }
     }
 
     createCollisionEffect(x, y) {
-        // Create a larger effect for ship collisions
-        try {
-            const particles = this.add.particles('star-particle');
+        // Use visual effects system if available
+        if (this.visualEffects) {
+            // Create medium explosion for collision
+            this.visualEffects.createExplosion(x, y, 'medium');
 
-            const emitter = particles.createEmitter({
-                x: x,
-                y: y,
-                speed: { min: 100, max: 200 },
-                scale: { start: 1, end: 0 },
-                lifespan: 500,
-                blendMode: 'ADD',
-                quantity: 15
-            });
+            // Add screen shake
+            this.visualEffects.createScreenShake(0.005, 200);
+        } else {
+            // Fallback to simple particle effect
+            try {
+                const particles = this.add.particles('star-particle');
 
-            // Set particle color - orange for collisions
-            emitter.setTint(0xff6600);
+                const emitter = particles.createEmitter({
+                    x: x,
+                    y: y,
+                    speed: { min: 100, max: 200 },
+                    scale: { start: 1, end: 0 },
+                    lifespan: 500,
+                    blendMode: 'ADD',
+                    quantity: 15
+                });
 
-            // Auto-destroy after particles are done
-            this.time.delayedCall(500, () => {
-                particles.destroy();
-            });
+                // Set particle color - orange for collisions
+                emitter.setTint(0xff6600);
 
-            // Add a flash effect
-            const flash = this.add.circle(x, y, 30, 0xffffff, 0.8);
-            this.tweens.add({
-                targets: flash,
-                alpha: 0,
-                scale: 2,
-                duration: 200,
-                onComplete: () => {
-                    flash.destroy();
-                }
-            });
-        } catch (error) {
-            console.warn('Could not create collision effect:', error);
+                // Auto-destroy after particles are done
+                this.time.delayedCall(500, () => {
+                    particles.destroy();
+                });
+
+                // Add a flash effect
+                const flash = this.add.circle(x, y, 30, 0xffffff, 0.8);
+                this.tweens.add({
+                    targets: flash,
+                    alpha: 0,
+                    scale: 2,
+                    duration: 200,
+                    onComplete: () => {
+                        flash.destroy();
+                    }
+                });
+            } catch (error) {
+                console.warn('Could not create collision effect:', error);
+            }
         }
     }
 
@@ -2183,45 +2577,234 @@ class GameScene extends Phaser.Scene {
             const healthPercentage = this.player.health / this.player.maxHealth;
             const shieldPercentage = this.player.shields / this.player.maxShields;
 
-            console.log('Health percentage:', healthPercentage, 'Shield percentage:', shieldPercentage);
+            // Update health bar with enhanced graphics
+            const healthBarWidth = 250;
 
-            // Update health bar
-            const healthBarWidth = 200;
+            if (this.healthBarGraphics) {
+                // Clear previous graphics
+                this.healthBarGraphics.clear();
 
-            if (this.healthBar) {
-                // Update health bar width based on percentage
-                this.healthBar.width = healthBarWidth * healthPercentage;
-
-                // Determine color based on health percentage
+                // Determine color based on health percentage with more vibrant colors
                 let healthColor;
+                let healthGlowColor;
+                let healthLabelColor;
                 if (healthPercentage > 0.6) {
-                    healthColor = 0x33ff33; // Green
+                    healthColor = 0x44ff44; // Brighter green
+                    healthGlowColor = 0x88ff88; // Brighter light green
+                    healthLabelColor = '#44ff44';
                 } else if (healthPercentage > 0.3) {
-                    healthColor = 0xffff33; // Yellow
+                    healthColor = 0xffff44; // Brighter yellow
+                    healthGlowColor = 0xffff88; // Brighter light yellow
+                    healthLabelColor = '#ffff44';
                 } else {
-                    healthColor = 0xff3333; // Red
+                    healthColor = 0xff4444; // Brighter red
+                    healthGlowColor = 0xff8888; // Brighter light red
+                    healthLabelColor = '#ff4444';
                 }
 
-                this.healthBar.fillColor = healthColor;
+                // Draw health bar with enhanced gradient and 3D effect
+                if (healthPercentage > 0) {
+                    // Create main fill
+                    this.healthBarGraphics.fillStyle(healthColor, 1);
+                    this.healthBarGraphics.fillRect(42, -15, healthBarWidth * healthPercentage, 30);
+
+                    // Add highlight line at the top for 3D effect
+                    this.healthBarGraphics.lineStyle(3, healthGlowColor, 0.9);
+                    this.healthBarGraphics.lineBetween(42, -14, 42 + (healthBarWidth * healthPercentage), -14);
+
+                    // Add shadow line at the bottom for 3D effect
+                    this.healthBarGraphics.lineStyle(2, 0x000000, 0.3);
+                    this.healthBarGraphics.lineBetween(42, 14, 42 + (healthBarWidth * healthPercentage), 14);
+
+                    // Add vertical line at the end of the health bar for better visibility
+                    if (healthPercentage < 1.0) {
+                        this.healthBarGraphics.lineStyle(2, healthGlowColor, 0.9);
+                        this.healthBarGraphics.lineBetween(
+                            42 + (healthBarWidth * healthPercentage),
+                            -15,
+                            42 + (healthBarWidth * healthPercentage),
+                            15
+                        );
+                    }
+
+                    // Add tick marks for better readability
+                    this.healthBarGraphics.lineStyle(1, 0xffffff, 0.4);
+                    for (let i = 0.25; i < 1; i += 0.25) {
+                        const x = 42 + (healthBarWidth * i);
+                        if (x <= 42 + (healthBarWidth * healthPercentage)) {
+                            this.healthBarGraphics.lineBetween(x, -15, x, 15);
+                        }
+                    }
+                }
+
+                // Update health bar glow with enhanced effect
+                if (this.healthBarGlow) {
+                    this.healthBarGlow.fillColor = healthColor;
+                    this.healthBarGlow.alpha = 0.3; // Increased base alpha for better visibility
+                    this.healthBarGlow.width = (healthBarWidth * healthPercentage) + 15; // Match width to health
+                }
+
+                // Update health label color with enhanced visibility
+                if (this.healthLabel) {
+                    this.healthLabel.setColor(healthLabelColor);
+                    this.healthLabel.setStroke('#000000', 4); // Thicker stroke for better contrast
+                }
+
+                // Add enhanced pulsing effect when health is low
+                if (healthPercentage <= 0.3 && !this.healthPulseEffect) {
+                    this.healthPulseEffect = this.tweens.add({
+                        targets: this.healthBarGlow,
+                        alpha: { from: 0.4, to: 0.7 }, // Increased alpha range for better visibility
+                        duration: 400, // Faster pulse for urgency
+                        yoyo: true,
+                        repeat: -1
+                    });
+
+                    // Also pulse the health text for additional visibility
+                    if (this.healthText) {
+                        this.healthTextPulse = this.tweens.add({
+                            targets: this.healthText,
+                            scale: { from: 1.0, to: 1.2 },
+                            duration: 400,
+                            yoyo: true,
+                            repeat: -1
+                        });
+                    }
+                } else if (healthPercentage > 0.3 && this.healthPulseEffect) {
+                    this.healthPulseEffect.stop();
+                    this.healthPulseEffect = null;
+                    this.healthBarGlow.alpha = 0.3;
+
+                    if (this.healthTextPulse) {
+                        this.healthTextPulse.stop();
+                        this.healthTextPulse = null;
+                        this.healthText.setScale(1.0);
+                    }
+                }
             }
 
-            // Update health text
+            // Update health text with enhanced visibility
             if (this.healthText) {
                 this.healthText.setText(`${Math.ceil(this.player.health)}/${this.player.maxHealth}`);
+                this.healthText.setStroke('#000000', 4); // Thicker stroke for better contrast
             }
 
-            // Update shield bar
-            const shieldBarWidth = 200;
+            // Update shield bar with enhanced graphics
+            const shieldBarWidth = 250;
 
-            if (this.shieldBar) {
-                // Update shield bar width based on percentage
-                this.shieldBar.width = shieldBarWidth * shieldPercentage;
+            if (this.shieldBarGraphics) {
+                // Clear previous graphics
+                this.shieldBarGraphics.clear();
+
+                // Draw shield bar with enhanced electric effect
+                if (shieldPercentage > 0) {
+                    // Create shield fill with brighter color
+                    this.shieldBarGraphics.fillStyle(0x44aaff, 1); // Brighter blue
+                    this.shieldBarGraphics.fillRect(42, -10, shieldBarWidth * shieldPercentage, 20);
+
+                    // Add highlight line at the top for 3D effect
+                    this.shieldBarGraphics.lineStyle(2, 0x88ddff, 0.9); // Brighter highlight
+                    this.shieldBarGraphics.lineBetween(42, -9, 42 + (shieldBarWidth * shieldPercentage), -9);
+
+                    // Add shadow line at the bottom for 3D effect
+                    this.shieldBarGraphics.lineStyle(1, 0x000000, 0.3);
+                    this.shieldBarGraphics.lineBetween(42, 9, 42 + (shieldBarWidth * shieldPercentage), 9);
+
+                    // Add enhanced electric effect (more visible zigzag lines)
+                    this.shieldBarGraphics.lineStyle(1.5, 0xccffff, 0.9); // Brighter, thicker lines
+                    const zigzagWidth = 8; // Smaller zigzags for more detail
+                    const zigzagHeight = 4; // Taller zigzags for better visibility
+                    for (let x = 42; x < 42 + (shieldBarWidth * shieldPercentage); x += zigzagWidth * 2) {
+                        this.shieldBarGraphics.beginPath();
+                        this.shieldBarGraphics.moveTo(x, -5);
+                        this.shieldBarGraphics.lineTo(x + zigzagWidth/2, -5 + zigzagHeight);
+                        this.shieldBarGraphics.lineTo(x + zigzagWidth, -5);
+                        this.shieldBarGraphics.lineTo(x + zigzagWidth*1.5, -5 - zigzagHeight);
+                        this.shieldBarGraphics.lineTo(x + zigzagWidth*2, -5);
+                        this.shieldBarGraphics.stroke();
+                    }
+
+                    // Add vertical line at the end of the shield bar for better visibility
+                    if (shieldPercentage < 1.0) {
+                        this.shieldBarGraphics.lineStyle(2, 0x88ddff, 0.9);
+                        this.shieldBarGraphics.lineBetween(
+                            42 + (shieldBarWidth * shieldPercentage),
+                            -10,
+                            42 + (shieldBarWidth * shieldPercentage),
+                            10
+                        );
+                    }
+
+                    // Add tick marks for better readability
+                    this.shieldBarGraphics.lineStyle(1, 0xffffff, 0.4);
+                    for (let i = 0.25; i < 1; i += 0.25) {
+                        const x = 42 + (shieldBarWidth * i);
+                        if (x <= 42 + (shieldBarWidth * shieldPercentage)) {
+                            this.shieldBarGraphics.lineBetween(x, -10, x, 10);
+                        }
+                    }
+                }
+
+                // Update shield bar glow with enhanced effect
+                if (this.shieldBarGlow) {
+                    // Update shield glow width and alpha
+                    this.shieldBarGlow.width = (shieldBarWidth * shieldPercentage) + 15; // Match width to shield
+                    this.shieldBarGlow.alpha = shieldPercentage > 0 ? 0.4 : 0; // Increased alpha for better visibility
+
+                    // Add enhanced pulsing effect when shield is active
+                    if (shieldPercentage > 0 && !this.shieldPulseEffect) {
+                        this.shieldPulseEffect = this.tweens.add({
+                            targets: this.shieldBarGlow,
+                            alpha: { from: 0.4, to: 0.7 }, // Increased alpha range for better visibility
+                            duration: 600,
+                            yoyo: true,
+                            repeat: -1
+                        });
+
+                        // Add electric shimmer effect for shields
+                        this.shieldShimmerEffect = this.time.addEvent({
+                            delay: 150,
+                            callback: () => {
+                                if (this.shieldBarGraphics && shieldPercentage > 0) {
+                                    // Random electric spark
+                                    const sparkX = Phaser.Math.Between(
+                                        42,
+                                        42 + (shieldBarWidth * shieldPercentage)
+                                    );
+                                    this.shieldBarGraphics.lineStyle(2, 0xffffff, 0.9);
+                                    this.shieldBarGraphics.lineBetween(sparkX, -10, sparkX + 5, 10);
+
+                                    // Auto-fade the spark
+                                    this.time.delayedCall(100, () => {
+                                        if (this.shieldBarGraphics) {
+                                            // Only redraw if still active
+                                            this.updateHealthUI();
+                                        }
+                                    });
+                                }
+                            },
+                            callbackScope: this,
+                            loop: true
+                        });
+                    } else if (shieldPercentage <= 0) {
+                        // Stop effects when shield is depleted
+                        if (this.shieldPulseEffect) {
+                            this.shieldPulseEffect.stop();
+                            this.shieldPulseEffect = null;
+                        }
+                        if (this.shieldShimmerEffect) {
+                            this.shieldShimmerEffect.remove();
+                            this.shieldShimmerEffect = null;
+                        }
+                        this.shieldBarGlow.alpha = 0;
+                    }
+                }
             }
 
-            // Update shield glow
-            if (this.shieldGlow) {
-                this.shieldGlow.width = (shieldBarWidth * shieldPercentage) + 4;
-                this.shieldGlow.alpha = shieldPercentage > 0 ? 0.3 : 0;
+            // Update shield text with enhanced visibility
+            if (this.shieldText) {
+                this.shieldText.setText(`${Math.ceil(this.player.shields)}/${this.player.maxShields}`);
+                this.shieldText.setStroke('#000000', 4); // Thicker stroke for better contrast
             }
 
             // Update sector progress bar
@@ -2309,6 +2892,23 @@ class GameScene extends Phaser.Scene {
             console.warn('Could not count defeated enemies:', error);
         }
 
+        // Record player death for dynamic difficulty
+        if (this.dynamicDifficulty) {
+            this.dynamicDifficulty.recordPlayerDeath();
+        }
+
+        // Track game over in analytics
+        if (this.game.global.analytics) {
+            this.game.global.analytics.trackGameplay('progression', 'game_over', {
+                sector: this.currentSector,
+                score: this.score,
+                enemiesDefeated: defeatedCount,
+                timeElapsed: this.time.now - this.sectorStartTime,
+                upgrades: this.choiceSystem ? this.choiceSystem.playerBuild.activeUpgrades.length : 0,
+                penalties: this.choiceSystem ? this.choiceSystem.playerBuild.activePenalties.length : 0
+            });
+        }
+
         // Store run data for meta-progression and statistics
         const runData = {
             sector: this.currentSector,
@@ -2348,6 +2948,24 @@ class GameScene extends Phaser.Scene {
      * Create a health bar for the boss
      */
     createBossHealthBar(boss) {
+        // Check if this is the Nemesis boss
+        if (boss instanceof BossNemesis) {
+            // Create specialized Nemesis health bar
+            this.nemesisHealthBar = new NemesisHealthBar(this, boss);
+
+            // Store a reference to the health bar for updates
+            this.bossHealthBar = {
+                width: 400, // Initial width
+                // Custom update method for Nemesis health bar
+                updateWidth: function(percentage) {
+                    this.width = 400 * percentage;
+                }
+            };
+
+            return;
+        }
+
+        // For other bosses, create standard health bar
         // Create container for boss UI elements
         this.bossUI = this.add.container(0, 0).setScrollFactor(0).setDepth(900);
 
@@ -2465,7 +3083,18 @@ class GameScene extends Phaser.Scene {
     onBossDamage(amount, healthPercentage) {
         // Update boss health bar
         if (this.bossHealthBar) {
-            this.bossHealthBar.width = 400 * healthPercentage;
+            if (typeof this.bossHealthBar.updateWidth === 'function') {
+                // For Nemesis health bar
+                this.bossHealthBar.updateWidth(healthPercentage);
+            } else {
+                // For standard health bar
+                this.bossHealthBar.width = 400 * healthPercentage;
+            }
+        }
+
+        // Update Nemesis health bar if it exists
+        if (this.nemesisHealthBar) {
+            this.nemesisHealthBar.update();
         }
     }
 
@@ -2474,6 +3103,9 @@ class GameScene extends Phaser.Scene {
      */
     setupBossArena(bossData) {
         console.log('Setting up boss arena for', bossData.type);
+
+        // Record the time when the boss encounter started (for Nemesis System)
+        this.bossEncounterTime = this.time.now;
 
         // Create arena boundaries
         this.createArenaBoundaries();
@@ -2486,6 +3118,11 @@ class GameScene extends Phaser.Scene {
 
         // Add visual effects for the arena
         this.createArenaVisualEffects(bossData);
+
+        // Initialize Nemesis System if needed
+        if (!this.game.global.nemesisSystem) {
+            this.game.global.nemesisSystem = new NemesisSystem(this.game);
+        }
     }
 
     /**
@@ -2900,6 +3537,42 @@ class GameScene extends Phaser.Scene {
         // Update statistics
         this.game.global.statistics.bossesDefeated++;
 
+        // Record boss defeated for dynamic difficulty
+        if (this.dynamicDifficulty) {
+            this.dynamicDifficulty.recordBossDefeated(boss.type);
+        }
+
+        // Track boss defeat in analytics
+        if (this.game.global.analytics) {
+            this.game.global.analytics.trackGameplay('combat', 'boss_defeated', {
+                bossType: boss.type,
+                sector: this.currentSector,
+                score: this.score,
+                timeElapsed: this.time.now - this.sectorStartTime,
+                playerHealth: this.player ? this.player.health : 0,
+                playerShield: this.player ? this.player.shield : 0
+            });
+        }
+
+        // Initialize Nemesis systems if they don't exist
+        if (!this.game.global.nemesisSystem) {
+            this.game.global.nemesisSystem = new NemesisSystem(this.game);
+        }
+
+        if (!this.game.global.nemesisDifficulty) {
+            this.game.global.nemesisDifficulty = new NemesisDifficulty(this.game);
+        }
+
+        // Record boss defeat for Nemesis System if it's not the Nemesis itself
+        if (boss.type !== 'NEMESIS' && this.game.global.nemesisSystem) {
+            // Gather data about how the boss was defeated
+            const defeatData = this.collectBossDefeatData(boss);
+
+            // Record the defeat in the Nemesis System
+            this.game.global.nemesisSystem.recordBossDefeat(boss.type, defeatData);
+            console.log(`Recorded defeat of ${boss.type} for Nemesis System`);
+        }
+
         // Show victory message
         const victoryText = this.add.text(
             this.cameras.main.width / 2,
@@ -2933,6 +3606,98 @@ class GameScene extends Phaser.Scene {
     }
 
     /**
+     * Collect data about how the boss was defeated for the Nemesis System
+     * @param {BossEnemy} boss - The defeated boss
+     * @returns {object} Data about the defeat
+     */
+    collectBossDefeatData(boss) {
+        // Default data
+        const defeatData = {
+            dominantWeapon: 'laser', // Default weapon
+            buildType: 'balanced',   // Default build type
+            timeToDefeat: 0,         // Time taken to defeat the boss
+            weaponUsage: {},         // Weapon usage statistics
+            buildStyle: {}           // Build style statistics
+        };
+
+        try {
+            // Get the player's current weapon
+            if (this.player && this.player.currentWeapon) {
+                defeatData.dominantWeapon = this.player.currentWeapon;
+            }
+
+            // Calculate time to defeat (approximate)
+            if (this.bossEncounterTime) {
+                defeatData.timeToDefeat = this.time.now - this.bossEncounterTime;
+            }
+
+            // Analyze player's weapon usage during the boss fight
+            if (this.player && this.player.weaponUsage) {
+                defeatData.weaponUsage = { ...this.player.weaponUsage };
+            } else {
+                // Create default weapon usage based on available weapons
+                const weapons = ['laser', 'triBeam', 'plasmaBolt', 'homingMissile', 'dualCannon', 'beamLaser', 'scatterBomb'];
+                weapons.forEach(weapon => {
+                    defeatData.weaponUsage[weapon] = 0;
+                });
+                // Set the current weapon as the most used
+                if (this.player && this.player.currentWeapon) {
+                    defeatData.weaponUsage[this.player.currentWeapon] = 10;
+                } else {
+                    defeatData.weaponUsage.laser = 10; // Default
+                }
+            }
+
+            // Analyze player's build style based on active upgrades
+            if (this.choiceSystem && this.choiceSystem.playerBuild) {
+                const upgrades = this.choiceSystem.playerBuild.activeUpgrades || [];
+
+                // Initialize build style counters
+                defeatData.buildStyle = {
+                    offensive: 0,
+                    defensive: 0,
+                    utility: 0,
+                    balanced: 0
+                };
+
+                // Categorize each upgrade
+                upgrades.forEach(upgrade => {
+                    if (!upgrade || !upgrade.type) return;
+
+                    // Categorize based on upgrade type or id
+                    if (upgrade.id && upgrade.id.includes('damage')) {
+                        defeatData.buildStyle.offensive += 1;
+                    } else if (upgrade.id && (upgrade.id.includes('shield') || upgrade.id.includes('health'))) {
+                        defeatData.buildStyle.defensive += 1;
+                    } else if (upgrade.id && (upgrade.id.includes('speed') || upgrade.id.includes('cooldown'))) {
+                        defeatData.buildStyle.utility += 1;
+                    } else {
+                        defeatData.buildStyle.balanced += 1;
+                    }
+                });
+
+                // Determine dominant build style
+                let maxValue = 0;
+                let dominantStyle = 'balanced';
+
+                Object.keys(defeatData.buildStyle).forEach(style => {
+                    if (defeatData.buildStyle[style] > maxValue) {
+                        maxValue = defeatData.buildStyle[style];
+                        dominantStyle = style;
+                    }
+                });
+
+                defeatData.buildType = dominantStyle;
+            }
+
+        } catch (error) {
+            console.warn('Error collecting boss defeat data:', error);
+        }
+
+        return defeatData;
+    }
+
+    /**
      * Show rewards after defeating a boss
      */
     showBossRewards(boss) {
@@ -2944,6 +3709,52 @@ class GameScene extends Phaser.Scene {
 
         console.log('Showing boss rewards:', rewards);
 
+        // Check if this is the Nemesis boss
+        if (boss instanceof BossNemesis) {
+            // Collect performance metrics for Nemesis boss
+            const metrics = this.collectPerformanceMetrics(boss);
+
+            // Use the enhanced Nemesis reward display for Nemesis boss
+            this.showNemesisRewards(boss, rewards, metrics);
+        } else {
+            // Use the standard reward display for other bosses
+            this.showStandardBossRewards(boss, rewards);
+        }
+    }
+
+    /**
+     * Show enhanced visual rewards for Nemesis boss
+     * @param {BossNemesis} boss - The Nemesis boss
+     * @param {array} rewards - Array of reward objects
+     * @param {object} metrics - Performance metrics
+     */
+    showNemesisRewards(boss, rewards, metrics) {
+        // Initialize the reward display if needed
+        if (!this.nemesisRewardDisplay) {
+            this.nemesisRewardDisplay = new NemesisRewardDisplay(this);
+        }
+
+        // Show the rewards with the enhanced display
+        this.nemesisRewardDisplay.showRewards(rewards, {
+            title: 'NEMESIS DEFEATED',
+            onClose: () => {
+                // Apply rewards
+                rewards.forEach(reward => {
+                    this.applyReward(reward);
+                });
+
+                // Show performance summary
+                this.showPerformanceSummary(metrics);
+            }
+        });
+    }
+
+    /**
+     * Show standard rewards for regular bosses
+     * @param {BossEnemy} boss - The boss enemy
+     * @param {array} rewards - Array of reward objects
+     */
+    showStandardBossRewards(boss, rewards) {
         // Create a rewards container
         const rewardsContainer = this.add.container(
             this.cameras.main.width / 2,
@@ -3174,6 +3985,12 @@ class GameScene extends Phaser.Scene {
             this.barrierTimer.remove();
         }
 
+        // Clean up Nemesis health bar if it exists
+        if (this.nemesisHealthBar) {
+            this.nemesisHealthBar.destroy();
+            this.nemesisHealthBar = null;
+        }
+
         // Reset background scroll speed
         this.backgroundScrollSpeed = CONSTANTS.GAME.BACKGROUND_SCROLL_SPEED;
     }
@@ -3318,7 +4135,86 @@ class GameScene extends Phaser.Scene {
         }
     }
 
+    /**
+     * Show performance summary after defeating Nemesis
+     * @param {object} metrics - Performance metrics
+     */
+    showPerformanceSummary(metrics) {
+        // Create performance summary if it doesn't exist
+        if (!this.performanceSummary) {
+            this.performanceSummary = new NemesisPerformanceSummary(this);
+        }
+
+        // Set metrics
+        this.performanceSummary.setMetrics(metrics);
+
+        // Show the summary
+        this.performanceSummary.show();
+
+        // Listen for summary closed event
+        this.events.once('summary-closed', () => {
+            this.completeLevel();
+        });
+    }
+
+    /**
+     * Collect performance metrics for Nemesis fight
+     * @param {BossNemesis} nemesis - The defeated Nemesis boss
+     * @returns {object} Performance metrics
+     */
+    collectPerformanceMetrics(nemesis) {
+        // Get metrics from adaptive difficulty system if available
+        let metrics = {};
+
+        if (nemesis && nemesis.adaptiveDifficulty) {
+            metrics = nemesis.adaptiveDifficulty.metrics;
+        }
+
+        // Add additional metrics
+        metrics.timeInFight = metrics.timeInFight || 0;
+        metrics.damageDealt = metrics.damageDealt || 0;
+        metrics.damageTaken = metrics.damageTaken || 0;
+        metrics.hitsLanded = metrics.hitsLanded || 0;
+        metrics.hitsTaken = metrics.hitsTaken || 0;
+        metrics.attacksAvoided = metrics.attacksAvoided || 0;
+        metrics.weaponsUsed = metrics.weaponsUsed || {};
+        metrics.combosAvoided = metrics.combosAvoided || 0;
+        metrics.combosTaken = metrics.combosTaken || 0;
+
+        // Add weapon usage data
+        if (this.player && this.player.weaponStats) {
+            metrics.weaponsUsed = this.player.weaponStats;
+        }
+
+        // Add difficulty level
+        if (nemesis && nemesis.adaptiveDifficulty) {
+            metrics.difficultyLevel = nemesis.adaptiveDifficulty.difficultyLevel;
+        } else {
+            metrics.difficultyLevel = 0.5; // Default to normal
+        }
+
+        return metrics;
+    }
+
     completeLevel() {
+        // Record sector completion for dynamic difficulty
+        if (this.dynamicDifficulty && this.sectorStartTime) {
+            const timeSpent = this.time.now - this.sectorStartTime;
+            this.dynamicDifficulty.recordSectorCompleted(this.currentSector, timeSpent);
+        }
+
+        // Track sector completion in analytics
+        if (this.game.global.analytics) {
+            this.game.global.analytics.trackGameplay('progression', 'sector_completed', {
+                sector: this.currentSector,
+                score: this.score,
+                timeSpent: this.time.now - this.sectorStartTime,
+                enemiesDefeated: this.dynamicDifficulty ? this.dynamicDifficulty.metrics.enemiesDefeated : 0,
+                upgrades: this.choiceSystem ? this.choiceSystem.playerBuild.activeUpgrades.length : 0,
+                penalties: this.choiceSystem ? this.choiceSystem.playerBuild.activePenalties.length : 0
+            });
+        }
+
         // Level is complete, transition to upgrade scene
         this.scene.start(CONSTANTS.SCENES.UPGRADE, {
             sector: this.currentSector + 1,
@@ -3382,6 +4278,11 @@ class GameScene extends Phaser.Scene {
 
         // Update UI if needed
         this.updateHealthUI();
+
+        // Create visual effect for powerup collection
+        if (this.visualEffects) {
+            this.visualEffects.createPowerupEffect(powerup.x, powerup.y, powerup.type);
+        }
 
         // Destroy the powerup
         powerup.destroy();

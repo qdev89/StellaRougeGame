@@ -18,7 +18,8 @@ const CONSTANTS = {
         SHIP_STATUS: 'ShipStatusScene',
         INVENTORY: 'InventoryScene',
         PROFILE: 'ProfileScene',
-        SUBSYSTEM_GRID: 'SubsystemGridScene'
+        SUBSYSTEM_GRID: 'SubsystemGridScene',
+        NEMESIS_INFO: 'NemesisInfoScene'
     },
 
     // Player ship settings
@@ -40,49 +41,49 @@ const CONSTANTS = {
                 HEALTH: 30,
                 SPEED: 150,
                 SCORE: 100,
-                FIRE_RATE: 8000 // milliseconds between shots (quadrupled for reduced ammo frequency)
+                FIRE_RATE: 12000 // Further increased from 8000 (originally 2000)
             },
             GUNSHIP: {
                 HEALTH: 60,
                 SPEED: 120,
                 SCORE: 250,
-                FIRE_RATE: 6000 // milliseconds between shots (quadrupled for reduced ammo frequency)
+                FIRE_RATE: 9000 // Further increased from 6000 (originally 1500)
             },
             DESTROYER: {
                 HEALTH: 120,
                 SPEED: 80,
                 SCORE: 500,
-                FIRE_RATE: 12000 // milliseconds between shots (quadrupled for reduced ammo frequency)
+                FIRE_RATE: 18000 // Further increased from 12000 (originally 3000)
             },
             INTERCEPTOR: {
                 HEALTH: 40,
                 SPEED: 200,
                 SCORE: 150,
-                FIRE_RATE: 4000 // milliseconds between shots (quadrupled for reduced ammo frequency)
+                FIRE_RATE: 6000 // Further increased from 4000 (originally 1000)
             },
             BOMBER: {
                 HEALTH: 80,
                 SPEED: 100,
                 SCORE: 300,
-                FIRE_RATE: 16000 // milliseconds between shots (quadrupled for reduced ammo frequency)
+                FIRE_RATE: 24000 // Further increased from 16000 (originally 4000)
             },
             STEALTH: {
                 HEALTH: 50,
                 SPEED: 180,
                 SCORE: 350,
-                FIRE_RATE: 10000 // milliseconds between shots (quadrupled for reduced ammo frequency)
+                FIRE_RATE: 15000 // Further increased from 10000 (originally 2500)
             },
             TURRET: {
                 HEALTH: 150,
                 SPEED: 0,
                 SCORE: 400,
-                FIRE_RATE: 4800 // milliseconds between shots (quadrupled for reduced ammo frequency)
+                FIRE_RATE: 7200 // Further increased from 4800 (originally 1200)
             },
             CARRIER: {
                 HEALTH: 200,
                 SPEED: 60,
                 SCORE: 600,
-                FIRE_RATE: 20000 // milliseconds between shots (quadrupled for reduced ammo frequency)
+                FIRE_RATE: 30000 // Further increased from 20000 (originally 5000)
             }
         },
 
@@ -92,7 +93,7 @@ const CONSTANTS = {
                 HEALTH: 300,
                 SPEED: 100,
                 SCORE: 1000,
-                FIRE_RATE: 4000, // quadrupled for reduced ammo frequency
+                FIRE_RATE: 6000, // Further increased from 4000 (originally 1000)
                 PHASES: 2,
                 ATTACK_PATTERNS: ['spread', 'charge']
             },
@@ -100,7 +101,7 @@ const CONSTANTS = {
                 HEALTH: 250,
                 SPEED: 80,
                 SCORE: 1000,
-                FIRE_RATE: 8000, // quadrupled for reduced ammo frequency
+                FIRE_RATE: 12000, // Further increased from 8000 (originally 2000)
                 PHASES: 2,
                 ATTACK_PATTERNS: ['shield', 'burst']
             },
@@ -108,7 +109,7 @@ const CONSTANTS = {
                 HEALTH: 200,
                 SPEED: 70,
                 SCORE: 1000,
-                FIRE_RATE: 12000, // quadrupled for reduced ammo frequency
+                FIRE_RATE: 18000, // Further increased from 12000 (originally 3000)
                 PHASES: 2,
                 ATTACK_PATTERNS: ['drones', 'support']
             },
@@ -116,7 +117,7 @@ const CONSTANTS = {
                 HEALTH: 220,
                 SPEED: 150,
                 SCORE: 1000,
-                FIRE_RATE: 6000, // quadrupled for reduced ammo frequency
+                FIRE_RATE: 9000, // Further increased from 6000 (originally 1500)
                 PHASES: 2,
                 ATTACK_PATTERNS: ['cloak', 'ambush']
             },
@@ -124,7 +125,7 @@ const CONSTANTS = {
                 HEALTH: 280,
                 SPEED: 60,
                 SCORE: 1000,
-                FIRE_RATE: 10000, // quadrupled for reduced ammo frequency
+                FIRE_RATE: 15000, // Further increased from 10000 (originally 2500)
                 PHASES: 2,
                 ATTACK_PATTERNS: ['bombs', 'mines']
             }
@@ -184,81 +185,81 @@ const CONSTANTS = {
         }
     },
 
-    // Weapon settings
+    // Weapon settings - Enhanced for better gameplay
     WEAPONS: {
         BASIC_LASER: {
-            DAMAGE: 10,
-            SPEED: 500,
-            FIRE_RATE: 300, // milliseconds between shots
-            LIFESPAN: 2000, // milliseconds before auto-destruction
-            COLOR: 0x33ccff, // Light blue
-            DESCRIPTION: 'Standard rapid-fire laser with balanced damage and fire rate.'
+            DAMAGE: 15,           // Increased from 10
+            SPEED: 600,          // Increased from 500
+            FIRE_RATE: 250,      // Faster fire rate (was 300ms)
+            LIFESPAN: 2000,      // milliseconds before auto-destruction
+            COLOR: 0x33ccff,     // Light blue
+            DESCRIPTION: 'Enhanced rapid-fire laser with improved damage and fire rate.'
         },
         SPREAD_SHOT: {
-            DAMAGE: 8,
-            SPEED: 450,
-            FIRE_RATE: 500, // milliseconds between shots
-            LIFESPAN: 1800, // milliseconds before auto-destruction
-            SPREAD_ANGLE: 25, // degrees of spread
-            COLOR: 0x33ff33, // Green
-            DESCRIPTION: 'Fires three projectiles in a spread pattern, great for hitting multiple targets.'
+            DAMAGE: 12,           // Increased from 8
+            SPEED: 500,          // Increased from 450
+            FIRE_RATE: 400,      // Faster fire rate (was 500ms)
+            LIFESPAN: 1800,      // milliseconds before auto-destruction
+            SPREAD_ANGLE: 30,    // Wider spread (was 25 degrees)
+            COLOR: 0x33ff33,     // Green
+            DESCRIPTION: 'Fires three powerful projectiles in a wide spread pattern.'
         },
         PLASMA_BOLT: {
-            DAMAGE: 25,
-            SPEED: 300,
-            FIRE_RATE: 800, // milliseconds between shots
-            LIFESPAN: 2500, // milliseconds before auto-destruction
-            COLOR: 0xff33ff, // Purple
-            DESCRIPTION: 'High-damage plasma projectile that can penetrate weak enemies.'
+            DAMAGE: 35,           // Increased from 25
+            SPEED: 350,          // Increased from 300
+            FIRE_RATE: 600,      // Faster fire rate (was 800ms)
+            LIFESPAN: 2500,      // milliseconds before auto-destruction
+            COLOR: 0xff33ff,     // Purple
+            DESCRIPTION: 'High-damage plasma projectile with improved fire rate.'
         },
         HOMING_MISSILE: {
-            DAMAGE: 20,
-            SPEED: 350,
-            FIRE_RATE: 1200, // milliseconds between shots
-            LIFESPAN: 4000, // milliseconds before auto-destruction
-            TRACKING_SPEED: 0.03, // rate at which the missile adjusts course
-            COLOR: 0xff9933, // Orange
-            DESCRIPTION: 'Guided missile that tracks the nearest enemy.'
+            DAMAGE: 30,           // Increased from 20
+            SPEED: 400,          // Increased from 350
+            FIRE_RATE: 900,      // Faster fire rate (was 1200ms)
+            LIFESPAN: 4000,      // milliseconds before auto-destruction
+            TRACKING_SPEED: 0.05, // Better tracking (was 0.03)
+            COLOR: 0xff9933,     // Orange
+            DESCRIPTION: 'Enhanced guided missile with improved tracking and damage.'
         },
         DUAL_CANNON: {
-            DAMAGE: 12,
-            SPEED: 550,
-            FIRE_RATE: 400, // milliseconds between shots
-            LIFESPAN: 2000, // milliseconds before auto-destruction
-            SPACING: 20, // spacing between the two projectiles
-            COLOR: 0xffff33, // Yellow
-            DESCRIPTION: 'Fires two parallel projectiles with good damage and fire rate.'
+            DAMAGE: 18,           // Increased from 12
+            SPEED: 600,          // Increased from 550
+            FIRE_RATE: 300,      // Faster fire rate (was 400ms)
+            LIFESPAN: 2000,      // milliseconds before auto-destruction
+            SPACING: 20,         // spacing between the two projectiles
+            COLOR: 0xffff33,     // Yellow
+            DESCRIPTION: 'Fires two powerful parallel projectiles with excellent fire rate.'
         },
         LASER_BEAM: {
-            DAMAGE: 3, // damage per frame
-            RANGE: 400, // beam length
-            FIRE_RATE: 50, // continuous beam, updates every 50ms
-            WIDTH: 8, // beam width
-            COLOR: 0xff3333, // Red
-            DESCRIPTION: 'Continuous laser beam that deals damage over time.'
+            DAMAGE: 5,            // Increased from 3 damage per frame
+            RANGE: 500,          // Longer range (was 400)
+            FIRE_RATE: 40,       // Faster updates (was 50ms)
+            WIDTH: 10,           // Wider beam (was 8)
+            COLOR: 0xff3333,     // Red
+            DESCRIPTION: 'Enhanced continuous laser beam with improved damage and range.'
         },
         SCATTER_BOMB: {
-            DAMAGE: 15, // initial damage
-            SPEED: 250,
-            FIRE_RATE: 1500, // milliseconds between shots
-            LIFESPAN: 1500, // milliseconds before explosion
-            FRAGMENT_COUNT: 8, // number of fragments after explosion
-            FRAGMENT_DAMAGE: 8, // damage per fragment
-            FRAGMENT_SPEED: 300, // speed of fragments
+            DAMAGE: 20,           // Increased from 15 initial damage
+            SPEED: 300,          // Increased from 250
+            FIRE_RATE: 1200,     // Faster fire rate (was 1500ms)
+            LIFESPAN: 1500,      // milliseconds before explosion
+            FRAGMENT_COUNT: 10,  // More fragments (was 8)
+            FRAGMENT_DAMAGE: 12, // Increased from 8 damage per fragment
+            FRAGMENT_SPEED: 350, // Faster fragments (was 300)
             FRAGMENT_LIFESPAN: 1000, // milliseconds before fragment destruction
-            COLOR: 0xff6633, // Orange-red
-            DESCRIPTION: 'Explosive projectile that splits into multiple fragments on impact or timeout.'
+            COLOR: 0xff6633,     // Orange-red
+            DESCRIPTION: 'Enhanced explosive projectile that splits into multiple deadly fragments.'
         }
     },
 
-    // Sector generation settings
+    // Sector generation settings - Further reduced for easier gameplay
     SECTOR: {
         LENGTH: 10000, // virtual pixel length of a sector
-        MIN_ENEMIES: 12, // minimum enemies per sector (reduced by 50%)
-        MAX_ENEMIES: 20, // maximum enemies per sector (reduced by 50%)
-        HAZARD_FREQUENCY: 0.3, // hazards per 1000 pixels (reduced)
-        UPGRADE_NODES: 2, // number of upgrade nodes per sector
-        DIFFICULTY_SCALING: 0.1 // difficulty increase per sector (reduced)
+        MIN_ENEMIES: 8,  // Further reduced from 12 (originally 24)
+        MAX_ENEMIES: 15, // Further reduced from 20 (originally 40)
+        HAZARD_FREQUENCY: 0.2, // Further reduced from 0.3 (originally 0.6)
+        UPGRADE_NODES: 3, // Increased from 2 for more upgrades
+        DIFFICULTY_SCALING: 0.05 // Further reduced from 0.1 (originally 0.2)
     },
 
     // Game settings
