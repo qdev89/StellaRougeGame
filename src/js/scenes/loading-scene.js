@@ -1615,4 +1615,114 @@ class LoadingScene extends Phaser.Scene {
         console.log(`Sound is disabled - skipping audio load: ${key}`);
         return;
     }
+
+    createEnhancedLaserSprite(key, color) {
+        // Create a more visually appealing laser beam
+        const width = 8;
+        const height = 32;
+
+        // Create a graphics object for the laser
+        const graphics = this.make.graphics();
+
+        // Determine laser color based on key or use provided color
+        let laserColor = color || 0x33ff33; // Default green
+
+        if (key.includes('blue')) {
+            laserColor = 0x33ccff; // Blue laser
+        } else if (key.includes('red')) {
+            laserColor = 0xff3333; // Red laser
+        } else if (key.includes('purple')) {
+            laserColor = 0xcc33ff; // Purple laser
+        } else if (key.includes('yellow')) {
+            laserColor = 0xffcc33; // Yellow laser
+        }
+
+        // Create a gradient effect for the laser
+        graphics.fillStyle(laserColor, 0.7);
+        graphics.fillRect(0, 0, width, height);
+
+        // Add a brighter core to the laser
+        graphics.fillStyle(0xffffff, 0.5);
+        graphics.fillRect(width/4, 0, width/2, height);
+
+        // Add a glow effect at the front of the laser
+        graphics.fillStyle(laserColor, 0.3);
+        graphics.fillCircle(width/2, 4, width);
+
+        // Generate the texture
+        graphics.generateTexture(key, width, height);
+        graphics.clear();
+
+        console.log(`Created enhanced laser sprite: ${key}`);
+    }
+
+    createEnhancedPowerupSprite(key, color, bgColor) {
+        // Create a more visually appealing powerup
+        const width = 32;
+        const height = 32;
+
+        // Create a graphics object for the powerup
+        const graphics = this.make.graphics();
+
+        // Determine powerup color based on key or use provided color
+        let powerupColor = color || 0x33ff33; // Default green
+        let powerupBgColor = bgColor || 0x222222; // Default dark background
+
+        if (key.includes('health')) {
+            powerupColor = 0x33ff33; // Green for health
+        } else if (key.includes('shield')) {
+            powerupColor = 0x33ccff; // Blue for shield
+        } else if (key.includes('ammo')) {
+            powerupColor = 0xffcc33; // Yellow for ammo
+        } else if (key.includes('weapon')) {
+            powerupColor = 0xff3333; // Red for weapon
+        }
+
+        // Create a circular background
+        graphics.fillStyle(powerupBgColor, 0.5);
+        graphics.fillCircle(width/2, height/2, width/2);
+
+        // Add a border
+        graphics.lineStyle(2, powerupColor, 1);
+        graphics.strokeCircle(width/2, height/2, width/2 - 1);
+
+        // Add an inner glow
+        graphics.fillStyle(powerupColor, 0.3);
+        graphics.fillCircle(width/2, height/2, width/3);
+
+        // Add a symbol based on the powerup type
+        graphics.fillStyle(powerupColor, 1);
+
+        if (key.includes('health')) {
+            // Plus symbol for health
+            graphics.fillRect(width/2 - 2, height/3, 4, height/3);
+            graphics.fillRect(width/3, height/2 - 2, width/3, 4);
+        } else if (key.includes('shield')) {
+            // Shield symbol
+            graphics.beginPath();
+            graphics.arc(width/2, height/2, width/4, Math.PI, 0, false);
+            graphics.strokePath();
+        } else if (key.includes('ammo')) {
+            // Bullet symbol for ammo
+            graphics.fillRect(width/2 - 2, height/3, 4, height/3);
+        } else if (key.includes('weapon')) {
+            // X symbol for weapon
+            graphics.lineStyle(3, powerupColor, 1);
+            graphics.beginPath();
+            graphics.moveTo(width/3, height/3);
+            graphics.lineTo(2*width/3, 2*height/3);
+            graphics.moveTo(2*width/3, height/3);
+            graphics.lineTo(width/3, 2*height/3);
+            graphics.strokePath();
+        } else {
+            // Default star symbol
+            graphics.fillCircle(width/2, height/2, width/6);
+        }
+
+        // Generate the texture
+        graphics.generateTexture(key, width, height);
+        graphics.clear();
+
+        console.log(`Created enhanced powerup sprite: ${key}`);
+    }
 }
