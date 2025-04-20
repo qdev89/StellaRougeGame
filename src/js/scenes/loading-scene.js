@@ -1676,44 +1676,77 @@ class LoadingScene extends Phaser.Scene {
             powerupColor = 0xffcc33; // Yellow for ammo
         } else if (key.includes('weapon')) {
             powerupColor = 0xff3333; // Red for weapon
+        } else if (key.includes('score')) {
+            powerupColor = 0xcc33ff; // Purple for score
         }
 
-        // Create a circular background
-        graphics.fillStyle(powerupBgColor, 0.5);
+        // Create a glowing orb effect
+        // Outer glow
+        graphics.fillStyle(powerupColor, 0.3);
         graphics.fillCircle(width/2, height/2, width/2);
 
-        // Add a border
-        graphics.lineStyle(2, powerupColor, 1);
-        graphics.strokeCircle(width/2, height/2, width/2 - 1);
+        // Middle glow
+        graphics.fillStyle(powerupColor, 0.5);
+        graphics.fillCircle(width/2, height/2, width/2.5);
 
-        // Add an inner glow
-        graphics.fillStyle(powerupColor, 0.3);
+        // Inner circle
+        graphics.fillStyle(powerupColor, 0.8);
         graphics.fillCircle(width/2, height/2, width/3);
 
-        // Add a symbol based on the powerup type
-        graphics.fillStyle(powerupColor, 1);
+        // Core
+        graphics.fillStyle(0xffffff, 0.9);
+        graphics.fillCircle(width/2, height/2, width/6);
+
+        // Add appropriate symbol based on powerup type
+        graphics.lineStyle(2, 0xffffff, 0.9);
 
         if (key.includes('health')) {
             // Plus symbol for health
-            graphics.fillRect(width/2 - 2, height/3, 4, height/3);
-            graphics.fillRect(width/3, height/2 - 2, width/3, 4);
+            graphics.beginPath();
+            graphics.moveTo(width/2, height/3);
+            graphics.lineTo(width/2, height*2/3);
+            graphics.moveTo(width/3, height/2);
+            graphics.lineTo(width*2/3, height/2);
+            graphics.strokePath();
         } else if (key.includes('shield')) {
             // Shield symbol
             graphics.beginPath();
             graphics.arc(width/2, height/2, width/4, Math.PI, 0, false);
             graphics.strokePath();
         } else if (key.includes('ammo')) {
-            // Bullet symbol for ammo
+            // Bullet symbol
+            graphics.fillStyle(0xffffff, 0.9);
             graphics.fillRect(width/2 - 2, height/3, 4, height/3);
         } else if (key.includes('weapon')) {
-            // X symbol for weapon
-            graphics.lineStyle(3, powerupColor, 1);
+            // Crosshair symbol
             graphics.beginPath();
-            graphics.moveTo(width/3, height/3);
-            graphics.lineTo(2*width/3, 2*height/3);
-            graphics.moveTo(2*width/3, height/3);
-            graphics.lineTo(width/3, 2*height/3);
+            graphics.arc(width/2, height/2, width/5, 0, Math.PI * 2);
+            graphics.moveTo(width/3, height/2);
+            graphics.lineTo(width*2/3, height/2);
+            graphics.moveTo(width/2, height/3);
+            graphics.lineTo(width/2, height*2/3);
             graphics.strokePath();
+        } else if (key.includes('score')) {
+            // Star symbol for score
+            graphics.fillStyle(0xffffff, 0.9);
+            const points = 5;
+            const innerRadius = width/8;
+            const outerRadius = width/4;
+
+            let angle = -Math.PI / 2; // Start at top
+            const angleIncrement = Math.PI * 2 / (points * 2);
+
+            graphics.beginPath();
+            graphics.moveTo(width/2 + Math.cos(angle) * outerRadius, height/2 + Math.sin(angle) * outerRadius);
+
+            for (let i = 0; i < points * 2; i++) {
+                angle += angleIncrement;
+                const radius = i % 2 === 0 ? innerRadius : outerRadius;
+                graphics.lineTo(width/2 + Math.cos(angle) * radius, height/2 + Math.sin(angle) * radius);
+            }
+
+            graphics.closePath();
+            graphics.fillPath();
         } else {
             // Default star symbol
             graphics.fillCircle(width/2, height/2, width/6);

@@ -2,15 +2,25 @@
  * Main Game Entry Point
  * Initializes the Phaser game instance and global game state
  */
-window.onload = function() {
+// This function is called from the inline script in index.html
+(function() {
     console.log('Initializing game - v1.0.2');
     let game;
 
     try {
+        // Hide loading screen (in case it wasn't already hidden)
+        if (document.getElementById('loading')) {
+            document.getElementById('loading').style.display = 'none';
+        }
+
         // Initialize Phaser game with scenes already defined in config
         game = new Phaser.Game(config);
     } catch (error) {
         console.error('Failed to initialize game:', error);
+        if (document.getElementById('loading')) {
+            document.getElementById('loading').innerHTML = '<h1>Error</h1><p>' + error.message + '</p>';
+            document.getElementById('loading').style.display = 'block';
+        }
         return;
     }
 
@@ -97,4 +107,4 @@ window.onload = function() {
 
     // Print debug info
     console.log('STELLAR ROGUE game initialized');
-};
+})();

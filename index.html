@@ -57,6 +57,7 @@
 
     <!-- Game scripts -->
     <script src="src/js/utils/constants.js"></script>
+    <script src="src/js/config.js"></script>
     <script src="src/js/scenes/boot-scene.js"></script>
     <script src="src/js/scenes/loading-scene.js"></script>
     <script src="src/js/scenes/main-menu-scene.js"></script>
@@ -115,115 +116,8 @@
     <script src="src/js/entities/nemesis-situation-combos.js"></script>
     <script src="src/js/scenes/nemesis-info-scene.js"></script>
     <script src="src/js/debug-nemesis.js"></script>
+    <script src="src/js/main.js"></script>
 
-    <script>
-        // Global game state
-        const gameState = {
-            currentRun: {
-                sector: 1,
-                score: 0,
-                shipType: 'fighter',
-                upgrades: [],
-                penalties: [],
-                inventory: {},
-                subsystemGrid: []
-            },
-            metaProgress: {
-                credits: CONSTANTS.META.STARTING_CREDITS,
-                highestSector: 1,
-                unlockedShips: ['fighter'],
-                unlockedUpgrades: [],
-                achievements: {}
-            },
-            statistics: {
-                totalRuns: 0,
-                totalPlayTime: 0,
-                highestScore: 0,
-                enemiesDefeated: 0,
-                bossesDefeated: 0,
-                upgradesCollected: 0,
-                itemsUsed: 0,
-                deaths: 0
-            },
-            settings: {
-                soundVolume: 0.7,
-                musicVolume: 0.5,
-                particleEffects: true,
-                screenShake: true,
-                difficulty: 'normal'
-            },
-            audio: {
-                music: false, // Disabled for this phase
-                sfx: false,   // Disabled for this phase
-                volume: 0
-            },
-            debug: {
-                invincible: false,
-                unlockAll: false,
-                showFps: false
-            }
-        };
-
-        // Game configuration
-        const config = {
-            type: Phaser.CANVAS,
-            width: 640,
-            height: 800,
-            backgroundColor: '#000000',
-            parent: 'game-container',
-            pixelArt: true,
-            physics: {
-                default: 'arcade',
-                arcade: {
-                    gravity: { y: 0 },
-                    debug: false
-                }
-            },
-            scene: [
-                BootScene,
-                LoadingScene,
-                MainMenuScene,
-                SectorMapScene,
-                GameScene,
-                UpgradeScene,
-                GameOverScene,
-                ShipStatusScene,
-                InventoryScene,
-                ProfileScene,
-                SubsystemGridScene,
-                NemesisInfoScene
-            ],
-            scale: {
-                mode: Phaser.Scale.FIT,
-                autoCenter: Phaser.Scale.CENTER_BOTH
-            }
-        };
-
-        // Initialize game when page loads
-        window.onload = function() {
-            try {
-                // Hide loading screen
-                document.getElementById('loading').style.display = 'none';
-
-                // Create game instance
-                const game = new Phaser.Game(config);
-
-                // Attach global state
-                game.global = gameState;
-
-                // Initialize debug tools
-                game.global.debugTools = new DebugTools(game);
-
-                // Initialize analytics
-                game.global.analytics = new GameAnalytics();
-
-                console.log('Game initialized successfully');
-            } catch (error) {
-                console.error('Failed to initialize game:', error);
-                document.getElementById('loading').innerHTML = '<h1>Error</h1><p>' + error.message + '</p>';
-                document.getElementById('loading').style.display = 'block';
-            }
-        };
-    </script>
+    <!-- Game initialization is handled in main.js -->
 </body>
 </html>
