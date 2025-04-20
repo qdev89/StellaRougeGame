@@ -269,7 +269,7 @@ class MainMenuScene extends Phaser.Scene {
     createMenuButtons(width, height) {
         // Create a modern menu panel with a more futuristic design
         const panelWidth = 320;
-        const panelHeight = 420;
+        let panelHeight = 420;
         const panelX = width / 2;
         const panelY = height / 2 + 50;
 
