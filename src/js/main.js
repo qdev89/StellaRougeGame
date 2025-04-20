@@ -2,7 +2,7 @@
  * Main Game Entry Point
  * Initializes the Phaser game instance and global game state
  */
-// This function is called from the inline script in index.html
+// This function is called when all scripts are loaded
 (function() {
     console.log('Initializing game - v1.0.2');
     let game;
@@ -13,7 +13,10 @@
             document.getElementById('loading').style.display = 'none';
         }
 
-        // Initialize Phaser game with scenes already defined in config
+        // Create the game configuration
+        const config = createGameConfig();
+
+        // Initialize Phaser game with the configuration
         game = new Phaser.Game(config);
     } catch (error) {
         console.error('Failed to initialize game:', error);
