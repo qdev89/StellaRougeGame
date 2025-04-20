@@ -15,7 +15,15 @@ class PowerUp extends Phaser.Physics.Arcade.Sprite {
 
         // Power-up properties
         this.type = type;
-        this.value = this.determineValue(type);
+
+        // Apply reward multiplier if available in the scene
+        const rewardMultiplier = scene.rewardMultiplier || 1.0;
+        this.value = this.determineValue(type, rewardMultiplier);
+
+        // Log if reward multiplier is applied
+        if (rewardMultiplier !== 1.0) {
+            console.log(`PowerUp: Applied reward multiplier ${rewardMultiplier} to ${type} powerup. Value: ${this.value}`);
+        }
 
         // Set up physics properties
         this.setDepth(CONSTANTS.GAME.POWERUP_Z_INDEX);
@@ -36,25 +44,43 @@ class PowerUp extends Phaser.Physics.Arcade.Sprite {
     }
 
     /**
-     * Determine the value/amount of the powerup based on type
+     * Determine the value/amount of the powerup based on type and reward multiplier
+     * @param {string} type - The type of powerup
+     * @param {number} multiplier - The reward multiplier to apply
+     * @returns {number|string} The value of the powerup
      */
-    determineValue(type) {
+    determineValue(type, multiplier = 1.0) {
+        // Base values for each powerup type
+        let baseValue;
+
         switch (type) {
             case 'health':
-                return 25; // Health restore amount
+                baseValue = 25; // Health restore amount
+                break;
             case 'shield':
-                return 20; // Shield restore amount
+                baseValue = 20; // Shield restore amount
+                break;
             case 'weapon':
-                return 'PLASMA_BOLT'; // Temporary weapon boost
+                return 'PLASMA_BOLT'; // Weapon type doesn't scale with multiplier
             case 'score':
-                return 500; // Score bonus
+                baseValue = 500; // Score bonus
+                break;
             case 'life':
-                return 1; // Extra life
+                return 1; // Extra life doesn't scale with multiplier
             case 'ammo':
-                return 30; // Ammo restore amount
+                baseValue = 30; // Ammo restore amount
+                break;
             default:
-                return 10; // Default value
+                baseValue = 10; // Default value
         }
+
+        // Apply multiplier to numeric values
+        if (typeof baseValue === 'number') {
+            // Round to nearest integer for cleaner values
+            return Math.round(baseValue * multiplier);
+        }
+
+        return baseValue;
     }
 
     /**
@@ -195,22 +221,43 @@ class PowerUp extends Phaser.Physics.Arcade.Sprite {
 
         // Create text popup
         let text;
+
+        // Check if there's a reward multiplier in effect
+        const hasMultiplier = this.scene.rewardMultiplier && this.scene.rewardMultiplier !== 1.0;
+
         switch (this.type) {
             case 'health':
                 text = `+${this.value} HP`;
+                if (hasMultiplier && this.scene.rewardMultiplier > 1.0) {
+                    text += ' (ENHANCED!)';
+                }
                 break;
             case 'shield':
                 text = `+${this.value} SHIELD`;
+                if (hasMultiplier && this.scene.rewardMultiplier > 1.0) {
+                    text += ' (ENHANCED!)';
+                }
                 break;
             case 'weapon':
                 text = 'WEAPON BOOST!';
                 break;
             case 'score':
                 text = `+${this.value} PTS`;
+                if (hasMultiplier && this.scene.rewardMultiplier > 1.0) {
+                    text += ' (BONUS!)';
+                }
                 break;
             case 'life':
                 text = '+1 LIFE';
                 break;
+            case 'ammo':
+                text = `+${this.value} AMMO`;
+                if (hasMultiplier && this.scene.rewardMultiplier > 1.0) {
+                    text += ' (ENHANCED!)';
+                }
+                break;
+            default:
+                text = `+${this.value}`;
         }
 
         const popupText = this.scene.add.text(this.x, this.y - 20, text, {

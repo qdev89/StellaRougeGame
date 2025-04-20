@@ -14,6 +14,12 @@ class UpgradeScene extends Phaser.Scene {
         this.shipType = data.shipType || 'fighter';
         this.upgrades = data.upgrades || [];
         this.penalties = data.penalties || [];
+
+        // Get reward multiplier and path difficulty from registry or data
+        this.rewardMultiplier = this.registry.get('rewardMultiplier') || data.rewardMultiplier || 1.0;
+        this.pathDifficulty = this.registry.get('pathDifficulty') || data.pathDifficulty || 'NORMAL';
+
+        console.log(`UpgradeScene: Reward multiplier: ${this.rewardMultiplier}, Path difficulty: ${this.pathDifficulty}`);
     }
 
     create() {
@@ -195,8 +201,52 @@ class UpgradeScene extends Phaser.Scene {
     }
 
     displayChoiceUI() {
+        // Display path difficulty and reward information
+        if (this.pathDifficulty && this.pathDifficulty !== 'NORMAL') {
+            let difficultyColor;
+            switch (this.pathDifficulty) {
+                case 'EASY': difficultyColor = '#33cc33'; break;
+                case 'HARD': difficultyColor = '#ff9933'; break;
+                case 'EXTREME': difficultyColor = '#ff3333'; break;
+                default: difficultyColor = '#ffaa33';
+            }
+
+            // Add path difficulty text
+            this.add.text(this.cameras.main.width / 2, 180, `PATH DIFFICULTY: ${this.pathDifficulty}`, {
+                fontFamily: 'monospace',
+                fontSize: '16px',
+                color: difficultyColor,
+                align: 'center'
+            }).setOrigin(0.5);
+
+            // Add reward multiplier text
+            const rewardPercentage = Math.round(this.rewardMultiplier * 100);
+            this.add.text(this.cameras.main.width / 2, 200, `REWARD BONUS: ${rewardPercentage}%`, {
+                fontFamily: 'monospace',
+                fontSize: '16px',
+                color: '#33ffaa',
+                align: 'center'
+            }).setOrigin(0.5);
+
+            // If this is a merchant node, show cost modifier
+            if (this.nodeType === 'MERCHANT' && this.costModifier !== 1.0) {
+                const costPercentage = Math.round(this.costModifier * 100);
+                const costText = this.costModifier < 1.0 ?
+                    `DISCOUNT: ${Math.round((1 - this.costModifier) * 100)}%` :
+                    `PRICE INCREASE: ${Math.round((this.costModifier - 1) * 100)}%`;
+
+                this.add.text(this.cameras.main.width / 2, 220, costText, {
+                    fontFamily: 'monospace',
+                    fontSize: '16px',
+                    color: this.costModifier < 1.0 ? '#33ffaa' : '#ff9933',
+                    align: 'center'
+                }).setOrigin(0.5);
+            }
+        }
+
         // Display the choice title
-        this.add.text(this.cameras.main.width / 2, 220, this.currentChoice.title.toUpperCase(), {
+        const titleY = (this.pathDifficulty && this.pathDifficulty !== 'NORMAL') ? 250 : 220;
+        this.add.text(this.cameras.main.width / 2, titleY, this.currentChoice.title.toUpperCase(), {
             fontFamily: 'monospace',
             fontSize: '28px',
             color: '#33ff33',
@@ -204,7 +254,8 @@ class UpgradeScene extends Phaser.Scene {
         }).setOrigin(0.5);
 
         // Display the choice description
-        this.add.text(this.cameras.main.width / 2, 260, this.currentChoice.description, {
+        const descY = (this.pathDifficulty && this.pathDifficulty !== 'NORMAL') ? 290 : 260;
+        this.add.text(this.cameras.main.width / 2, descY, this.currentChoice.description, {
             fontFamily: 'monospace',
             fontSize: '16px',
             color: '#ffffff',
@@ -214,7 +265,7 @@ class UpgradeScene extends Phaser.Scene {
 
         // Display option buttons
         this.optionButtons = [];
-        const startY = 320;
+        const startY = (this.pathDifficulty && this.pathDifficulty !== 'NORMAL') ? 350 : 320;
         const spacing = 150;
 
         this.currentChoice.options.forEach((option, index) => {
@@ -375,10 +426,35 @@ class UpgradeScene extends Phaser.Scene {
     }
 
     calculateRewardModifiers() {
-        // Calculate reward modifiers based on sector number and player stats
-        // This is a placeholder - in a full implementation, this would adjust
-        // the rewards based on game progression
-        this.rewardModifier = 1 + (0.1 * (this.nextSector - 1));
+        // Base reward modifier based on sector number
+        let sectorModifier = 1 + (0.1 * (this.nextSector - 1));
+
+        // Apply path difficulty modifier
+        let pathModifier = this.rewardMultiplier || 1.0;
+
+        // Calculate final reward modifier
+        this.rewardModifier = sectorModifier * pathModifier;
+
+        // Adjust merchant costs based on path difficulty
+        this.costModifier = 1.0;
+
+        // Harder paths have cheaper upgrades, easier paths have more expensive upgrades
+        switch (this.pathDifficulty) {
+            case 'EASY':
+                this.costModifier = 1.2; // 20% more expensive
+                break;
+            case 'NORMAL':
+                this.costModifier = 1.0; // Normal price
+                break;
+            case 'HARD':
+                this.costModifier = 0.8; // 20% cheaper
+                break;
+            case 'EXTREME':
+                this.costModifier = 0.6; // 40% cheaper
+                break;
+        }
+
+        console.log(`Reward modifier: ${this.rewardModifier}, Cost modifier: ${this.costModifier}`);
     }
 
     continueToBattle() {

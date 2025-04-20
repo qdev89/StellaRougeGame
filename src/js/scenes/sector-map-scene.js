@@ -351,13 +351,7 @@ class SectorMapScene extends Phaser.Scene {
     }
 
     drawPaths(offsetX, offsetY, horizontalSpacing, verticalSpacing) {
-        // Create graphics object for paths
-        const pathGraphics = this.add.graphics();
-
-        // Set line style
-        pathGraphics.lineStyle(2, 0x666666, 0.5);
-
-        // Draw each path
+        // Draw each path individually for better control
         for (const path of this.sectorMap.paths) {
             // Find source and target nodes
             const sourceNode = this.sectorMap.nodes.find(n => n.id === path.source);
@@ -370,28 +364,110 @@ class SectorMapScene extends Phaser.Scene {
                 const x2 = offsetX + targetNode.x * horizontalSpacing;
                 const y2 = offsetY + targetNode.y * verticalSpacing;
 
-                // Draw line
+                // Create path graphics
+                const pathGraphics = this.add.graphics();
+
+                // Check if this path is from current node
+                const isFromCurrent = sourceNode.id === this.currentNodeId;
+
+                // Style based on path properties
+                if (isFromCurrent) {
+                    // Use the path's difficulty color if available
+                    const pathColor = path.color || 0x33aaff;
+                    pathGraphics.lineStyle(3, pathColor, 0.8);
+
+                    // Add a glow effect for harder paths
+                    if (path.difficulty === 'HARD' || path.difficulty === 'EXTREME') {
+                        const glowGraphics = this.add.graphics();
+                        glowGraphics.lineStyle(6, pathColor, 0.3);
+                        glowGraphics.beginPath();
+                        glowGraphics.moveTo(x1, y1);
+                        glowGraphics.lineTo(x2, y2);
+                        glowGraphics.strokePath();
+                        this.mapContainer.add(glowGraphics);
+                    }
+
+                    // Add difficulty indicator
+                    const midX = (x1 + x2) / 2;
+                    const midY = (y1 + y2) / 2;
+
+                    // Create a small icon to indicate difficulty
+                    let difficultyIcon;
+                    let difficultyText;
+
+                    switch (path.difficulty) {
+                        case 'EASY':
+                            difficultyIcon = this.add.circle(midX, midY, 5, 0x33cc33, 0.8);
+                            difficultyText = 'EASY';
+                            break;
+                        case 'NORMAL':
+                            difficultyIcon = this.add.circle(midX, midY, 5, 0x3399ff, 0.8);
+                            difficultyText = 'NORMAL';
+                            break;
+                        case 'HARD':
+                            difficultyIcon = this.add.circle(midX, midY, 5, 0xff9933, 0.8);
+                            difficultyText = 'HARD';
+                            break;
+                        case 'EXTREME':
+                            difficultyIcon = this.add.circle(midX, midY, 5, 0xff3333, 0.8);
+                            difficultyText = 'EXTREME';
+                            break;
+                    }
+
+                    // Add tooltip on hover
+                    if (difficultyIcon) {
+                        // Add a pulsing animation to the difficulty icon
+                        this.tweens.add({
+                            targets: difficultyIcon,
+                            alpha: { from: 0.7, to: 1 },
+                            scale: { from: 1, to: 1.3 },
+                            duration: 800,
+                            yoyo: true,
+                            repeat: -1
+                        });
+
+                        // Make icon interactive
+                        difficultyIcon.setInteractive({ useHandCursor: true });
+
+                        // Create tooltip (initially hidden)
+                        const rewardMultiplier = path.rewardMultiplier || 1.0;
+                        const tooltipText = `${difficultyText}\nRewards: ${Math.round(rewardMultiplier * 100)}%`;
+                        const tooltip = this.add.text(midX, midY - 20, tooltipText, {
+                            fontFamily: 'monospace',
+                            fontSize: '12px',
+                            color: '#ffffff',
+                            align: 'center',
+                            backgroundColor: '#000000',
+                            padding: { x: 5, y: 3 }
+                        }).setOrigin(0.5).setAlpha(0);
+
+                        // Show tooltip on hover
+                        difficultyIcon.on('pointerover', () => {
+                            tooltip.setAlpha(1);
+                        });
+
+                        difficultyIcon.on('pointerout', () => {
+                            tooltip.setAlpha(0);
+                        });
+
+                        this.mapContainer.add(difficultyIcon);
+                        this.mapContainer.add(tooltip);
+                    }
+                } else {
+                    // Non-current paths are dimmed
+                    pathGraphics.lineStyle(2, 0x666666, 0.5);
+                }
+
+                // Draw the path
                 pathGraphics.beginPath();
                 pathGraphics.moveTo(x1, y1);
                 pathGraphics.lineTo(x2, y2);
                 pathGraphics.strokePath();
 
-                // Highlight path if it's from current node
-                if (sourceNode.id === this.currentNodeId) {
-                    const highlightGraphics = this.add.graphics();
-                    highlightGraphics.lineStyle(3, 0xffffff, 0.3);
-                    highlightGraphics.beginPath();
-                    highlightGraphics.moveTo(x1, y1);
-                    highlightGraphics.lineTo(x2, y2);
-                    highlightGraphics.strokePath();
-
-                    this.mapContainer.add(highlightGraphics);
-                }
+                // Add to container
+                this.mapContainer.add(pathGraphics);
             }
         }
-
-        // Add to container
-        this.mapContainer.add(pathGraphics);
     }
 
     getNodeLabel(node) {
@@ -462,6 +538,26 @@ class SectorMapScene extends Phaser.Scene {
                 description = 'No information available.';
         }
 
+        // Add reward multiplier information if available
+        if (node.rewardMultiplier && node.rewardMultiplier !== 1.0) {
+            const rewardPercentage = Math.round(node.rewardMultiplier * 100);
+            const rewardText = rewardPercentage > 100 ?
+                `Enhanced Rewards: ${rewardPercentage}%` :
+                `Reduced Rewards: ${rewardPercentage}%`;
+
+            description += `\n\n${rewardText}`;
+
+            // Add difficulty information if available
+            if (node.incomingPaths && node.incomingPaths.length > 0) {
+                // Find the path from current node if it exists
+                const pathFromCurrent = node.incomingPaths.find(p => p.sourceId === this.currentNodeId);
+
+                if (pathFromCurrent) {
+                    description += `\nPath Difficulty: ${pathFromCurrent.difficulty}`;
+                }
+            }
+        }
+
         this.infoPanelDesc.setText(description);
 
         // Enable/disable travel button based on connectivity
@@ -469,6 +565,33 @@ class SectorMapScene extends Phaser.Scene {
         const isCurrentNode = (node.id === this.currentNodeId);
 
         this.travelButton.setVisible(isConnected && !isCurrentNode);
+
+        // If this is a connected node, show a difficulty indicator on the travel button
+        if (isConnected && !isCurrentNode) {
+            // Find the path from current node
+            const path = this.sectorMap.paths.find(p =>
+                p.source === this.currentNodeId && p.target === node.id);
+
+            if (path && path.difficulty) {
+                // Update travel button text with difficulty
+                this.travelButton.setText(`TRAVEL (${path.difficulty})`);
+
+                // Set button color based on difficulty
+                let buttonColor;
+                switch (path.difficulty) {
+                    case 'EASY': buttonColor = 0x33cc33; break;
+                    case 'NORMAL': buttonColor = 0x3399ff; break;
+                    case 'HARD': buttonColor = 0xff9933; break;
+                    case 'EXTREME': buttonColor = 0xff3333; break;
+                    default: buttonColor = 0x3399ff;
+                }
+
+                // Update button style
+                this.travelButton.setStyle({ backgroundColor: '#' + buttonColor.toString(16) });
+            } else {
+                this.travelButton.setText('TRAVEL');
+            }
+        }
 
         // Store selected node
         this.selectedNode = node.id;
@@ -520,12 +643,31 @@ class SectorMapScene extends Phaser.Scene {
                 // Store node type in registry for other scenes to access
                 this.registry.set('nodeType', node.type);
 
+                // Get the reward multiplier for this node
+                const rewardMultiplier = node.rewardMultiplier || 1.0;
+
+                // Store reward multiplier in registry
+                this.registry.set('rewardMultiplier', rewardMultiplier);
+
+                // Find the path that was taken
+                const path = this.sectorMap.paths.find(p =>
+                    p.source === this.game.global.currentRun.currentNodeId &&
+                    p.target === node.id
+                );
+
+                // Store path difficulty in registry if available
+                if (path && path.difficulty) {
+                    this.registry.set('pathDifficulty', path.difficulty);
+                }
+
                 // Start the appropriate scene
                 this.scene.start(nextScene, {
                     sector: this.currentSector,
                     score: this.score,
                     nodeType: node.type,
-                    nodeId: node.id
+                    nodeId: node.id,
+                    rewardMultiplier: rewardMultiplier,
+                    pathDifficulty: path ? path.difficulty : 'NORMAL'
                 });
             }
         }
@@ -631,12 +773,20 @@ class SectorMapScene extends Phaser.Scene {
             bossNameText.destroy();
             continueText.destroy();
 
+            // Get node details
+            const node = this.sectorMap.nodes.find(n => n.id === this.selectedNode);
+
+            // Get the reward multiplier for this node
+            const rewardMultiplier = node && node.rewardMultiplier ? node.rewardMultiplier : 1.0;
+
             // Continue to game scene
             this.scene.start(CONSTANTS.SCENES.GAME, {
                 sector: this.currentSector,
                 score: this.score,
                 nodeType: 'BOSS',
-                nodeId: this.selectedNode
+                nodeId: this.selectedNode,
+                rewardMultiplier: rewardMultiplier,
+                pathDifficulty: 'BOSS'
             });
         });
     }

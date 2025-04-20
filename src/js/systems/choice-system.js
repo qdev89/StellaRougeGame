@@ -189,6 +189,14 @@ class ChoiceSystem {
     generateRewards(rewardTemplates, playerBuild, sectorNumber = 1) {
         const generatedRewards = [];
 
+        // Get reward multiplier from scene if available
+        const rewardMultiplier = this.scene.rewardMultiplier || 1.0;
+
+        // Log if reward multiplier is applied
+        if (rewardMultiplier !== 1.0) {
+            console.log(`ChoiceSystem: Applying reward multiplier ${rewardMultiplier} to rewards`);
+        }
+
         // Determine appropriate tier based on sector number
         const maxTier = sectorNumber <= 2 ? 1 : (sectorNumber <= 4 ? 2 : 3);
 
@@ -304,8 +312,8 @@ class ChoiceSystem {
                             }
                         }
 
-                        // Apply sector scaling to value
-                        const scaledValue = Math.round(selectedStat.value * statMultiplier);
+                        // Apply sector scaling and reward multiplier to value
+                        const scaledValue = Math.round(selectedStat.value * statMultiplier * rewardMultiplier);
 
                         generatedRewards.push({
                             type: selectedStat.type,
@@ -315,12 +323,12 @@ class ChoiceSystem {
                             tier: selectedStat.tier
                         });
                     } else {
-                        // Fallback to basic stat boost
+                        // Fallback to basic stat boost with reward multiplier applied
                         const stats = [
-                            { type: 'health', value: Math.round(25 * statMultiplier), name: 'Hull Reinforcement', description: 'Increases maximum health.' },
-                            { type: 'shield', value: Math.round(20 * statMultiplier), name: 'Shield Amplifier', description: 'Increases maximum shield capacity.' },
-                            { type: 'speed', value: Math.round(30 * statMultiplier), name: 'Engine Boost', description: 'Increases movement speed.' },
-                            { type: 'fireRate', value: Math.round(15 * statMultiplier), name: 'Firing System Upgrade', description: 'Decreases time between shots.' }
+                            { type: 'health', value: Math.round(25 * statMultiplier * rewardMultiplier), name: 'Hull Reinforcement', description: 'Increases maximum health.' },
+                            { type: 'shield', value: Math.round(20 * statMultiplier * rewardMultiplier), name: 'Shield Amplifier', description: 'Increases maximum shield capacity.' },
+                            { type: 'speed', value: Math.round(30 * statMultiplier * rewardMultiplier), name: 'Engine Boost', description: 'Increases movement speed.' },
+                            { type: 'fireRate', value: Math.round(15 * statMultiplier * rewardMultiplier), name: 'Firing System Upgrade', description: 'Decreases time between shots.' }
                         ];
 
                         const selectedStat = stats[Math.floor(Math.random() * stats.length)];
@@ -627,6 +635,23 @@ class ChoiceSystem {
         if (!selectedOption) {
             console.error('Invalid choice option:', choiceIndex, choice);
             return { rewards: [], penalties: [] };
+        }
+
+        // Apply cost modifier for merchant choices
+        if (choice.type === 'merchant' && this.scene.costModifier) {
+            // Log the cost adjustment
+            console.log(`ChoiceSystem: Applying cost modifier ${this.scene.costModifier} to merchant choice`);
+
+            // For merchant choices, adjust the penalties (costs) based on the cost modifier
+            if (selectedOption.penalties) {
+                selectedOption.penalties.forEach(penalty => {
+                    // Only adjust numeric values
+                    if (typeof penalty.value === 'number') {
+                        // Round to nearest integer for cleaner values
+                        penalty.value = Math.round(penalty.value * this.scene.costModifier);
+                    }
+                });
+            }
         }
 
         // Record the choice for history

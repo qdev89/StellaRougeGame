@@ -73,7 +73,7 @@ The game features a balanced difficulty level with 50% fewer enemies and reduced
 - [x] Create 30+ unique upgrades and 20+ penalty variations
 - [x] Build out meta-progression system
 - [x] Implement dynamic difficulty scaling
-- [ ] Balance risk/reward across different path choices
+- [x] Balance risk/reward across different path choices
 
 **Deliverables:** Content-complete game with full progression, multiple bosses, unique systems
 

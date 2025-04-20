@@ -19,6 +19,12 @@ class GameScene extends Phaser.Scene {
         this.nodeType = data.nodeType || 'COMBAT';
         this.nodeId = data.nodeId || 0;
 
+        // Get reward multiplier and path difficulty from sector map
+        this.rewardMultiplier = data.rewardMultiplier || 1.0;
+        this.pathDifficulty = data.pathDifficulty || 'NORMAL';
+
+        console.log(`GameScene: Node type: ${this.nodeType}, Reward multiplier: ${this.rewardMultiplier}, Path difficulty: ${this.pathDifficulty}`);
+
         // Set up empty collections for game objects
         this.enemies = this.physics.add.group();
         this.hazards = this.physics.add.group();
@@ -1347,44 +1353,68 @@ class GameScene extends Phaser.Scene {
         // Apply dynamic difficulty to adjust enemy count
         let enemiesToSpawn = wave.enemies;
 
-        // Adjust enemy count based on dynamic difficulty if available
+        // Get base enemy count
+        const baseCount = wave.enemies.length;
+
+        // Apply path difficulty adjustment
+        let pathDifficultyMultiplier = 1.0;
+        switch (this.pathDifficulty) {
+            case 'EASY':
+                pathDifficultyMultiplier = 0.8; // 20% fewer enemies on easy paths
+                break;
+            case 'NORMAL':
+                pathDifficultyMultiplier = 1.0; // Normal enemy count
+                break;
+            case 'HARD':
+                pathDifficultyMultiplier = 1.2; // 20% more enemies on hard paths
+                break;
+            case 'EXTREME':
+                pathDifficultyMultiplier = 1.4; // 40% more enemies on extreme paths
+                break;
+            case 'BOSS':
+                pathDifficultyMultiplier = 1.0; // Normal enemy count for boss nodes
+                break;
+        }
+
+        // Calculate adjusted count based on path difficulty
+        let adjustedCount = Math.round(baseCount * pathDifficultyMultiplier);
+
+        // Further adjust based on dynamic difficulty if available
         if (this.dynamicDifficulty) {
-            // Get base enemy count
-            const baseCount = wave.enemies.length;
+            adjustedCount = this.dynamicDifficulty.getAdjustedEnemyCount(adjustedCount);
+        }
 
-            // Get adjusted count
-            const adjustedCount = this.dynamicDifficulty.getAdjustedEnemyCount(baseCount);
+        console.log(`Spawning wave: Base count: ${baseCount}, Path difficulty: ${this.pathDifficulty}, Adjusted count: ${adjustedCount}`);
 
-            // If adjusted count is different, modify the enemies array
-            if (adjustedCount !== baseCount) {
-                if (adjustedCount < baseCount) {
-                    // Reduce enemies by randomly removing some
-                    const toRemove = baseCount - adjustedCount;
-                    for (let i = 0; i < toRemove; i++) {
-                        if (enemiesToSpawn.length > 1) { // Always keep at least one enemy
-                            const randomIndex = Math.floor(Math.random() * enemiesToSpawn.length);
-                            enemiesToSpawn.splice(randomIndex, 1);
-                        }
+        // If adjusted count is different, modify the enemies array
+        if (adjustedCount !== baseCount) {
+            if (adjustedCount < baseCount) {
+                // Reduce enemies by randomly removing some
+                const toRemove = baseCount - adjustedCount;
+                for (let i = 0; i < toRemove; i++) {
+                    if (enemiesToSpawn.length > 1) { // Always keep at least one enemy
+                        const randomIndex = Math.floor(Math.random() * enemiesToSpawn.length);
+                        enemiesToSpawn.splice(randomIndex, 1);
                     }
-                } else if (adjustedCount > baseCount) {
-                    // Add more enemies by duplicating existing ones with slight position offsets
-                    const toAdd = adjustedCount - baseCount;
-                    for (let i = 0; i < toAdd; i++) {
-                        if (enemiesToSpawn.length > 0) {
-                            const randomIndex = Math.floor(Math.random() * enemiesToSpawn.length);
-                            const enemyToDuplicate = enemiesToSpawn[randomIndex];
+                }
+            } else if (adjustedCount > baseCount) {
+                // Add more enemies by duplicating existing ones with slight position offsets
+                const toAdd = adjustedCount - baseCount;
+                for (let i = 0; i < toAdd; i++) {
+                    if (enemiesToSpawn.length > 0) {
+                        const randomIndex = Math.floor(Math.random() * enemiesToSpawn.length);
+                        const enemyToDuplicate = enemiesToSpawn[randomIndex];
 
-                            // Create a copy with slightly different position
-                            const newEnemy = {
-                                ...enemyToDuplicate,
-                                position: {
-                                    x: enemyToDuplicate.position.x + Phaser.Math.Between(-50, 50),
-                                    y: enemyToDuplicate.position.y + Phaser.Math.Between(-50, 50)
-                                }
-                            };
+                        // Create a copy with slightly different position
+                        const newEnemy = {
+                            ...enemyToDuplicate,
+                            position: {
+                                x: enemyToDuplicate.position.x + Phaser.Math.Between(-50, 50),
+                                y: enemyToDuplicate.position.y + Phaser.Math.Between(-50, 50)
+                            }
+                        };
 
-                            enemiesToSpawn.push(newEnemy);
-                        }
+                        enemiesToSpawn.push(newEnemy);
                     }
                 }
             }
@@ -2415,10 +2445,23 @@ class GameScene extends Phaser.Scene {
             dropChance += 0.15;
         }
 
+        // Apply path reward multiplier
+        if (this.rewardMultiplier) {
+            dropChance *= this.rewardMultiplier;
+
+            // Log the adjustment if it's significant
+            if (this.rewardMultiplier !== 1.0) {
+                console.log(`Adjusted drop chance by reward multiplier ${this.rewardMultiplier}: ${dropChance}`);
+            }
+        }
+
         // Apply dynamic difficulty adjustment to drop chance
         if (this.dynamicDifficulty) {
             dropChance = this.dynamicDifficulty.getAdjustedAmmoDropChance(dropChance);
         }
+
+        // Cap the drop chance at reasonable values
+        dropChance = Math.min(Math.max(dropChance, 0.05), 0.8);
 
         // Roll for ammo drop
         if (Math.random() < dropChance) {
