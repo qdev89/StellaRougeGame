@@ -2201,4 +2201,219 @@ class LoadingScene extends Phaser.Scene {
             graphics.clear();
         }
     }
+
+    createEnemyCarrierSprite(key) {
+        try {
+            // Create a large carrier ship that spawns drones
+            const width = 96;
+            const height = 96;
+
+            // Create a canvas for the sprite
+            const texture = this.textures.createCanvas(key, width, height);
+            const context = texture.getContext();
+
+            // Clear the canvas
+            context.clearRect(0, 0, width, height);
+
+            // Center coordinates
+            const centerX = width / 2;
+            const centerY = height / 2;
+
+            // Create a metallic dark red gradient for the ship body
+            const bodyGradient = context.createLinearGradient(0, 0, width, 0);
+            bodyGradient.addColorStop(0, '#661111');   // Very dark red on left
+            bodyGradient.addColorStop(0.5, '#992222'); // Dark red in center
+            bodyGradient.addColorStop(1, '#661111');   // Very dark red on right
+
+            // Draw the main body of the carrier - large, rectangular shape
+            context.fillStyle = bodyGradient;
+            context.beginPath();
+            context.moveTo(centerX - 35, 15);          // Top left
+            context.lineTo(centerX + 35, 15);          // Top right
+            context.lineTo(centerX + 40, height - 25); // Bottom right
+            context.lineTo(centerX - 40, height - 25); // Bottom left
+            context.closePath();
+            context.fill();
+
+            // Add a metallic stroke to the body
+            context.strokeStyle = '#bb3333';
+            context.lineWidth = 2;
+            context.stroke();
+
+            // Add flight deck (center strip)
+            context.fillStyle = '#440000';
+            context.beginPath();
+            context.rect(centerX - 15, 20, 30, height - 45);
+            context.fill();
+            context.strokeStyle = '#aa2222';
+            context.lineWidth = 1;
+            context.stroke();
+
+            // Add launch bays (slots in the flight deck)
+            context.fillStyle = '#220000';
+
+            // Top launch bay
+            context.beginPath();
+            context.rect(centerX - 10, 30, 20, 15);
+            context.fill();
+
+            // Middle launch bay
+            context.beginPath();
+            context.rect(centerX - 10, centerY - 7, 20, 15);
+            context.fill();
+
+            // Bottom launch bay
+            context.beginPath();
+            context.rect(centerX - 10, height - 45, 20, 15);
+            context.fill();
+
+            // Add side structures (hangar bays)
+            context.fillStyle = '#550000';
+
+            // Left hangar structure
+            context.beginPath();
+            context.rect(centerX - 35, 25, 15, height - 60);
+            context.fill();
+            context.strokeStyle = '#882222';
+            context.lineWidth = 0.5;
+            context.stroke();
+
+            // Right hangar structure
+            context.beginPath();
+            context.rect(centerX + 20, 25, 15, height - 60);
+            context.fill();
+            context.strokeStyle = '#882222';
+            context.lineWidth = 0.5;
+            context.stroke();
+
+            // Add engine glow
+            const engineGlow = context.createRadialGradient(
+                centerX, height - 25, 0,
+                centerX, height - 25, 20
+            );
+            engineGlow.addColorStop(0, 'rgba(255, 150, 50, 0.8)');
+            engineGlow.addColorStop(1, 'rgba(255, 100, 50, 0)');
+
+            context.fillStyle = engineGlow;
+            context.beginPath();
+            context.arc(centerX, height - 25, 20, 0, Math.PI * 2);
+            context.fill();
+
+            // Add smaller engine glows on sides
+            const leftEngineGlow = context.createRadialGradient(
+                centerX - 25, height - 25, 0,
+                centerX - 25, height - 25, 10
+            );
+            leftEngineGlow.addColorStop(0, 'rgba(255, 150, 50, 0.6)');
+            leftEngineGlow.addColorStop(1, 'rgba(255, 100, 50, 0)');
+
+            context.fillStyle = leftEngineGlow;
+            context.beginPath();
+            context.arc(centerX - 25, height - 25, 10, 0, Math.PI * 2);
+            context.fill();
+
+            const rightEngineGlow = context.createRadialGradient(
+                centerX + 25, height - 25, 0,
+                centerX + 25, height - 25, 10
+            );
+            rightEngineGlow.addColorStop(0, 'rgba(255, 150, 50, 0.6)');
+            rightEngineGlow.addColorStop(1, 'rgba(255, 100, 50, 0)');
+
+            context.fillStyle = rightEngineGlow;
+            context.beginPath();
+            context.arc(centerX + 25, height - 25, 10, 0, Math.PI * 2);
+            context.fill();
+
+            // Add command bridge
+            context.fillStyle = '#aa3333';
+            context.beginPath();
+            context.rect(centerX - 20, 5, 40, 15);
+            context.fill();
+            context.strokeStyle = '#cc4444';
+            context.lineWidth = 1;
+            context.stroke();
+
+            // Add bridge windows
+            context.fillStyle = '#ffcccc';
+            for (let i = 0; i < 5; i++) {
+                context.beginPath();
+                context.rect(centerX - 15 + i * 7, 8, 5, 3);
+                context.fill();
+            }
+
+            // Add antenna/communications array
+            context.strokeStyle = '#dd5555';
+            context.lineWidth = 1;
+            context.beginPath();
+            context.moveTo(centerX, 5);
+            context.lineTo(centerX, -5);
+            context.stroke();
+
+            context.beginPath();
+            context.moveTo(centerX - 10, 0);
+            context.lineTo(centerX, -5);
+            context.lineTo(centerX + 10, 0);
+            context.stroke();
+
+            // Add panel lines and details
+            context.strokeStyle = '#aa3333';
+            context.lineWidth = 0.5;
+
+            // Horizontal deck lines
+            for (let i = 1; i < 5; i++) {
+                const y = 15 + i * (height - 40) / 5;
+                context.beginPath();
+                context.moveTo(centerX - 35, y);
+                context.lineTo(centerX + 35, y);
+                context.stroke();
+            }
+
+            // Vertical structure lines
+            context.beginPath();
+            context.moveTo(centerX - 15, 15);
+            context.lineTo(centerX - 15, height - 25);
+            context.stroke();
+
+            context.beginPath();
+            context.moveTo(centerX + 15, 15);
+            context.lineTo(centerX + 15, height - 25);
+            context.stroke();
+
+            // Add some small lights/details
+            context.fillStyle = '#ff6666';
+            for (let i = 0; i < 6; i++) {
+                const x = centerX - 30 + i * 12;
+                context.beginPath();
+                context.arc(x, height - 30, 1, 0, Math.PI * 2);
+                context.fill();
+            }
+
+            // Add a subtle glow around the ship
+            const shipGlow = context.createRadialGradient(
+                centerX, centerY, 40,
+                centerX, centerY, 60
+            );
+            shipGlow.addColorStop(0, 'rgba(255, 50, 50, 0.1)');
+            shipGlow.addColorStop(1, 'rgba(255, 50, 50, 0)');
+
+            context.fillStyle = shipGlow;
+            context.beginPath();
+            context.arc(centerX, centerY, 60, 0, Math.PI * 2);
+            context.fill();
+
+            // Update the texture
+            texture.refresh();
+
+            console.log(`Created enhanced ${key} sprite`);
+        } catch (error) {
+            console.warn(`Failed to create ${key} sprite:`, error);
+
+            // Fallback to simple shape
+            const graphics = this.make.graphics();
+            graphics.fillStyle(0xff3333);
+            graphics.fillRect(24, 24, 48, 48);
+            graphics.generateTexture(key, 96, 96);
+            graphics.clear();
+        }
+    }
 }
