@@ -104,6 +104,9 @@ class GameScene extends Phaser.Scene {
             // Initialize visual effects system
             this.initializeVisualEffects();
 
+            // Initialize tutorial and contextual tips systems
+            this.initializeTutorialSystems();
+
             // Set up physics and collisions
             this.setupPhysics();
 
@@ -248,6 +251,49 @@ class GameScene extends Phaser.Scene {
                 createBossEntranceEffect: () => {},
                 createTeleportEffect: () => {},
                 cleanup: () => {}
+            };
+        }
+    }
+
+    /**
+     * Initialize tutorial and contextual tips systems
+     */
+    initializeTutorialSystems() {
+        try {
+            // Create game tutorial system
+            this.tutorial = new GameTutorial(this);
+
+            // Create contextual tips system
+            this.contextualTips = new ContextualTips(this);
+
+            // Show tutorial for first-time players
+            // Only show in sector 1 and if it's a new game
+            if (this.currentSector === 1 && !this.tutorial.tutorialComplete) {
+                // Delay tutorial start to allow the scene to fully initialize
+                this.time.delayedCall(1000, () => {
+                    this.tutorial.startTutorial();
+                });
+            }
+
+            // Trigger initial contextual tip
+            this.time.delayedCall(2000, () => {
+                this.contextualTips.checkTrigger('game_start');
+            });
+
+            console.log('Tutorial systems initialized');
+        } catch (error) {
+            console.error('Error initializing tutorial systems:', error);
+            // Create dummy tutorial systems if initialization fails
+            this.tutorial = {
+                startTutorial: () => {},
+                endTutorial: () => {},
+                tutorialComplete: true
+            };
+
+            this.contextualTips = {
+                checkTrigger: () => {},
+                showTip: () => {},
+                hideTip: () => {}
             };
         }
     }
@@ -1345,6 +1391,35 @@ class GameScene extends Phaser.Scene {
             if (!wave.spawned && wave.position > cameraY - 500 && wave.position < visibleBottom + 500) {
                 this.spawnWave(wave);
                 wave.spawned = true;
+
+                // Trigger contextual tips based on wave content
+                if (this.contextualTips) {
+                    // Check for multiple enemies to trigger weapon switching tip
+                    if (wave.enemies && wave.enemies.length > 2) {
+                        this.contextualTips.checkTrigger('multiple_enemies');
+                    }
+
+                    // Check for new enemy types to trigger enemy patterns tip
+                    if (wave.enemies) {
+                        const hasNewEnemyType = wave.enemies.some(enemy => {
+                            // Initialize encountered enemy types set if needed
+                            if (!this.encounteredEnemyTypes) {
+                                this.encounteredEnemyTypes = new Set();
+                            }
+
+                            // Check if this is a new enemy type
+                            if (!this.encounteredEnemyTypes.has(enemy.type)) {
+                                this.encounteredEnemyTypes.add(enemy.type);
+                                return true;
+                            }
+                            return false;
+                        });
+
+                        if (hasNewEnemyType) {
+                            this.contextualTips.checkTrigger('new_enemy_type');
+                        }
+                    }
+                }
             }
         });
     }
@@ -2077,6 +2152,11 @@ class GameScene extends Phaser.Scene {
 
         console.log('Spawning boss:', bossData.type);
 
+        // Trigger boss encounter tip
+        if (this.contextualTips) {
+            this.contextualTips.checkTrigger('boss_encounter');
+        }
+
         // Set up the boss arena first
         this.setupBossArena(bossData);
 
@@ -2730,6 +2810,11 @@ class GameScene extends Phaser.Scene {
             if (this.healthText) {
                 this.healthText.setText(`${Math.ceil(this.player.health)}/${this.player.maxHealth}`);
                 this.healthText.setStroke('#000000', 4); // Thicker stroke for better contrast
+
+                // Trigger contextual tip for low health
+                if (this.contextualTips && healthPercentage <= 0.3) {
+                    this.contextualTips.checkTrigger('health_low');
+                }
             }
 
             // Update shield bar with enhanced graphics
@@ -2848,6 +2933,11 @@ class GameScene extends Phaser.Scene {
             if (this.shieldText) {
                 this.shieldText.setText(`${Math.ceil(this.player.shields)}/${this.player.maxShields}`);
                 this.shieldText.setStroke('#000000', 4); // Thicker stroke for better contrast
+
+                // Trigger contextual tip for low shields
+                if (this.contextualTips && shieldPercentage <= 0.2) {
+                    this.contextualTips.checkTrigger('shields_low');
+                }
             }
 
             // Update sector progress bar

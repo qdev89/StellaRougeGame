@@ -4,7 +4,7 @@
  */
 const CONSTANTS = {
     // Game version
-    GAME_VERSION: '0.1.0',
+    GAME_VERSION: '0.6.0',
 
     // Scene keys
     SCENES: {
@@ -19,7 +19,8 @@ const CONSTANTS = {
         INVENTORY: 'InventoryScene',
         PROFILE: 'ProfileScene',
         SUBSYSTEM_GRID: 'SubsystemGridScene',
-        NEMESIS_INFO: 'NemesisInfoScene'
+        NEMESIS_INFO: 'NemesisInfoScene',
+        HELP: 'HelpScene'
     },
 
     // Player ship settings

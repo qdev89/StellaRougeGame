@@ -347,8 +347,8 @@ class MainMenuScene extends Phaser.Scene {
             ease: 'Sine.easeInOut'
         });
 
-        // Adjust panel height to accommodate the new button
-        panelHeight = 500;
+        // Adjust panel height to accommodate all buttons
+        panelHeight = 580;
 
         // Button configs with icons
         const buttonConfigs = [
@@ -365,27 +365,33 @@ class MainMenuScene extends Phaser.Scene {
                 handler: () => this.openProfile()
             },
             {
+                text: 'HELP & TUTORIAL',
+                icon: '❓',
+                y: panelY - panelHeight/2 + headerHeight + 230,
+                handler: () => this.openHelp()
+            },
+            {
                 text: 'NEMESIS INFO',
                 icon: '👾',
-                y: panelY - panelHeight/2 + headerHeight + 230,
+                y: panelY - panelHeight/2 + headerHeight + 310,
                 handler: () => this.openNemesisInfo()
             },
             {
                 text: 'DIFFICULTY',
                 icon: '🎯',
-                y: panelY - panelHeight/2 + headerHeight + 310,
+                y: panelY - panelHeight/2 + headerHeight + 390,
                 handler: () => this.openDifficultySelector()
             },
             {
                 text: 'HANGAR BAY',
                 icon: '🛸',
-                y: panelY - panelHeight/2 + headerHeight + 390,
+                y: panelY - panelHeight/2 + headerHeight + 470,
                 handler: () => this.openHangar()
             },
             {
                 text: 'SYSTEM CONFIG',
                 icon: '⚙️',
-                y: panelY - panelHeight/2 + headerHeight + 470,
+                y: panelY - panelHeight/2 + headerHeight + 550,
                 handler: () => this.openOptions()
             }
         ];
@@ -769,6 +775,18 @@ class MainMenuScene extends Phaser.Scene {
         this.game.sound.mute = true;
         this.game.sound.volume = 0;
         console.log('Sound is permanently disabled');
+    }
+
+    /**
+     * Open the help and tutorial screen
+     */
+    openHelp() {
+        console.log('Opening help and tutorial screen...');
+
+        // Start the help scene
+        this.scene.start(CONSTANTS.SCENES.HELP, {
+            previousScene: CONSTANTS.SCENES.MAIN_MENU
+        });
     }
 
     /**

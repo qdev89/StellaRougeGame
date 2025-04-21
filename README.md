@@ -19,6 +19,9 @@ Make meaningful choices that affect your ship's capabilities and the challenges 
 - **Balanced Difficulty**: 50% fewer enemies and reduced ammo frequency for a more accessible experience
 - **Dynamic Difficulty System**: Adaptive difficulty that adjusts to player skill with multiple preset difficulty levels
 - **Advanced Visual Effects**: Particle-based explosions, impacts, and environmental effects
+- **Comprehensive Tutorial**: In-game tutorial system that guides new players through game mechanics
+- **Contextual Tips**: Adaptive tips system that provides gameplay advice based on the current situation
+- **Detailed Help System**: Comprehensive help scene with information on all game mechanics
 - **Retro Visual Style**: 16-bit pixel art aesthetic reminiscent of SNES-era shooters
 - **Roguelike Elements**: Procedural generation, permadeath, and meta-progression
 - **Choice & Consequence System**: Meaningful decisions that shape each run
@@ -107,7 +110,7 @@ Use number keys 1-7 to switch between weapons:
 
 ## Development Status
 
-This game is currently in development (v0.5.0 Beta). The following features are implemented:
+This game is currently in development (v0.6.0 Beta). The following features are implemented:
 
 - [x] Basic game structure and scene management
 - [x] Player ship movement and controls
@@ -137,6 +140,10 @@ This game is currently in development (v0.5.0 Beta). The following features are 
 - [x] GitHub Pages deployment workflow
 - [x] Comprehensive testing plan
 - [x] Future development roadmap
+- [x] Tutorial and help system implementation
+  - In-game tutorial for new players
+  - Contextual tips system for gameplay advice
+  - Comprehensive help scene with game mechanics explanation
 - [ ] Sound implementation (completely disabled for now)
 
 ## Development Roadmap
@@ -154,6 +161,10 @@ This game is currently in development (v0.5.0 Beta). The following features are 
   - Game balance and tuning with comprehensive balance configuration system
   - Bug fixing and optimization with debug tools
   - Visual polish with enhanced particle effects and animations
+  - Tutorial and help system implementation
+    - In-game tutorial for new players
+    - Contextual tips system for gameplay advice
+    - Comprehensive help scene with game mechanics explanation
   - Final documentation with player guide and release notes
   - Release preparation with build scripts and package management
 - **Phase 3.2**: Content expansion and unique systems
@@ -163,10 +174,23 @@ This game is currently in development (v0.5.0 Beta). The following features are 
   - Dynamic difficulty scaling with adaptive mode and multiple difficulty levels
 
 ### Future Considerations
-- Sound design and music implementation (planned for post-release)
-- Mobile support with touch controls
-- Gamepad support for browser play
-- Additional game modes (endless, boss rush)
+- **Sound Implementation (Post-Release)**
+  - Background music for menu and gameplay with unique themes for each sector
+  - Sound effects for weapons, explosions, UI, and environmental elements
+  - Dynamic audio mixing based on gameplay intensity
+  - Audio options menu for player customization
+- **Platform Expansion**
+  - Mobile support with touch controls and responsive UI
+  - Gamepad support for browser play with full controller mapping
+  - Electron wrapper for desktop distribution on Windows, macOS, and Linux
+- **Content Expansion**
+  - Additional game modes (endless, boss rush, challenge mode, daily runs)
+  - New ship types with unique abilities and playstyles
+  - Expanded progression systems with achievements and customization
+- **Community Features**
+  - Online leaderboards for comparing scores
+  - Run sharing functionality to share builds
+  - Community challenges with special rules
 
 See the [detailed project plan](project-plan.md) for more information.
 
