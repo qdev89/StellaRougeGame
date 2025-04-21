@@ -164,12 +164,13 @@ class PowerUp extends Phaser.Physics.Arcade.Sprite {
 
                     // Revert after 10 seconds
                     this.scene.time.delayedCall(10000, () => {
-                        if (player.active) {
+                        // Check if player and scene are still valid
+                        if (player && player.active && this.scene && !this.scene.isDestroyed) {
                             player.weaponType = originalWeapon;
 
-                            // Update UI if available
-                            if (this.scene.updateAmmoUI) {
-                                this.scene.updateAmmoUI();
+                            // Update UI if available - use player's reference to scene instead
+                            if (player.scene && player.scene.updateAmmoUI) {
+                                player.scene.updateAmmoUI();
                             }
                         }
                     });
@@ -189,8 +190,8 @@ class PowerUp extends Phaser.Physics.Arcade.Sprite {
                 break;
 
             case 'ammo':
-                // Add ammo to current weapon
-                player.addAmmo(player.weaponType, this.value);
+                // Improved ammo distribution system
+                this.distributeAmmo(player, this.value);
                 // Sound disabled
                 break;
         }
@@ -251,7 +252,7 @@ class PowerUp extends Phaser.Physics.Arcade.Sprite {
                 text = '+1 LIFE';
                 break;
             case 'ammo':
-                text = `+${this.value} AMMO`;
+                text = `+${this.value} AMMO DISTRIBUTED`;
                 if (hasMultiplier && this.scene.rewardMultiplier > 1.0) {
                     text += ' (ENHANCED!)';
                 }
@@ -289,6 +290,42 @@ class PowerUp extends Phaser.Physics.Arcade.Sprite {
         // Check if lifespan is exceeded
         if (this.scene.time.now - this.createdAt > this.lifespan) {
             this.fadeOut();
+        }
+    }
+
+    /**
+     * Distribute ammo intelligently among weapons
+     * @param {PlayerShip} player - The player ship
+     * @param {number} amount - The amount of ammo to distribute
+     */
+    distributeAmmo(player, amount) {
+        // Special weapons that need priority for ammo
+        const specialWeapons = ['PLASMA_BOLT', 'HOMING_MISSILE', 'SCATTER_BOMB'];
+
+        // First, add ammo to the current weapon
+        player.addAmmo(player.weaponType, Math.floor(amount * 0.6)); // 60% to current weapon
+
+        // Distribute remaining 40% among special weapons if they're unlocked
+        const remainingAmmo = Math.floor(amount * 0.4);
+        const unlockedSpecialWeapons = specialWeapons.filter(weapon =>
+            player.unlockedWeapons.includes(weapon));
+
+        if (unlockedSpecialWeapons.length > 0) {
+            // Distribute evenly among unlocked special weapons
+            const ammoPerWeapon = Math.floor(remainingAmmo / unlockedSpecialWeapons.length);
+
+            unlockedSpecialWeapons.forEach(weapon => {
+                // Skip if it's the current weapon (already got ammo)
+                if (weapon !== player.weaponType) {
+                    player.addAmmo(weapon, ammoPerWeapon);
+                }
+            });
+
+            // Log the distribution for debugging
+            console.log(`Ammo distributed: ${Math.floor(amount * 0.6)} to ${player.weaponType}, ${ammoPerWeapon} each to ${unlockedSpecialWeapons.filter(w => w !== player.weaponType).join(', ')}`);
+        } else {
+            // If no special weapons are unlocked, add all remaining ammo to current weapon
+            player.addAmmo(player.weaponType, remainingAmmo);
         }
     }
 

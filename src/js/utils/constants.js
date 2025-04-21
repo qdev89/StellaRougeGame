@@ -20,7 +20,8 @@ const CONSTANTS = {
         PROFILE: 'ProfileScene',
         SUBSYSTEM_GRID: 'SubsystemGridScene',
         NEMESIS_INFO: 'NemesisInfoScene',
-        HELP: 'HelpScene'
+        HELP: 'HelpScene',
+        GAME_SETTINGS: 'GameSettingsScene'
     },
 
     // Player ship settings

@@ -10,11 +10,11 @@ class GameTutorial {
         this.tutorialActive = false;
         this.tutorialComplete = this.checkTutorialComplete();
         this.tutorialElements = [];
-        
+
         // Define tutorial steps
         this.defineSteps();
     }
-    
+
     /**
      * Check if the tutorial has been completed before
      */
@@ -23,16 +23,27 @@ class GameTutorial {
         if (this.scene.game.global && this.scene.game.global.tutorialComplete) {
             return true;
         }
-        
+
         // Default to false if not found
         return false;
     }
-    
+
     /**
      * Define the tutorial steps
      */
     defineSteps() {
         this.steps = [
+            {
+                id: 'guide_intro',
+                type: 'Guide and Tutorial',
+                title: 'STELLAR ROGUE GUIDE',
+                content: 'Welcome to Stellar Rogue! This guide will help you learn the basics of the game. Press NEXT to continue or SKIP ALL to jump right in.',
+                position: 'center',
+                highlight: null,
+                action: null,
+                nextTrigger: 'button',
+                nextDelay: 0
+            },
             {
                 id: 'welcome',
                 title: 'WELCOME TO STELLAR ROGUE',
@@ -145,7 +156,7 @@ class GameTutorial {
             }
         ];
     }
-    
+
     /**
      * Start the tutorial sequence
      */
@@ -154,18 +165,24 @@ class GameTutorial {
             console.log('Tutorial already completed, skipping...');
             return;
         }
-        
+
         console.log('Starting tutorial...');
         this.tutorialActive = true;
         this.currentStep = 0;
-        
+
         // Show the first step
         this.showCurrentStep();
-        
+
         // Set up event listeners for tutorial progression
         this.setupEventListeners();
+
+        // Add ESC key to skip tutorial
+        this.escKey = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
+        this.escKey.on('down', () => {
+            this.endTutorial();
+        });
     }
-    
+
     /**
      * Show the current tutorial step
      */
@@ -174,22 +191,22 @@ class GameTutorial {
             this.endTutorial();
             return;
         }
-        
+
         // Clear any existing tutorial elements
         this.clearTutorialElements();
-        
+
         // Get the current step
         const step = this.steps[this.currentStep];
         console.log(`Showing tutorial step: ${step.id}`);
-        
+
         // Create tutorial panel
         this.createTutorialPanel(step);
-        
+
         // Highlight relevant UI element if specified
         if (step.highlight) {
             this.highlightElement(step.highlight);
         }
-        
+
         // Set up automatic progression if using time trigger
         if (step.nextTrigger === 'time') {
             this.scene.time.delayedCall(step.nextDelay, () => {
@@ -197,14 +214,14 @@ class GameTutorial {
             });
         }
     }
-    
+
     /**
      * Create the tutorial panel UI
      */
     createTutorialPanel(step) {
         const width = this.scene.cameras.main.width;
         const height = this.scene.cameras.main.height;
-        
+
         // Determine panel position based on step.position
         let panelX, panelY;
         switch (step.position) {
@@ -230,99 +247,285 @@ class GameTutorial {
                 panelY = height / 2;
                 break;
         }
-        
-        // Create panel background
-        const panelWidth = 400;
-        const panelHeight = 150;
+
+        // Create skip tutorial button in the top-right corner
+        const skipButton = this.scene.add.text(
+            width - 20,
+            20,
+            'SKIP STEP',
+            {
+                fontFamily: 'monospace',
+                fontSize: '16px',
+                color: '#cccccc',
+                align: 'right',
+                stroke: '#000000',
+                strokeThickness: 3,
+                shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 2, fill: true }
+            }
+        ).setScrollFactor(0).setOrigin(1, 0).setDepth(1002)
+         .setInteractive({ useHandCursor: true });
+
+        // Add hover effect to skip button
+        skipButton.on('pointerover', () => {
+            skipButton.setColor('#ffffff');
+            skipButton.setShadow(1, 1, '#33aaff', 5, true);
+        });
+
+        skipButton.on('pointerout', () => {
+            skipButton.setColor('#cccccc');
+            skipButton.setShadow(1, 1, '#000000', 2, true);
+        });
+
+        // Add click handler to skip button
+        skipButton.on('pointerdown', () => {
+            this.nextStep();
+        });
+
+        // Create skip ALL tutorial button below the skip step button - with enhanced visibility
+        // Create button background for better visibility
+        const skipAllBg = this.scene.add.rectangle(
+            width - 70,
+            50,
+            100, 30,
+            0xaa3333, 0.8
+        ).setScrollFactor(0).setStrokeStyle(2, 0xff3333, 0.9).setDepth(1001)
+         .setInteractive({ useHandCursor: true });
+
+        const skipAllButton = this.scene.add.text(
+            width - 70,
+            50,
+            'SKIP ALL',
+            {
+                fontFamily: 'monospace',
+                fontSize: '18px', // Increased size
+                color: '#ffffff',
+                align: 'center',
+                stroke: '#000000',
+                strokeThickness: 3,
+                shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 2, fill: true },
+                fontWeight: 'bold' // Added bold
+            }
+        ).setScrollFactor(0).setOrigin(0.5, 0.5).setDepth(1002);
+
+        // Add hover effect to skip all button
+        skipAllBg.on('pointerover', () => {
+            skipAllBg.setFillStyle(0xff3333, 0.9); // Brighter red
+            skipAllButton.setColor('#ffffff');
+            skipAllButton.setShadow(1, 1, '#ffff33', 5, true);
+
+            // Add scale animation on hover
+            this.scene.tweens.add({
+                targets: [skipAllBg, skipAllButton],
+                scaleX: 1.1,
+                scaleY: 1.1,
+                duration: 100,
+                ease: 'Power1'
+            });
+        });
+
+        skipAllBg.on('pointerout', () => {
+            skipAllBg.setFillStyle(0xaa3333, 0.8); // Return to original color
+            skipAllButton.setColor('#ffffff');
+            skipAllButton.setShadow(1, 1, '#000000', 2, true);
+
+            // Reset scale on pointer out
+            this.scene.tweens.add({
+                targets: [skipAllBg, skipAllButton],
+                scaleX: 1,
+                scaleY: 1,
+                duration: 100,
+                ease: 'Power1'
+            });
+        });
+
+        // Add click handler to skip all button with enhanced feedback
+        skipAllBg.on('pointerdown', () => {
+            // Add click feedback
+            this.scene.tweens.add({
+                targets: [skipAllBg, skipAllButton],
+                scaleX: 0.95,
+                scaleY: 0.95,
+                duration: 50,
+                yoyo: true,
+                ease: 'Power1',
+                onComplete: () => {
+                    this.endTutorial();
+                }
+            });
+        });
+
+        // Add to tutorial elements for cleanup
+        this.tutorialElements.push(skipButton, skipAllBg, skipAllButton);
+
+        // Create panel background with enhanced styling
+        const panelWidth = 450; // Increased from 400
+        const panelHeight = 180; // Increased from 150
+
+        // Add glow effect behind panel
+        const glow = this.scene.add.rectangle(
+            panelX, panelY,
+            panelWidth + 20, panelHeight + 20,
+            0x3399ff, 0.2
+        ).setScrollFactor(0).setDepth(999);
+
+        // Create main panel with enhanced styling
         const panel = this.scene.add.rectangle(
             panelX, panelY,
             panelWidth, panelHeight,
-            0x000033, 0.8
-        ).setScrollFactor(0).setStrokeStyle(2, 0x3399ff).setDepth(1000);
-        
-        // Create title text
+            0x000033, 0.9 // Increased opacity from 0.8
+        ).setScrollFactor(0).setStrokeStyle(3, 0x3399ff, 0.8).setDepth(1000); // Thicker stroke
+
+        // Add step indicator (e.g., "Step 3/11")
+        const stepIndicator = this.scene.add.text(
+            panelX, panelY - panelHeight/2 - 15,
+            `STEP ${this.currentStep + 1}/${this.steps.length}`,
+            {
+                fontFamily: 'monospace',
+                fontSize: '14px',
+                color: '#66ccff',
+                align: 'center',
+                stroke: '#000033',
+                strokeThickness: 2
+            }
+        ).setScrollFactor(0).setOrigin(0.5).setDepth(1001);
+
+        // Create title text with enhanced styling
         const title = this.scene.add.text(
-            panelX, panelY - 50,
+            panelX, panelY - 60,
             step.title,
             {
                 fontFamily: 'monospace',
-                fontSize: '20px',
+                fontSize: '24px', // Increased from 20px
                 color: '#3399ff',
                 align: 'center',
                 stroke: '#000033',
-                strokeThickness: 4
+                strokeThickness: 4,
+                fontWeight: 'bold', // Added bold
+                shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 3, fill: true } // Added shadow
             }
         ).setScrollFactor(0).setOrigin(0.5).setDepth(1001);
-        
-        // Create content text
+
+        // Create content text with enhanced styling
         const content = this.scene.add.text(
             panelX, panelY,
             step.content,
             {
                 fontFamily: 'monospace',
-                fontSize: '16px',
+                fontSize: '18px', // Increased from 16px
                 color: '#ffffff',
                 align: 'center',
                 stroke: '#000033',
-                strokeThickness: 2,
-                wordWrap: { width: panelWidth - 40 }
+                strokeThickness: 3, // Increased from 2
+                wordWrap: { width: panelWidth - 60 } // Adjusted for larger panel
             }
         ).setScrollFactor(0).setOrigin(0.5).setDepth(1001);
-        
-        // Create next button
+
+        // Create next button with enhanced styling
+        // Create button background
+        const buttonBg = this.scene.add.rectangle(
+            panelX, panelY + 60,
+            100, 40,
+            0x33aa33, 0.7
+        ).setScrollFactor(0).setStrokeStyle(2, 0x33ff33, 0.8).setDepth(1001)
+          .setInteractive({ useHandCursor: true });
+
+        // Create button text
         const nextButton = this.scene.add.text(
-            panelX, panelY + 50,
+            panelX, panelY + 60,
             'NEXT',
             {
                 fontFamily: 'monospace',
-                fontSize: '16px',
-                color: '#33ff33',
+                fontSize: '18px', // Increased from 16px
+                color: '#ffffff',
                 align: 'center',
                 stroke: '#000033',
-                strokeThickness: 2
+                strokeThickness: 3, // Increased from 2
+                fontWeight: 'bold' // Added bold
             }
-        ).setScrollFactor(0).setOrigin(0.5).setDepth(1001)
-          .setInteractive({ useHandCursor: true });
-        
-        // Add hover effect to next button
-        nextButton.on('pointerover', () => {
+        ).setScrollFactor(0).setOrigin(0.5).setDepth(1002);
+
+        // Add hover effect to next button with enhanced feedback
+        buttonBg.on('pointerover', () => {
+            buttonBg.setFillStyle(0x33ff33, 0.9); // Brighter green
             nextButton.setColor('#ffffff');
+
+            // Add scale animation on hover
+            this.scene.tweens.add({
+                targets: [buttonBg, nextButton],
+                scaleX: 1.1,
+                scaleY: 1.1,
+                duration: 100,
+                ease: 'Power1'
+            });
         });
-        
-        nextButton.on('pointerout', () => {
-            nextButton.setColor('#33ff33');
+
+        buttonBg.on('pointerout', () => {
+            buttonBg.setFillStyle(0x33aa33, 0.7); // Return to original color
+            nextButton.setColor('#ffffff');
+
+            // Reset scale on pointer out
+            this.scene.tweens.add({
+                targets: [buttonBg, nextButton],
+                scaleX: 1,
+                scaleY: 1,
+                duration: 100,
+                ease: 'Power1'
+            });
         });
-        
-        // Add click handler to next button
-        nextButton.on('pointerdown', () => {
-            this.nextStep();
+
+        // Add click handler to next button with enhanced feedback
+        buttonBg.on('pointerdown', () => {
+            // Add click feedback
+            this.scene.tweens.add({
+                targets: [buttonBg, nextButton],
+                scaleX: 0.95,
+                scaleY: 0.95,
+                duration: 50,
+                yoyo: true,
+                ease: 'Power1',
+                onComplete: () => {
+                    this.nextStep();
+                }
+            });
         });
-        
+
         // Add elements to the tutorial elements array for later cleanup
-        this.tutorialElements.push(panel, title, content, nextButton);
-        
-        // Add entrance animation
+        this.tutorialElements.push(panel, glow, stepIndicator, title, content, buttonBg, nextButton);
+
+        // Add entrance animation with enhanced effect
         this.scene.tweens.add({
-            targets: [panel, title, content, nextButton],
+            targets: [panel, glow, stepIndicator, title, content, buttonBg, nextButton],
             alpha: { from: 0, to: 1 },
-            y: { from: panelY - 20, to: panelY },
-            duration: 300,
-            ease: 'Power2',
+            y: { from: panelY - 30, to: panelY }, // Increased from -20 for more dramatic effect
+            duration: 500, // Increased from 300
+            ease: 'Back.easeOut', // Changed from Power2 for more dynamic effect
             onStart: () => {
-                title.y -= 50;
+                title.y -= 60;
                 content.y += 0;
-                nextButton.y += 50;
+                buttonBg.y += 60;
+                nextButton.y += 60;
+                stepIndicator.y -= 15;
             }
+        });
+
+        // Add subtle pulse animation to glow
+        this.scene.tweens.add({
+            targets: glow,
+            alpha: { from: 0.2, to: 0.4 },
+            duration: 1500,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
         });
     }
-    
+
     /**
      * Highlight a UI element for the tutorial
      */
     highlightElement(elementType) {
         let element;
         let x, y, width, height;
-        
+
         // Find the element to highlight
         switch (elementType) {
             case 'player':
@@ -385,31 +588,99 @@ class GameTutorial {
             default:
                 return; // No element to highlight
         }
-        
+
         // If element was found, create highlight effect
         if (x !== undefined && y !== undefined) {
-            // Create highlight rectangle
+            // Create outer glow effect
+            const outerGlow = this.scene.add.rectangle(
+                x, y, width + 20, height + 20,
+                0x66ccff, 0.2
+            ).setScrollFactor(elementType === 'player' ? 1 : 0)
+             .setDepth(998);
+
+            // Create highlight rectangle with enhanced styling
             const highlight = this.scene.add.rectangle(
                 x, y, width, height,
-                0x3399ff, 0.3
+                0x3399ff, 0.4 // Increased from 0.3
             ).setScrollFactor(elementType === 'player' ? 1 : 0)
-             .setStrokeStyle(2, 0x3399ff)
+             .setStrokeStyle(3, 0x66ccff, 0.8) // Thicker, brighter stroke
              .setDepth(999);
-            
-            // Add pulsing animation
+
+            // Create corner markers for better visibility
+            const cornerSize = 10;
+            const halfWidth = width / 2;
+            const halfHeight = height / 2;
+
+            // Top-left corner
+            const topLeft = this.scene.add.graphics()
+                .setScrollFactor(elementType === 'player' ? 1 : 0)
+                .setDepth(999);
+            topLeft.lineStyle(3, 0xffffff, 1);
+            topLeft.beginPath();
+            topLeft.moveTo(x - halfWidth, y - halfHeight + cornerSize);
+            topLeft.lineTo(x - halfWidth, y - halfHeight);
+            topLeft.lineTo(x - halfWidth + cornerSize, y - halfHeight);
+            topLeft.strokePath();
+
+            // Top-right corner
+            const topRight = this.scene.add.graphics()
+                .setScrollFactor(elementType === 'player' ? 1 : 0)
+                .setDepth(999);
+            topRight.lineStyle(3, 0xffffff, 1);
+            topRight.beginPath();
+            topRight.moveTo(x + halfWidth - cornerSize, y - halfHeight);
+            topRight.lineTo(x + halfWidth, y - halfHeight);
+            topRight.lineTo(x + halfWidth, y - halfHeight + cornerSize);
+            topRight.strokePath();
+
+            // Bottom-left corner
+            const bottomLeft = this.scene.add.graphics()
+                .setScrollFactor(elementType === 'player' ? 1 : 0)
+                .setDepth(999);
+            bottomLeft.lineStyle(3, 0xffffff, 1);
+            bottomLeft.beginPath();
+            bottomLeft.moveTo(x - halfWidth, y + halfHeight - cornerSize);
+            bottomLeft.lineTo(x - halfWidth, y + halfHeight);
+            bottomLeft.lineTo(x - halfWidth + cornerSize, y + halfHeight);
+            bottomLeft.strokePath();
+
+            // Bottom-right corner
+            const bottomRight = this.scene.add.graphics()
+                .setScrollFactor(elementType === 'player' ? 1 : 0)
+                .setDepth(999);
+            bottomRight.lineStyle(3, 0xffffff, 1);
+            bottomRight.beginPath();
+            bottomRight.moveTo(x + halfWidth - cornerSize, y + halfHeight);
+            bottomRight.lineTo(x + halfWidth, y + halfHeight);
+            bottomRight.lineTo(x + halfWidth, y + halfHeight - cornerSize);
+            bottomRight.strokePath();
+
+            // Add pulsing animation with enhanced effect
             this.scene.tweens.add({
-                targets: highlight,
-                alpha: { from: 0.3, to: 0.6 },
+                targets: [highlight, outerGlow],
+                alpha: { from: highlight.alpha, to: highlight.alpha + 0.3 },
                 duration: 800,
                 yoyo: true,
-                repeat: -1
+                repeat: -1,
+                ease: 'Sine.easeInOut'
             });
-            
+
+            // Add subtle scale animation to corner markers
+            this.scene.tweens.add({
+                targets: [topLeft, topRight, bottomLeft, bottomRight],
+                scaleX: { from: 1, to: 1.2 },
+                scaleY: { from: 1, to: 1.2 },
+                duration: 1200,
+                yoyo: true,
+                repeat: -1,
+                ease: 'Sine.easeInOut'
+            });
+
             // Add to tutorial elements for cleanup
-            this.tutorialElements.push(highlight);
+            this.tutorialElements.push(highlight, outerGlow, topLeft, topRight, bottomLeft, bottomRight);
         }
     }
-    
+
     /**
      * Set up event listeners for tutorial progression
      */
@@ -424,121 +695,134 @@ class GameTutorial {
         this.scene.input.keyboard.on('keydown-LEFT', this.onMovement, this);
         this.scene.input.keyboard.on('keydown-DOWN', this.onMovement, this);
         this.scene.input.keyboard.on('keydown-RIGHT', this.onMovement, this);
-        
+
         // Dash detection
         this.dashDetected = false;
         this.scene.input.keyboard.on('keydown-SPACE', this.onDash, this);
-        
+
         // Weapon switch detection
         this.weaponSwitchDetected = false;
         for (let i = 1; i <= 7; i++) {
             this.scene.input.keyboard.on(`keydown-${i}`, this.onWeaponSwitch, this);
         }
-        
+
         // Enemy hit detection
         this.enemyHitDetected = false;
         if (this.scene.events) {
             this.scene.events.on('enemy-hit', this.onEnemyHit, this);
         }
     }
-    
+
     /**
      * Handle movement event
      */
     onMovement() {
         if (!this.tutorialActive) return;
-        
+
         this.movementDetected = true;
-        
+
         // Check if current step is waiting for movement
         const currentStep = this.steps[this.currentStep];
         if (currentStep && currentStep.nextTrigger === 'movement') {
             this.nextStep();
         }
     }
-    
+
     /**
      * Handle dash event
      */
     onDash() {
         if (!this.tutorialActive) return;
-        
+
         this.dashDetected = true;
-        
+
         // Check if current step is waiting for dash
         const currentStep = this.steps[this.currentStep];
         if (currentStep && currentStep.nextTrigger === 'dash') {
             this.nextStep();
         }
     }
-    
+
     /**
      * Handle weapon switch event
      */
     onWeaponSwitch() {
         if (!this.tutorialActive) return;
-        
+
         this.weaponSwitchDetected = true;
-        
+
         // Check if current step is waiting for weapon switch
         const currentStep = this.steps[this.currentStep];
         if (currentStep && currentStep.nextTrigger === 'weapon_switch') {
             this.nextStep();
         }
     }
-    
+
     /**
      * Handle enemy hit event
      */
     onEnemyHit() {
         if (!this.tutorialActive) return;
-        
+
         this.enemyHitDetected = true;
-        
+
         // Check if current step is waiting for enemy hit
         const currentStep = this.steps[this.currentStep];
         if (currentStep && currentStep.nextTrigger === 'enemy_hit') {
             this.nextStep();
         }
     }
-    
+
     /**
      * Advance to the next tutorial step
      */
     nextStep() {
         if (!this.tutorialActive) return;
-        
+
         this.currentStep++;
-        
+
         if (this.currentStep >= this.steps.length) {
-            this.endTutorial();
+            this.endTutorial(true); // Pass true to indicate natural completion
         } else {
             this.showCurrentStep();
         }
     }
-    
+
     /**
      * End the tutorial
+     * @param {boolean} completed - Whether the tutorial was completed naturally (true) or skipped (false)
      */
-    endTutorial() {
+    endTutorial(completed = false) {
         if (!this.tutorialActive) return;
-        
-        console.log('Tutorial completed');
+
+        console.log(completed ? 'Tutorial completed naturally' : 'Tutorial skipped');
         this.tutorialActive = false;
         this.tutorialComplete = true;
-        
+
         // Store tutorial completion in game state
         if (this.scene.game.global) {
             this.scene.game.global.tutorialComplete = true;
         }
-        
+
         // Clean up tutorial elements
         this.clearTutorialElements();
-        
+
         // Remove event listeners
         this.removeEventListeners();
+
+        // Remove ESC key listener
+        if (this.escKey) {
+            this.escKey.removeAllListeners();
+        }
+
+        // Show a brief message based on how the tutorial ended
+        if (completed) {
+            this.showTutorialCompletedMessage();
+        } else {
+            this.showTutorialSkippedMessage();
+        }
     }
-    
+
     /**
      * Clear all tutorial UI elements
      */
@@ -548,10 +832,10 @@ class GameTutorial {
                 element.destroy();
             }
         });
-        
+
         this.tutorialElements = [];
     }
-    
+
     /**
      * Remove event listeners
      */
@@ -566,15 +850,108 @@ class GameTutorial {
         this.scene.input.keyboard.off('keydown-DOWN', this.onMovement, this);
         this.scene.input.keyboard.off('keydown-RIGHT', this.onMovement, this);
         this.scene.input.keyboard.off('keydown-SPACE', this.onDash, this);
-        
+
         for (let i = 1; i <= 7; i++) {
             this.scene.input.keyboard.off(`keydown-${i}`, this.onWeaponSwitch, this);
         }
-        
+
         // Remove game event listeners
         if (this.scene.events) {
             this.scene.events.off('enemy-hit', this.onEnemyHit, this);
         }
+    }
+
+    /**
+     * Show a brief message when the tutorial is skipped
+     */
+    showTutorialSkippedMessage() {
+        const width = this.scene.cameras.main.width;
+        const height = this.scene.cameras.main.height;
+
+        // Create message text
+        const message = this.scene.add.text(
+            width / 2,
+            height / 2,
+            'TUTORIAL SKIPPED\nPress H for help anytime',
+            {
+                fontFamily: 'monospace',
+                fontSize: '24px',
+                color: '#ff9999', // Red tint for skipped
+                align: 'center',
+                stroke: '#000033',
+                strokeThickness: 4,
+                fontWeight: 'bold',
+                shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 3, fill: true }
+            }
+        ).setScrollFactor(0).setOrigin(0.5).setDepth(1005);
+
+        // Add fade in/out animation
+        this.scene.tweens.add({
+            targets: message,
+            alpha: { from: 0, to: 1 },
+            duration: 500,
+            ease: 'Power2',
+            yoyo: true,
+            hold: 1500,
+            onComplete: () => {
+                message.destroy();
+            }
+        });
+    }
+
+    /**
+     * Show a brief message when tutorial is completed naturally
+     */
+    showTutorialCompletedMessage() {
+        const width = this.scene.cameras.main.width;
+        const height = this.scene.cameras.main.height;
+
+        // Create message text
+        const message = this.scene.add.text(
+            width / 2,
+            height / 2 - 20,
+            'TUTORIAL COMPLETED',
+            {
+                fontFamily: 'monospace',
+                fontSize: '28px',
+                color: '#99ff99', // Green tint for completion
+                align: 'center',
+                stroke: '#000033',
+                strokeThickness: 4,
+                fontWeight: 'bold',
+                shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 3, fill: true }
+            }
+        ).setScrollFactor(0).setOrigin(0.5).setDepth(1005);
+
+        // Add a congratulatory subtext
+        const subtext = this.scene.add.text(
+            width / 2,
+            height / 2 + 20,
+            'You\'re ready for action!\nPress H for help anytime',
+            {
+                fontFamily: 'monospace',
+                fontSize: '20px',
+                color: '#ffffff',
+                align: 'center',
+                stroke: '#000033',
+                strokeThickness: 3,
+                shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 2, fill: true }
+            }
+        ).setScrollFactor(0).setOrigin(0.5).setDepth(1005);
+
+        // Add fade in/out animation for both texts
+        this.scene.tweens.add({
+            targets: [message, subtext],
+            alpha: { from: 0, to: 1 },
+            duration: 500,
+            ease: 'Power2',
+            yoyo: true,
+            hold: 2000,
+            onComplete: () => {
+                message.destroy();
+                subtext.destroy();
+            }
+        });
     }
 }
 

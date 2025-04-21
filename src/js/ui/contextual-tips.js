@@ -5,20 +5,20 @@
 class ContextualTips {
     constructor(scene) {
         this.scene = scene;
-        
+
         // Tips state
         this.shownTips = new Set();
         this.activeTip = null;
         this.tipQueue = [];
         this.tipContainer = null;
-        
+
         // Load previously shown tips
         this.loadShownTips();
-        
+
         // Define all available tips
         this.defineTips();
     }
-    
+
     /**
      * Load previously shown tips from localStorage
      */
@@ -34,7 +34,7 @@ class ContextualTips {
             this.shownTips = new Set();
         }
     }
-    
+
     /**
      * Save shown tips to localStorage
      */
@@ -46,7 +46,7 @@ class ContextualTips {
             console.warn('Failed to save shown tips', error);
         }
     }
-    
+
     /**
      * Define all available tips
      */
@@ -68,7 +68,7 @@ class ContextualTips {
                 trigger: 'enemy_nearby',
                 priority: 90
             },
-            
+
             // Combat tips
             weapon_switching: {
                 id: 'weapon_switching',
@@ -84,7 +84,7 @@ class ContextualTips {
                 trigger: 'new_enemy_type',
                 priority: 70
             },
-            
+
             // Health and shields
             shield_regen: {
                 id: 'shield_regen',
@@ -100,7 +100,7 @@ class ContextualTips {
                 trigger: 'health_low',
                 priority: 100
             },
-            
+
             // Powerups
             powerup_types: {
                 id: 'powerup_types',
@@ -109,7 +109,7 @@ class ContextualTips {
                 trigger: 'powerup_spawned',
                 priority: 85
             },
-            
+
             // Sector map
             path_difficulty: {
                 id: 'path_difficulty',
@@ -118,7 +118,7 @@ class ContextualTips {
                 trigger: 'sector_map_opened',
                 priority: 90
             },
-            
+
             // Upgrades
             upgrade_synergies: {
                 id: 'upgrade_synergies',
@@ -127,7 +127,7 @@ class ContextualTips {
                 trigger: 'upgrade_screen',
                 priority: 80
             },
-            
+
             // Boss fights
             boss_patterns: {
                 id: 'boss_patterns',
@@ -138,7 +138,7 @@ class ContextualTips {
             }
         };
     }
-    
+
     /**
      * Check if a tip should be shown based on a trigger
      * @param {string} trigger - The trigger event
@@ -147,22 +147,22 @@ class ContextualTips {
     checkTrigger(trigger, context = {}) {
         // Skip if a tip is already showing
         if (this.activeTip) return;
-        
+
         // Find all tips that match this trigger
-        const matchingTips = Object.values(this.tips).filter(tip => 
+        const matchingTips = Object.values(this.tips).filter(tip =>
             tip.trigger === trigger && !this.shownTips.has(tip.id)
         );
-        
+
         // Skip if no matching tips
         if (matchingTips.length === 0) return;
-        
+
         // Sort by priority (highest first)
         matchingTips.sort((a, b) => b.priority - a.priority);
-        
+
         // Queue the highest priority tip
         this.queueTip(matchingTips[0]);
     }
-    
+
     /**
      * Queue a tip to be shown
      * @param {Object} tip - The tip to queue
@@ -170,27 +170,27 @@ class ContextualTips {
     queueTip(tip) {
         // Add to queue
         this.tipQueue.push(tip);
-        
+
         // Process queue if not already processing
         if (!this.activeTip) {
             this.processQueue();
         }
     }
-    
+
     /**
      * Process the tip queue
      */
     processQueue() {
         // Skip if queue is empty
         if (this.tipQueue.length === 0) return;
-        
+
         // Get next tip
         const tip = this.tipQueue.shift();
-        
+
         // Show the tip
         this.showTip(tip);
     }
-    
+
     /**
      * Show a tip
      * @param {Object} tip - The tip to show
@@ -198,15 +198,15 @@ class ContextualTips {
     showTip(tip) {
         // Set as active tip
         this.activeTip = tip;
-        
+
         // Create container if it doesn't exist
         if (!this.tipContainer) {
             this.createTipContainer();
         }
-        
+
         // Update tip content
         this.updateTipContent(tip);
-        
+
         // Show the container
         this.tipContainer.setAlpha(0);
         this.scene.tweens.add({
@@ -215,17 +215,17 @@ class ContextualTips {
             duration: 300,
             ease: 'Power2'
         });
-        
+
         // Auto-hide after delay
         this.scene.time.delayedCall(5000, () => {
             this.hideTip();
         });
-        
+
         // Mark tip as shown
         this.shownTips.add(tip.id);
         this.saveShownTips();
     }
-    
+
     /**
      * Create the tip container
      */
@@ -233,12 +233,12 @@ class ContextualTips {
         // Create container
         this.tipContainer = this.scene.add.container(0, 0);
         this.tipContainer.setDepth(1000);
-        
-        // Position at bottom of screen
+
+        // Position at bottom of screen, but higher to avoid overlap with weapon UI
         const x = this.scene.cameras.main.width / 2;
-        const y = this.scene.cameras.main.height - 100;
+        const y = this.scene.cameras.main.height - 220; // Moved up even higher to avoid overlap
         this.tipContainer.setPosition(x, y);
-        
+
         // Create background
         this.tipBackground = this.scene.add.rectangle(
             0, 0,
@@ -247,7 +247,7 @@ class ContextualTips {
             0.8
         );
         this.tipBackground.setStrokeStyle(2, 0x3399ff, 1);
-        
+
         // Create title text
         this.tipTitle = this.scene.add.text(
             0, -25,
@@ -261,7 +261,7 @@ class ContextualTips {
                 strokeThickness: 2
             }
         ).setOrigin(0.5);
-        
+
         // Create tip text
         this.tipText = this.scene.add.text(
             0, 5,
@@ -276,7 +276,7 @@ class ContextualTips {
                 wordWrap: { width: 380 }
             }
         ).setOrigin(0.5);
-        
+
         // Create dismiss button
         this.dismissButton = this.scene.add.text(
             180, -30,
@@ -288,25 +288,25 @@ class ContextualTips {
                 align: 'center'
             }
         ).setOrigin(0.5).setInteractive({ useHandCursor: true });
-        
+
         // Add hover effect to dismiss button
         this.dismissButton.on('pointerover', () => {
             this.dismissButton.setColor('#ffffff');
         });
-        
+
         this.dismissButton.on('pointerout', () => {
             this.dismissButton.setColor('#999999');
         });
-        
+
         // Add click handler to dismiss button
         this.dismissButton.on('pointerdown', () => {
             this.hideTip();
         });
-        
+
         // Add elements to container
         this.tipContainer.add([this.tipBackground, this.tipTitle, this.tipText, this.dismissButton]);
     }
-    
+
     /**
      * Update tip content
      * @param {Object} tip - The tip to display
@@ -315,19 +315,19 @@ class ContextualTips {
         // Update title and text
         this.tipTitle.setText(tip.title);
         this.tipText.setText(tip.text);
-        
+
         // Adjust background height based on text height
         const height = Math.max(80, this.tipText.height + 60);
         this.tipBackground.height = height;
     }
-    
+
     /**
      * Hide the current tip
      */
     hideTip() {
         // Skip if no active tip
         if (!this.activeTip) return;
-        
+
         // Hide with animation
         this.scene.tweens.add({
             targets: this.tipContainer,
@@ -337,13 +337,13 @@ class ContextualTips {
             onComplete: () => {
                 // Clear active tip
                 this.activeTip = null;
-                
+
                 // Process next tip in queue
                 this.processQueue();
             }
         });
     }
-    
+
     /**
      * Reset all tips (for testing)
      */

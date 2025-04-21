@@ -131,9 +131,9 @@ class LoadingScene extends Phaser.Scene {
 
     createSpaceshipSprite() {
         try {
-            // Create an improved spaceship texture based on space.jfif design
-            const width = 120;
-            const height = 160;
+            // Create a smaller spaceship texture based on space.jfif design
+            const width = 64; // Reduced from 120
+            const height = 96; // Reduced from 160
 
             // Create a canvas for the spaceship
             const texture = this.textures.createCanvas('player-ship-sprite', width, height);
@@ -479,10 +479,12 @@ class LoadingScene extends Phaser.Scene {
         const requiredTextures = [
             'button', 'button-hover', 'bg-stars', 'bg-nebula', 'bg-planets', 'player-ship',
             'enemy-drone', 'enemy-gunship', 'enemy-destroyer', 'laser-blue', 'laser-red',
-            'plasma-bolt', 'missile', 'powerup-health', 'powerup-shield',
+            'plasma-bolt', 'missile', 'scatter-bomb', 'powerup-health', 'powerup-shield',
             'powerup-weapon', 'powerup-score', 'powerup-flash', 'particle-blue',
             'star-particle', 'bg-dust', 'asteroid', 'enemy-interceptor', 'enemy-bomber',
-            'enemy-stealth', 'enemy-turret', 'enemy-carrier'
+            'enemy-stealth', 'enemy-turret', 'enemy-carrier', 'powerup-ammo',
+            'particle-health', 'particle-shield', 'particle-weapon', 'particle-score', 'particle-ammo',
+            'portal' // Added portal texture for level completion
             // New enemy types will use existing assets with different tints
         ];
 
@@ -533,8 +535,23 @@ class LoadingScene extends Phaser.Scene {
             color = 0xff3333; // Red for enemy lasers
         } else if (key.includes('plasma')) {
             color = 0xff33ff; // Purple for plasma
+            // Create enhanced plasma bolt sprite
+            this.createEnhancedPlasmaBoltSprite(key, color);
+            return;
         } else if (key.includes('missile')) {
             color = 0xffff33; // Yellow for missiles
+            // Create enhanced missile sprite
+            this.createEnhancedMissileSprite(key, color);
+            return;
+        } else if (key.includes('scatter-bomb')) {
+            color = 0xff6633; // Orange-red for scatter bomb
+            // Create enhanced scatter bomb sprite
+            this.createEnhancedScatterBombSprite(key, color);
+            return;
+        } else if (key.includes('portal')) {
+            // Create portal texture
+            this.createPortalTexture(key);
+            return;
         } else if (key.includes('powerup')) {
             color = 0x33ffff; // Cyan for powerups
         } else if (key.includes('button')) {
@@ -602,13 +619,8 @@ class LoadingScene extends Phaser.Scene {
             graphics.lineStyle(2, 0x33ff33);
             graphics.strokeRoundedRect(0, 0, width*4, height, 10);
         } else if (key.includes('particle')) {
-            // Particle (small circle)
-            graphics.fillStyle(color);
-            graphics.fillCircle(4, 4, 4);
-
-            // Generate with smaller size
-            graphics.generateTexture(key, 8, 8);
-            graphics.clear();
+            // Create enhanced particle with glow effect
+            this.createEnhancedParticleTexture(key, color);
             return;
         } else {
             // Default shape (square)
@@ -2565,6 +2577,423 @@ class LoadingScene extends Phaser.Scene {
             graphics.fillStyle(0xff3333);
             graphics.fillRect(24, 24, 48, 48);
             graphics.generateTexture(key, 96, 96);
+            graphics.clear();
+        }
+    }
+
+    /**
+     * Create enhanced particle textures with glow effects
+     */
+    createEnhancedParticleTexture(key, color) {
+        const graphics = this.make.graphics();
+        const size = 16; // Smaller size for particles
+
+        // Determine particle color based on type
+        let particleColor = color;
+        if (key.includes('health')) {
+            particleColor = 0xff3333; // Red
+        } else if (key.includes('shield')) {
+            particleColor = 0x3333ff; // Blue
+        } else if (key.includes('weapon')) {
+            particleColor = 0xffff33; // Yellow
+        } else if (key.includes('score')) {
+            particleColor = 0x33ff33; // Green
+        } else if (key.includes('ammo')) {
+            particleColor = 0xff9900; // Orange
+        }
+
+        // Create a glowing particle effect
+        // Outer glow
+        graphics.fillStyle(particleColor, 0.2);
+        graphics.fillCircle(size/2, size/2, size/2);
+
+        // Middle glow
+        graphics.fillStyle(particleColor, 0.5);
+        graphics.fillCircle(size/2, size/2, size/3);
+
+        // Core
+        graphics.fillStyle(particleColor, 0.9);
+        graphics.fillCircle(size/2, size/2, size/4);
+
+        // Brightest center
+        graphics.fillStyle(0xffffff, 0.9);
+        graphics.fillCircle(size/2, size/2, size/8);
+
+        // Generate the texture
+        graphics.generateTexture(key, size, size);
+        graphics.clear();
+
+        console.log(`Created enhanced particle texture: ${key}`);
+    }
+
+    /**
+     * Create enhanced plasma bolt sprite
+     * @param {string} key - Texture key
+     * @param {number} color - Base color for the plasma bolt
+     */
+    createEnhancedPlasmaBoltSprite(key, color) {
+        // Create a more detailed plasma bolt
+        const width = 24;
+        const height = 48;
+
+        try {
+            // Create a canvas for the plasma bolt
+            const texture = this.textures.createCanvas(key, width, height);
+            const context = texture.getContext();
+
+            // Clear the canvas
+            context.clearRect(0, 0, width, height);
+
+            // Create a gradient for the plasma bolt
+            const gradient = context.createLinearGradient(width/2, 0, width/2, height);
+            gradient.addColorStop(0, '#ffffff');
+            gradient.addColorStop(0.3, '#ff66ff');
+            gradient.addColorStop(0.7, '#cc33cc');
+            gradient.addColorStop(1, '#990099');
+
+            // Draw the plasma bolt body (oval shape)
+            context.fillStyle = gradient;
+            context.beginPath();
+            context.ellipse(width/2, height/2, width/2 - 2, height/2 - 2, 0, 0, Math.PI * 2);
+            context.fill();
+
+            // Add a glow effect
+            const glow = context.createRadialGradient(
+                width/2, height/2, 0,
+                width/2, height/2, width
+            );
+            glow.addColorStop(0, 'rgba(255, 100, 255, 0.5)');
+            glow.addColorStop(0.5, 'rgba(255, 100, 255, 0.2)');
+            glow.addColorStop(1, 'rgba(255, 100, 255, 0)');
+
+            context.fillStyle = glow;
+            context.beginPath();
+            context.ellipse(width/2, height/2, width, height/2, 0, 0, Math.PI * 2);
+            context.fill();
+
+            // Add some energy details
+            context.strokeStyle = '#ffffff';
+            context.lineWidth = 1;
+
+            // Zigzag energy pattern
+            context.beginPath();
+            context.moveTo(width/2, 5);
+            context.lineTo(width/2 - 3, height/4);
+            context.lineTo(width/2 + 3, height/2);
+            context.lineTo(width/2 - 3, 3*height/4);
+            context.lineTo(width/2, height - 5);
+            context.stroke();
+
+            // Update the texture
+            texture.refresh();
+
+            console.log(`Created enhanced plasma bolt sprite: ${key}`);
+        } catch (error) {
+            console.warn(`Failed to create plasma bolt sprite:`, error);
+
+            // Fallback to simple shape
+            const graphics = this.make.graphics();
+            graphics.fillStyle(color);
+            graphics.fillRect(0, 0, width, height);
+            graphics.generateTexture(key, width, height);
+            graphics.clear();
+        }
+    }
+
+    /**
+     * Create enhanced missile sprite
+     * @param {string} key - Texture key
+     * @param {number} color - Base color for the missile
+     */
+    createEnhancedMissileSprite(key, color) {
+        // Create a more detailed missile
+        const width = 16;
+        const height = 40;
+
+        try {
+            // Create a canvas for the missile
+            const texture = this.textures.createCanvas(key, width, height);
+            const context = texture.getContext();
+
+            // Clear the canvas
+            context.clearRect(0, 0, width, height);
+
+            // Draw missile body
+            context.fillStyle = '#dddddd';
+            context.beginPath();
+            context.roundRect(width/4, height/4, width/2, height/2, 2);
+            context.fill();
+
+            // Draw missile nose cone
+            context.fillStyle = '#ff3333';
+            context.beginPath();
+            context.moveTo(width/2, 0);
+            context.lineTo(width/4, height/4);
+            context.lineTo(3*width/4, height/4);
+            context.fill();
+
+            // Draw missile fins
+            context.fillStyle = '#aaaaaa';
+
+            // Left fin
+            context.beginPath();
+            context.moveTo(width/4, 3*height/4);
+            context.lineTo(0, height);
+            context.lineTo(width/4, height);
+            context.fill();
+
+            // Right fin
+            context.beginPath();
+            context.moveTo(3*width/4, 3*height/4);
+            context.lineTo(width, height);
+            context.lineTo(3*width/4, height);
+            context.fill();
+
+            // Draw engine exhaust
+            const exhaustGradient = context.createLinearGradient(width/2, 3*height/4, width/2, height);
+            exhaustGradient.addColorStop(0, '#ffff33');
+            exhaustGradient.addColorStop(0.5, '#ff6600');
+            exhaustGradient.addColorStop(1, 'rgba(255, 0, 0, 0)');
+
+            context.fillStyle = exhaustGradient;
+            context.beginPath();
+            context.moveTo(width/3, 3*height/4);
+            context.lineTo(width/2, height);
+            context.lineTo(2*width/3, 3*height/4);
+            context.fill();
+
+            // Add details
+            context.strokeStyle = '#333333';
+            context.lineWidth = 1;
+            context.beginPath();
+            context.moveTo(width/4, height/2);
+            context.lineTo(3*width/4, height/2);
+            context.stroke();
+
+            // Update the texture
+            texture.refresh();
+
+            console.log(`Created enhanced missile sprite: ${key}`);
+        } catch (error) {
+            console.warn(`Failed to create missile sprite:`, error);
+
+            // Fallback to simple shape
+            const graphics = this.make.graphics();
+            graphics.fillStyle(color);
+            graphics.fillRect(0, 0, width, height);
+            graphics.generateTexture(key, width, height);
+            graphics.clear();
+        }
+    }
+
+    /**
+     * Create enhanced scatter bomb sprite
+     * @param {string} key - Texture key
+     * @param {number} color - Base color for the scatter bomb
+     */
+    createEnhancedScatterBombSprite(key, color) {
+        // Create a more detailed scatter bomb
+        const width = 32;
+        const height = 32;
+
+        try {
+            // Create a canvas for the scatter bomb
+            const texture = this.textures.createCanvas(key, width, height);
+            const context = texture.getContext();
+
+            // Clear the canvas
+            context.clearRect(0, 0, width, height);
+
+            // Draw the bomb body (circle)
+            const gradient = context.createRadialGradient(
+                width/2, height/2, 0,
+                width/2, height/2, width/2
+            );
+            gradient.addColorStop(0, '#ffcc99');
+            gradient.addColorStop(0.4, '#ff6633');
+            gradient.addColorStop(0.8, '#cc3300');
+            gradient.addColorStop(1, '#661a00');
+
+            context.fillStyle = gradient;
+            context.beginPath();
+            context.arc(width/2, height/2, width/2 - 2, 0, Math.PI * 2);
+            context.fill();
+
+            // Add a glow effect
+            const glow = context.createRadialGradient(
+                width/2, height/2, width/4,
+                width/2, height/2, width
+            );
+            glow.addColorStop(0, 'rgba(255, 150, 50, 0.5)');
+            glow.addColorStop(0.5, 'rgba(255, 100, 0, 0.2)');
+            glow.addColorStop(1, 'rgba(255, 50, 0, 0)');
+
+            context.fillStyle = glow;
+            context.beginPath();
+            context.arc(width/2, height/2, width, 0, Math.PI * 2);
+            context.fill();
+
+            // Add bomb details
+            // Fuse
+            context.strokeStyle = '#333333';
+            context.lineWidth = 2;
+            context.beginPath();
+            context.moveTo(width/2, 2);
+            context.lineTo(width/2, width/4);
+            context.stroke();
+
+            // Fuse spark
+            context.fillStyle = '#ffff00';
+            context.beginPath();
+            context.arc(width/2, 2, 3, 0, Math.PI * 2);
+            context.fill();
+
+            // Bomb segments
+            context.strokeStyle = '#000000';
+            context.lineWidth = 1;
+
+            // Horizontal line
+            context.beginPath();
+            context.moveTo(4, height/2);
+            context.lineTo(width-4, height/2);
+            context.stroke();
+
+            // Vertical line
+            context.beginPath();
+            context.moveTo(width/2, 4);
+            context.lineTo(width/2, height-4);
+            context.stroke();
+
+            // Update the texture
+            texture.refresh();
+
+            console.log(`Created enhanced scatter bomb sprite: ${key}`);
+        } catch (error) {
+            console.warn(`Failed to create scatter bomb sprite:`, error);
+
+            // Fallback to simple shape
+            const graphics = this.make.graphics();
+            graphics.fillStyle(color);
+            graphics.fillCircle(width/2, height/2, width/2);
+            graphics.generateTexture(key, width, height);
+            graphics.clear();
+        }
+    }
+
+    /**
+     * Create a portal texture for level completion
+     * @param {string} key - Texture key
+     */
+    createPortalTexture(key) {
+        // Create a detailed portal with swirling energy effect
+        const size = 128; // Larger size for the portal
+
+        try {
+            // Create a canvas for the portal
+            const texture = this.textures.createCanvas(key, size, size);
+            const context = texture.getContext();
+
+            // Clear the canvas
+            context.clearRect(0, 0, size, size);
+
+            // Create outer ring gradient
+            const outerRingGradient = context.createRadialGradient(
+                size/2, size/2, size/2 - 10,
+                size/2, size/2, size/2
+            );
+            outerRingGradient.addColorStop(0, '#33ccff');
+            outerRingGradient.addColorStop(0.5, '#3366ff');
+            outerRingGradient.addColorStop(1, '#0033cc');
+
+            // Draw outer ring
+            context.fillStyle = outerRingGradient;
+            context.beginPath();
+            context.arc(size/2, size/2, size/2, 0, Math.PI * 2);
+            context.fill();
+
+            // Create inner portal gradient
+            const innerGradient = context.createRadialGradient(
+                size/2, size/2, 0,
+                size/2, size/2, size/2 - 15
+            );
+            innerGradient.addColorStop(0, '#ffffff');
+            innerGradient.addColorStop(0.2, '#ccffff');
+            innerGradient.addColorStop(0.5, '#66ccff');
+            innerGradient.addColorStop(0.8, '#3366ff');
+            innerGradient.addColorStop(1, '#0033cc');
+
+            // Draw inner portal
+            context.fillStyle = innerGradient;
+            context.beginPath();
+            context.arc(size/2, size/2, size/2 - 15, 0, Math.PI * 2);
+            context.fill();
+
+            // Add swirl effect
+            context.strokeStyle = '#ffffff';
+            context.lineWidth = 2;
+
+            // Draw multiple swirls
+            for (let i = 0; i < 3; i++) {
+                const radius = (size/2 - 20) - (i * 10);
+                context.beginPath();
+
+                for (let angle = 0; angle < Math.PI * 6; angle += 0.1) {
+                    const r = radius * (1 - angle / (Math.PI * 8));
+                    const x = size/2 + r * Math.cos(angle + (i * Math.PI/4));
+                    const y = size/2 + r * Math.sin(angle + (i * Math.PI/4));
+
+                    if (angle === 0) {
+                        context.moveTo(x, y);
+                    } else {
+                        context.lineTo(x, y);
+                    }
+                }
+
+                context.stroke();
+            }
+
+            // Add energy particles
+            for (let i = 0; i < 30; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const distance = Math.random() * (size/2 - 20);
+                const x = size/2 + distance * Math.cos(angle);
+                const y = size/2 + distance * Math.sin(angle);
+                const particleSize = 1 + Math.random() * 3;
+
+                context.fillStyle = '#ffffff';
+                context.beginPath();
+                context.arc(x, y, particleSize, 0, Math.PI * 2);
+                context.fill();
+            }
+
+            // Add glow effect
+            const glowGradient = context.createRadialGradient(
+                size/2, size/2, size/2 - 15,
+                size/2, size/2, size
+            );
+            glowGradient.addColorStop(0, 'rgba(51, 153, 255, 0.5)');
+            glowGradient.addColorStop(0.5, 'rgba(51, 153, 255, 0.3)');
+            glowGradient.addColorStop(1, 'rgba(51, 153, 255, 0)');
+
+            context.fillStyle = glowGradient;
+            context.beginPath();
+            context.arc(size/2, size/2, size, 0, Math.PI * 2);
+            context.fill();
+
+            // Update the texture
+            texture.refresh();
+
+            console.log(`Created portal texture: ${key}`);
+        } catch (error) {
+            console.warn(`Failed to create portal texture:`, error);
+
+            // Fallback to simple shape
+            const graphics = this.make.graphics();
+            graphics.fillStyle(0x3366ff);
+            graphics.fillCircle(size/2, size/2, size/2);
+            graphics.lineStyle(10, 0x66ccff);
+            graphics.strokeCircle(size/2, size/2, size/2 - 5);
+            graphics.generateTexture(key, size, size);
             graphics.clear();
         }
     }

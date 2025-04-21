@@ -7,41 +7,41 @@ class NemesisIcons {
         this.scene = scene;
         this.initialized = false;
         this.icons = {};
-        
+
         // Initialize the icons
         this.initializeIcons();
     }
-    
+
     /**
      * Initialize all Nemesis icons
      */
     initializeIcons() {
         if (this.initialized) return;
-        
+
         // Create a texture atlas for the icons
         this.createIconAtlas();
-        
+
         // Define icon mappings
         this.defineIconMappings();
-        
+
         this.initialized = true;
     }
-    
+
     /**
      * Create a texture atlas for Nemesis icons
      */
     createIconAtlas() {
         // Create a graphics object to draw our icons
         const graphics = this.scene.make.graphics();
-        
+
         // Create base shapes for different icon types
         this.createBaseShapes(graphics);
-        
+
         // Generate the texture atlas
         graphics.generateTexture('nemesis-icons', 512, 512);
         graphics.destroy();
     }
-    
+
     /**
      * Create base shapes for different icon types
      * @param {Phaser.GameObjects.Graphics} graphics - The graphics object to draw on
@@ -49,7 +49,7 @@ class NemesisIcons {
     createBaseShapes(graphics) {
         // Clear the graphics object
         graphics.clear();
-        
+
         // Define colors
         const colors = {
             core: 0xff3333,       // Red
@@ -59,19 +59,19 @@ class NemesisIcons {
             balanced: 0xcc33ff,   // Purple
             legendary: 0xff9900   // Orange
         };
-        
+
         // Define icon size
         const iconSize = 64;
         const halfSize = iconSize / 2;
         const quarterSize = iconSize / 4;
         const padding = 4;
-        
+
         // Create Nemesis Core icon
         graphics.fillStyle(colors.core);
         graphics.fillCircle(halfSize, halfSize, halfSize - padding);
         graphics.lineStyle(3, 0xffffff, 0.8);
         graphics.strokeCircle(halfSize, halfSize, halfSize - padding);
-        
+
         // Add inner details
         graphics.lineStyle(2, 0xffffff, 0.6);
         graphics.beginPath();
@@ -81,13 +81,13 @@ class NemesisIcons {
         graphics.lineTo(halfSize - quarterSize, halfSize + quarterSize);
         graphics.closePath();
         graphics.strokePath();
-        
+
         // Create Nemesis Weapon icon
         graphics.fillStyle(colors.weapon);
         graphics.fillRect(iconSize + padding, padding, iconSize - padding * 2, iconSize - padding * 2);
         graphics.lineStyle(3, 0xffffff, 0.8);
         graphics.strokeRect(iconSize + padding, padding, iconSize - padding * 2, iconSize - padding * 2);
-        
+
         // Add inner details
         graphics.lineStyle(2, 0xffffff, 0.6);
         graphics.beginPath();
@@ -97,13 +97,13 @@ class NemesisIcons {
         graphics.lineTo(iconSize + padding + iconSize - quarterSize, halfSize);
         graphics.closePath();
         graphics.strokePath();
-        
+
         // Create Nemesis Defensive icon
         graphics.fillStyle(colors.defensive);
         graphics.fillRoundedRect(iconSize * 2 + padding, padding, iconSize - padding * 2, iconSize - padding * 2, 16);
         graphics.lineStyle(3, 0xffffff, 0.8);
         graphics.strokeRoundedRect(iconSize * 2 + padding, padding, iconSize - padding * 2, iconSize - padding * 2, 16);
-        
+
         // Add inner details (shield shape)
         graphics.lineStyle(2, 0xffffff, 0.6);
         graphics.beginPath();
@@ -113,7 +113,7 @@ class NemesisIcons {
         graphics.lineTo(iconSize * 2 + padding + quarterSize, halfSize);
         graphics.closePath();
         graphics.strokePath();
-        
+
         // Create Nemesis Utility icon
         graphics.fillStyle(colors.utility);
         graphics.fillTriangle(
@@ -127,7 +127,7 @@ class NemesisIcons {
             iconSize * 3 + padding, padding + iconSize - padding,
             iconSize * 3 + iconSize - padding, padding + iconSize - padding
         );
-        
+
         // Add inner details
         graphics.lineStyle(2, 0xffffff, 0.6);
         graphics.beginPath();
@@ -135,41 +135,69 @@ class NemesisIcons {
         graphics.lineTo(iconSize * 3 + halfSize, padding + iconSize - quarterSize);
         graphics.closePath();
         graphics.strokePath();
-        
+
         // Create Nemesis Balanced icon
         graphics.fillStyle(colors.balanced);
         graphics.fillCircle(halfSize, iconSize + halfSize, halfSize - padding);
         graphics.lineStyle(3, 0xffffff, 0.8);
         graphics.strokeCircle(halfSize, iconSize + halfSize, halfSize - padding);
-        
+
         // Add inner details (yin-yang style)
         graphics.fillStyle(0xffffff);
         graphics.fillCircle(halfSize, iconSize + halfSize - quarterSize, quarterSize / 2);
         graphics.fillStyle(colors.balanced);
         graphics.fillCircle(halfSize, iconSize + halfSize + quarterSize, quarterSize / 2);
-        
-        // Create Nemesis Legendary icon
+
+        // Create Nemesis Legendary icon - using polygon for star shape
         graphics.fillStyle(colors.legendary);
-        graphics.fillStar(
-            iconSize + halfSize, iconSize + halfSize,
-            5, halfSize - padding, halfSize / 2
-        );
+
+        // Create star points manually
+        const starX = iconSize + halfSize;
+        const starY = iconSize + halfSize;
+        const outerRadius = halfSize - padding;
+        const innerRadius = halfSize / 2;
+        const points = [];
+
+        // Generate the star points
+        for (let i = 0; i < 10; i++) {
+            // Use outer or inner radius based on whether it's an odd or even point
+            const radius = i % 2 === 0 ? outerRadius : innerRadius;
+            const angle = Math.PI * 2 * (i / 10) - Math.PI / 2; // Start at top (subtract PI/2)
+            points.push({
+                x: starX + radius * Math.cos(angle),
+                y: starY + radius * Math.sin(angle)
+            });
+        }
+
+        // Draw the filled star
+        graphics.beginPath();
+        graphics.moveTo(points[0].x, points[0].y);
+        for (let i = 1; i < points.length; i++) {
+            graphics.lineTo(points[i].x, points[i].y);
+        }
+        graphics.closePath();
+        graphics.fillPath();
+
+        // Draw the star outline
         graphics.lineStyle(3, 0xffffff, 0.8);
-        graphics.strokeStar(
-            iconSize + halfSize, iconSize + halfSize,
-            5, halfSize - padding, halfSize / 2
-        );
-        
+        graphics.beginPath();
+        graphics.moveTo(points[0].x, points[0].y);
+        for (let i = 1; i < points.length; i++) {
+            graphics.lineTo(points[i].x, points[i].y);
+        }
+        graphics.closePath();
+        graphics.strokePath();
+
         // Add inner details
         graphics.fillStyle(0xffffff);
         graphics.fillCircle(iconSize + halfSize, iconSize + halfSize, quarterSize / 2);
-        
+
         // Create Nemesis Adaptive icon
         graphics.fillStyle(0x33ccff);
         graphics.fillCircle(iconSize * 2 + halfSize, iconSize + halfSize, halfSize - padding);
         graphics.lineStyle(3, 0xffffff, 0.8);
         graphics.strokeCircle(iconSize * 2 + halfSize, iconSize + halfSize, halfSize - padding);
-        
+
         // Add inner details (spiral pattern)
         graphics.lineStyle(2, 0xffffff, 0.6);
         graphics.beginPath();
@@ -178,7 +206,7 @@ class NemesisIcons {
             const radius = (i / 360) * (halfSize - padding);
             const x = iconSize * 2 + halfSize + Math.cos(angle) * radius;
             const y = iconSize + halfSize + Math.sin(angle) * radius;
-            
+
             if (i === 0) {
                 graphics.moveTo(x, y);
             } else {
@@ -187,13 +215,13 @@ class NemesisIcons {
         }
         graphics.closePath();
         graphics.strokePath();
-        
+
         // Create Nemesis Phase Shift icon
         graphics.fillStyle(0x9933cc);
         graphics.fillCircle(iconSize * 3 + halfSize, iconSize + halfSize, halfSize - padding);
         graphics.lineStyle(3, 0xffffff, 0.8);
         graphics.strokeCircle(iconSize * 3 + halfSize, iconSize + halfSize, halfSize - padding);
-        
+
         // Add inner details (phase shift effect)
         graphics.lineStyle(2, 0xffffff, 0.6);
         graphics.beginPath();
@@ -204,7 +232,7 @@ class NemesisIcons {
         }
         graphics.closePath();
     }
-    
+
     /**
      * Define mappings between reward IDs and icon frames
      */
@@ -213,7 +241,7 @@ class NemesisIcons {
         this.icons = {
             // Core rewards
             'nemesis_core': { x: 0, y: 0, width: 64, height: 64 },
-            
+
             // Weapon rewards
             'nemesis_laser': { x: 64, y: 0, width: 64, height: 64 },
             'nemesis_tri_beam': { x: 64, y: 0, width: 64, height: 64 },
@@ -223,29 +251,29 @@ class NemesisIcons {
             'nemesis_beam': { x: 64, y: 0, width: 64, height: 64 },
             'nemesis_bombs': { x: 64, y: 0, width: 64, height: 64 },
             'nemesis_weapon': { x: 64, y: 0, width: 64, height: 64 },
-            
+
             // Defensive rewards
             'adaptive_shields': { x: 128, y: 0, width: 64, height: 64 },
             'nemesis_defensive': { x: 128, y: 0, width: 64, height: 64 },
-            
+
             // Utility rewards
             'nemesis_utility': { x: 192, y: 0, width: 64, height: 64 },
-            
+
             // Balanced rewards
             'nemesis_balanced': { x: 0, y: 64, width: 64, height: 64 },
-            
+
             // Legendary rewards
             'nemesis_mastery': { x: 64, y: 64, width: 64, height: 64 },
-            
+
             // Special rewards
             'adaptive_shields': { x: 128, y: 64, width: 64, height: 64 },
             'phase_shift_drive': { x: 192, y: 64, width: 64, height: 64 },
-            
+
             // Default icon for unknown rewards
             'default': { x: 0, y: 0, width: 64, height: 64 }
         };
     }
-    
+
     /**
      * Get the icon frame for a specific reward ID
      * @param {string} rewardId - The ID of the reward
@@ -254,7 +282,7 @@ class NemesisIcons {
     getIconFrame(rewardId) {
         return this.icons[rewardId] || this.icons['default'];
     }
-    
+
     /**
      * Create an icon sprite for a reward
      * @param {number} x - The x position
@@ -264,16 +292,16 @@ class NemesisIcons {
      */
     createIcon(x, y, rewardId) {
         const frame = this.getIconFrame(rewardId);
-        
+
         // Create a sprite using the atlas
         const sprite = this.scene.add.sprite(x, y, 'nemesis-icons');
-        
+
         // Set the frame based on the icon mapping
         sprite.setFrame(frame);
-        
+
         return sprite;
     }
-    
+
     /**
      * Create a reward icon with glow effect
      * @param {number} x - The x position
@@ -285,24 +313,24 @@ class NemesisIcons {
     createRewardIcon(x, y, rewardId, options = {}) {
         // Create a container for the icon and effects
         const container = this.scene.add.container(x, y);
-        
+
         // Get the frame data
         const frame = this.getIconFrame(rewardId);
-        
+
         // Create a glow effect
         const glow = this.scene.add.sprite(0, 0, 'nemesis-icons');
         glow.setFrame(frame);
         glow.setTint(0xffffff);
         glow.setAlpha(0.5);
         glow.setScale(1.2);
-        
+
         // Create the main icon
         const icon = this.scene.add.sprite(0, 0, 'nemesis-icons');
         icon.setFrame(frame);
-        
+
         // Add to container
         container.add([glow, icon]);
-        
+
         // Add animation if requested
         if (options.animate) {
             this.scene.tweens.add({
@@ -313,7 +341,7 @@ class NemesisIcons {
                 yoyo: true,
                 repeat: -1
             });
-            
+
             this.scene.tweens.add({
                 targets: icon,
                 angle: { from: -5, to: 5 },
@@ -322,7 +350,7 @@ class NemesisIcons {
                 repeat: -1
             });
         }
-        
+
         return container;
     }
 }

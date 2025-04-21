@@ -607,62 +607,43 @@ class BossEnemy extends Enemy {
             );
 
             explosion.setScale(0.5);
-            explosion.play('explosion');
-            explosion.once('animationcomplete', () => {
-                explosion.destroy();
-            });
+            if (explosion.anims && explosion.anims.exists('explosion')) {
+                explosion.play('explosion');
+                explosion.once('animationcomplete', () => {
+                    explosion.destroy();
+                });
+            } else {
+                // Fallback if animation doesn't exist
+                this.scene.tweens.add({
+                    targets: explosion,
+                    alpha: 0,
+                    scale: 1.5,
+                    duration: 300,
+                    onComplete: () => {
+                        explosion.destroy();
+                    }
+                });
+            }
         }
 
         // Remove when fully faded
         if (this.alpha <= 0) {
             this.destroy();
-        }
-    }
 
-    createExplosionEffect() {
-        // Create multiple explosions
-        for (let i = 0; i < 5; i++) {
-            this.scene.time.delayedCall(i * 300, () => {
-                if (!this.active) return;
-
-                const offsetX = Phaser.Math.Between(-this.width/2, this.width/2);
-                const offsetY = Phaser.Math.Between(-this.height/2, this.height/2);
-
-                const explosion = this.scene.add.sprite(
-                    this.x + offsetX,
-                    this.y + offsetY,
-                    'explosion'
-                );
-
-                explosion.setScale(1 + Math.random() * 0.5);
-                explosion.play('explosion');
-                explosion.once('animationcomplete', () => {
-                    explosion.destroy();
+            // Ensure the level completes if it hasn't already
+            if (this.scene && !this.scene.levelCompleting) {
+                console.log('Boss fully destroyed, ensuring level completion');
+                this.scene.time.delayedCall(1000, () => {
+                    if (this.scene && !this.scene.levelCompleting) {
+                        this.scene.completeLevel();
+                    }
                 });
-
-                // Camera shake
-                this.scene.cameras.main.shake(200, 0.01);
-            });
+            }
         }
-
-        // Final large explosion
-        this.scene.time.delayedCall(1500, () => {
-            if (!this.active) return;
-
-            const explosion = this.scene.add.sprite(this.x, this.y, 'explosion');
-            explosion.setScale(3);
-            explosion.play('explosion');
-            explosion.once('animationcomplete', () => {
-                explosion.destroy();
-            });
-
-            // Stronger camera shake
-            this.scene.cameras.main.shake(500, 0.03);
-
-            // Flash screen
-            this.scene.cameras.main.flash(500, 255, 255, 255);
-        });
     }
+
+    // Note: This is an enhanced version of the createExplosionEffect method above
+    // that adds more visual effects and ensures proper cleanup
 }
 
 // For non-ES6 module compatibility

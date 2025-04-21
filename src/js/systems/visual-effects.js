@@ -1021,6 +1021,88 @@ class VisualEffects {
     }
 
     /**
+     * Create a portal effect for level completion
+     * @param {number} x - X position
+     * @param {number} y - Y position
+     * @returns {object} The portal sprite
+     */
+    createPortalEffect(x, y) {
+        // Create the portal sprite
+        const portal = this.scene.add.sprite(x, y, 'portal');
+        portal.setDepth(CONSTANTS.GAME.POWERUP_Z_INDEX + 10); // Above most game elements
+        portal.setScale(0.1); // Start small
+
+        // Add rotation animation
+        this.scene.tweens.add({
+            targets: portal,
+            angle: 360,
+            duration: 10000,
+            repeat: -1
+        });
+
+        // Add pulsing effect
+        this.scene.tweens.add({
+            targets: portal,
+            scale: 1.2,
+            duration: 2000,
+            ease: 'Sine.easeInOut',
+            yoyo: true,
+            repeat: -1
+        });
+
+        // Add particle effects around the portal
+        const particles = this.scene.add.particles('star-particle');
+
+        // Orbiting particles
+        const orbiter = particles.createEmitter({
+            x: x,
+            y: y,
+            speed: 100,
+            scale: { start: 0.4, end: 0 },
+            blendMode: 'ADD',
+            lifespan: 1000,
+            quantity: 2,
+            tint: [0x66ccff, 0x3366ff, 0xffffff],
+            emitZone: {
+                type: 'edge',
+                source: new Phaser.Geom.Circle(0, 0, 70),
+                quantity: 32
+            }
+        });
+
+        // Inward flowing particles
+        const inflow = particles.createEmitter({
+            x: x,
+            y: y,
+            speed: { min: 50, max: 100 },
+            scale: { start: 0.2, end: 0 },
+            blendMode: 'ADD',
+            lifespan: 1000,
+            quantity: 1,
+            tint: [0x66ccff, 0x3366ff, 0xffffff],
+            emitZone: {
+                type: 'edge',
+                source: new Phaser.Geom.Circle(0, 0, 100),
+                quantity: 48
+            },
+            accelerationX: { min: -100, max: 100 },
+            accelerationY: { min: -100, max: 100 }
+        });
+
+        // Create a flash effect
+        this.createFlash(x, y, 'medium');
+
+        // Add screen shake
+        this.createScreenShake(0.005, 300);
+
+        // Store emitters with the portal for later cleanup
+        portal.particles = particles;
+        portal.emitters = [orbiter, inflow];
+
+        return portal;
+    }
+
+    /**
      * Create a boss entrance effect
      * @param {number} x - X position
      * @param {number} y - Y position
