@@ -966,16 +966,16 @@ class PlayerShip extends Phaser.Physics.Arcade.Sprite {
     }
 
     fireScatterBomb(settings) {
-        // Create the main bomb projectile
-        const bomb = this.projectiles.create(this.x, this.y - 20, 'plasma-bolt');
+        // Create the main bomb projectile using the dedicated scatter-bomb texture
+        const bomb = this.projectiles.create(this.x, this.y - 20, 'scatter-bomb');
 
         // Set tint based on weapon color
         if (settings.COLOR) {
             bomb.setTint(settings.COLOR);
         }
 
-        // Make it larger to look like a bomb
-        bomb.setScale(2);
+        // Make it slightly larger
+        bomb.setScale(1.2);
 
         // Set up physics body
         bomb.setVelocity(0, -settings.SPEED);
@@ -1511,8 +1511,8 @@ class PlayerShip extends Phaser.Physics.Arcade.Sprite {
 
     getCurrentAmmo() {
         // Get current ammo for the active weapon
-        // Special case for BASIC_LASER which has infinite ammo
-        if (this.weaponType === 'BASIC_LASER') {
+        // Handle any weapon with infinite ammo (not just BASIC_LASER)
+        if (this.ammo[this.weaponType] === Infinity || this.maxAmmo[this.weaponType] === Infinity) {
             return {
                 current: '∞', // Infinity symbol
                 max: '∞',
@@ -1520,12 +1520,23 @@ class PlayerShip extends Phaser.Physics.Arcade.Sprite {
             };
         }
 
-        return {
-            current: Math.floor(this.ammo[this.weaponType] || 0),
-            max: this.maxAmmo[this.weaponType] || 0,
-            percentage: this.maxAmmo[this.weaponType] ?
-                this.ammo[this.weaponType] / this.maxAmmo[this.weaponType] : 0
-        };
+        // Make sure the weapon type exists in our ammo object
+        if (this.weaponType && this.ammo[this.weaponType] !== undefined) {
+            return {
+                current: Math.floor(this.ammo[this.weaponType] || 0),
+                max: this.maxAmmo[this.weaponType] || 0,
+                percentage: this.maxAmmo[this.weaponType] ?
+                    this.ammo[this.weaponType] / this.maxAmmo[this.weaponType] : 0
+            };
+        } else {
+            // Fallback for unknown weapon types
+            console.warn(`Unknown weapon type: ${this.weaponType}`);
+            return {
+                current: 0,
+                max: 0,
+                percentage: 0
+            };
+        }
     }
 
     applyPenalty(penalty) {
@@ -1670,12 +1681,12 @@ class PlayerShip extends Phaser.Physics.Arcade.Sprite {
             const isUsingSpaceJfif = this.texture.key === 'player-ship-sprite';
 
             if (isUsingSpaceJfif) {
-                // For our basic spaceship sprite
-                this.setScale(1.0); // Adjust scale for the new sprite
+                // For our spaceship sprite - use a smaller scale
+                this.setScale(0.8); // Reduced scale for better proportions
 
                 // Set the hitbox size to match the visible part of the ship
-                this.body.setSize(80, 120);
-                this.body.setOffset(20, 20);
+                this.body.setSize(40, 70); // Smaller hitbox to match visual size
+                this.body.setOffset(12, 13); // Adjusted offset for centered hitbox
             } else {
                 // For the default sprite
                 this.setTint(0x3399ff);
@@ -1709,9 +1720,9 @@ class PlayerShip extends Phaser.Physics.Arcade.Sprite {
             // Add engine trails
             if (this.scene.textures.exists('player-ship-engines')) {
                 // Create engine sprite
-                this.engineSprite = this.scene.add.sprite(0, isUsingSpaceJfif ? 70 : 15, 'player-ship-engines');
+                this.engineSprite = this.scene.add.sprite(0, isUsingSpaceJfif ? 40 : 15, 'player-ship-engines');
                 this.engineSprite.setOrigin(0.5, 0);
-                this.engineSprite.setScale(isUsingSpaceJfif ? 0.8 : 1.2);
+                this.engineSprite.setScale(isUsingSpaceJfif ? 0.6 : 1.2);
                 this.engineContainer.add(this.engineSprite);
 
                 // Create engine animation if it doesn't exist
@@ -1740,16 +1751,16 @@ class PlayerShip extends Phaser.Physics.Arcade.Sprite {
                 this.engineParticles = this.scene.add.particles('star-particle');
 
                 // Adjust particle positions based on the sprite
-                const engineY = isUsingSpaceJfif ? 75 : 20;
-                const thrusterOffset = isUsingSpaceJfif ? 15 : 10;
+                const engineY = isUsingSpaceJfif ? 45 : 20; // Reduced from 75 to match smaller ship
+                const thrusterOffset = isUsingSpaceJfif ? 10 : 10; // Reduced from 15 to match smaller ship
 
                 // Main engine exhaust
                 this.engineEmitter = this.engineParticles.createEmitter({
                     x: 0,
                     y: engineY,
-                    speed: { min: 50, max: 100 },
+                    speed: { min: 40, max: 80 }, // Reduced speed for smaller ship
                     angle: { min: 80, max: 100 },
-                    scale: { start: 0.5, end: 0 },
+                    scale: { start: 0.3, end: 0 }, // Smaller particles
                     lifespan: { min: 200, max: 400 },
                     blendMode: 'ADD',
                     tint: [ 0x66ccff, 0x3399ff ],
@@ -1800,15 +1811,15 @@ class PlayerShip extends Phaser.Physics.Arcade.Sprite {
             }
 
             // Create a shield effect
-            const shieldRadius = isUsingSpaceJfif ? 50 : 30;
-            this.shieldEffect = this.scene.add.circle(0, isUsingSpaceJfif ? 20 : 0, shieldRadius, 0x3399ff, 0.2)
+            const shieldRadius = isUsingSpaceJfif ? 35 : 30; // Reduced from 50 to match smaller ship
+            this.shieldEffect = this.scene.add.circle(0, isUsingSpaceJfif ? 10 : 0, shieldRadius, 0x3399ff, 0.2)
                 .setOrigin(0.5);
             this.shieldEffect.setAlpha(0); // Start invisible
             this.visualsContainer.add(this.shieldEffect);
 
             // Create a hit effect (initially invisible)
-            const hitRadius = isUsingSpaceJfif ? 40 : 25;
-            this.hitEffect = this.scene.add.circle(0, isUsingSpaceJfif ? 20 : 0, hitRadius, 0xff3333, 0)
+            const hitRadius = isUsingSpaceJfif ? 30 : 25; // Reduced from 40 to match smaller ship
+            this.hitEffect = this.scene.add.circle(0, isUsingSpaceJfif ? 10 : 0, hitRadius, 0xff3333, 0)
                 .setOrigin(0.5);
             this.visualsContainer.add(this.hitEffect);
 

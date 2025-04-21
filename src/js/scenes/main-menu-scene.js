@@ -17,8 +17,8 @@ class MainMenuScene extends Phaser.Scene {
         // Create a simple background if image assets aren't available
         this.createBackground();
 
-        // Create a title container for animations
-        const titleContainer = this.add.container(width / 2, height / 5);
+        // Create a title container for animations - positioned higher to avoid overlap with menu
+        const titleContainer = this.add.container(width / 2, height / 7);
 
         // Title text with enhanced styling
         const titleText = this.add.text(0, 0, 'STELLAR ROGUE', {
@@ -51,7 +51,7 @@ class MainMenuScene extends Phaser.Scene {
         });
 
         // Subtitle text with enhanced styling
-        const subtitleText = this.add.text(width / 2, titleContainer.y + 80, 'RETRO ROGUELIKE FLYING SHOOTER', {
+        const subtitleText = this.add.text(width / 2, titleContainer.y + 60, 'RETRO ROGUELIKE FLYING SHOOTER', {
             fontFamily: 'monospace',
             fontSize: '18px',
             color: '#ffffff',
@@ -269,9 +269,11 @@ class MainMenuScene extends Phaser.Scene {
     createMenuButtons(width, height) {
         // Create a modern menu panel with a more futuristic design
         const panelWidth = 320;
-        let panelHeight = 420;
+        // Set panel height to accommodate all buttons from the start
+        let panelHeight = 650; // Increased to provide more space for all buttons
         const panelX = width / 2;
-        const panelY = height / 2 + 50;
+        // Center the panel vertically based on its actual height
+        const panelY = height / 2 + 40; // Moved down to avoid overlap with title
 
         // Create a container for the menu
         const menuContainer = this.add.container(0, 0);
@@ -307,17 +309,8 @@ class MainMenuScene extends Phaser.Scene {
         header.fillRoundedRect(panelX - panelWidth/2, panelY - panelHeight/2, panelWidth, headerHeight, { tl: 15, tr: 15, bl: 0, br: 0 });
         menuContainer.add(header);
 
-        // Add decorative lines to the panel
+        // Add decorative lines to the panel - only vertical lines for now
         const decorLines = this.add.graphics();
-        decorLines.lineStyle(1, 0x33aaff, 0.3);
-
-        // Horizontal lines
-        for (let i = 1; i < 4; i++) {
-            const y = panelY - panelHeight/2 + headerHeight + i * 90;
-            decorLines.lineBetween(panelX - panelWidth/2 + 20, y, panelX + panelWidth/2 - 20, y);
-        }
-
-        // Vertical accent lines
         decorLines.lineStyle(2, 0x33aaff, 0.2);
         decorLines.lineBetween(panelX - panelWidth/2 + 15, panelY - panelHeight/2 + headerHeight,
                               panelX - panelWidth/2 + 15, panelY + panelHeight/2 - 15);
@@ -347,54 +340,118 @@ class MainMenuScene extends Phaser.Scene {
             ease: 'Sine.easeInOut'
         });
 
-        // Adjust panel height to accommodate all buttons
-        panelHeight = 580;
+        // Button configs with icons - grouped by category
+        const buttonSpacing = 70; // Reduced spacing for grouped items
+        const groupSpacing = 30; // Space between groups
 
-        // Button configs with icons
+        // Calculate starting position
+        let currentY = panelY - panelHeight/2 + headerHeight + 60;
+
+        // Group 1: Game Start
+        const gameGroup = this.add.text(
+            panelX - panelWidth/2 + 20,
+            currentY,
+            'GAME',
+            {
+                fontFamily: 'monospace',
+                fontSize: '14px',
+                color: '#33aaff',
+                fontStyle: 'bold'
+            }
+        );
+        menuContainer.add(gameGroup);
+        currentY += 30;
+
         const buttonConfigs = [
+            // Group 1: Game Start
             {
                 text: 'START MISSION',
                 icon: '🚀',
-                y: panelY - panelHeight/2 + headerHeight + 70,
-                handler: () => this.startGame()
-            },
-            {
-                text: 'PILOT PROFILE',
-                icon: '👨‍🚀',
-                y: panelY - panelHeight/2 + headerHeight + 150,
-                handler: () => this.openProfile()
-            },
-            {
-                text: 'HELP & TUTORIAL',
-                icon: '❓',
-                y: panelY - panelHeight/2 + headerHeight + 230,
-                handler: () => this.openHelp()
-            },
-            {
-                text: 'NEMESIS INFO',
-                icon: '👾',
-                y: panelY - panelHeight/2 + headerHeight + 310,
-                handler: () => this.openNemesisInfo()
-            },
-            {
-                text: 'DIFFICULTY',
-                icon: '🎯',
-                y: panelY - panelHeight/2 + headerHeight + 390,
-                handler: () => this.openDifficultySelector()
+                y: currentY,
+                handler: () => this.startGame(),
+                group: 'game'
             },
             {
                 text: 'HANGAR BAY',
                 icon: '🛸',
-                y: panelY - panelHeight/2 + headerHeight + 470,
-                handler: () => this.openHangar()
+                y: currentY + buttonSpacing,
+                handler: () => this.openHangar(),
+                group: 'game'
+            },
+
+            // Group 2: Pilot & Info
+            {
+                text: 'PILOT PROFILE',
+                icon: '👨‍🚀',
+                y: currentY + buttonSpacing * 2 + groupSpacing,
+                handler: () => this.openProfile(),
+                group: 'pilot'
             },
             {
-                text: 'SYSTEM CONFIG',
+                text: 'NEMESIS INFO',
+                icon: '👾',
+                y: currentY + buttonSpacing * 3 + groupSpacing,
+                handler: () => this.openNemesisInfo(),
+                group: 'pilot'
+            },
+
+            // Group 3: Settings
+            {
+                text: 'GAME SETTINGS',
                 icon: '⚙️',
-                y: panelY - panelHeight/2 + headerHeight + 550,
-                handler: () => this.openOptions()
+                y: currentY + buttonSpacing * 4 + groupSpacing * 2,
+                handler: () => this.openGameSettings(),
+                group: 'settings'
             }
         ];
+
+        // Add group headers
+        const pilotGroup = this.add.text(
+            panelX - panelWidth/2 + 20,
+            currentY + buttonSpacing * 2 + groupSpacing - 30,
+            'PILOT',
+            {
+                fontFamily: 'monospace',
+                fontSize: '14px',
+                color: '#33aaff',
+                fontStyle: 'bold'
+            }
+        );
+        menuContainer.add(pilotGroup);
+
+        const settingsGroup = this.add.text(
+            panelX - panelWidth/2 + 20,
+            currentY + buttonSpacing * 4 + groupSpacing * 2 - 30,
+            'SETTINGS',
+            {
+                fontFamily: 'monospace',
+                fontSize: '14px',
+                color: '#33aaff',
+                fontStyle: 'bold'
+            }
+        );
+        menuContainer.add(settingsGroup);
+
+        // Add horizontal separator lines for groups
+        const separatorLines = this.add.graphics();
+        separatorLines.lineStyle(1, 0x33aaff, 0.3);
+
+        // Line after Game group
+        separatorLines.lineBetween(
+            panelX - panelWidth/2 + 20,
+            currentY + buttonSpacing * 2 + groupSpacing - 40,
+            panelX + panelWidth/2 - 20,
+            currentY + buttonSpacing * 2 + groupSpacing - 40
+        );
+
+        // Line after Pilot group
+        separatorLines.lineBetween(
+            panelX - panelWidth/2 + 20,
+            currentY + buttonSpacing * 4 + groupSpacing * 2 - 40,
+            panelX + panelWidth/2 - 20,
+            currentY + buttonSpacing * 4 + groupSpacing * 2 - 40
+        );
+        menuContainer.add(separatorLines);
 
         // Create modern, futuristic buttons
         buttonConfigs.forEach(config => {
@@ -768,13 +825,16 @@ class MainMenuScene extends Phaser.Scene {
         console.log('Available ships:', this.game.global.metaProgress.unlockedShips);
     }
 
-    openOptions() {
-        console.log('Opening options menu...');
-        // This would open an options menu
-        // Sound is permanently disabled
-        this.game.sound.mute = true;
-        this.game.sound.volume = 0;
-        console.log('Sound is permanently disabled');
+    /**
+     * Open the game settings screen
+     */
+    openGameSettings() {
+        console.log('Opening game settings screen...');
+
+        // Start the game settings scene
+        this.scene.start(CONSTANTS.SCENES.GAME_SETTINGS, {
+            previousScene: CONSTANTS.SCENES.MAIN_MENU
+        });
     }
 
     /**
@@ -786,40 +846,6 @@ class MainMenuScene extends Phaser.Scene {
         // Start the help scene
         this.scene.start(CONSTANTS.SCENES.HELP, {
             previousScene: CONSTANTS.SCENES.MAIN_MENU
-        });
-    }
-
-    /**
-     * Open the difficulty selector
-     */
-    openDifficultySelector() {
-        console.log('Opening difficulty selector');
-
-        // Create difficulty selector if it doesn't exist
-        if (!this.difficultySelector) {
-            this.difficultySelector = new DifficultySelector(this, this.cameras.main.width / 2, this.cameras.main.height / 2);
-        }
-
-        // Show the difficulty selector
-        this.difficultySelector.show((selectedLevel) => {
-            console.log(`Selected difficulty: ${selectedLevel.key} (${selectedLevel.value})`);
-
-            // Initialize dynamic difficulty system if it doesn't exist
-            if (!this.game.global.dynamicDifficulty) {
-                this.game.global.dynamicDifficulty = new DynamicDifficultySystem(this.game);
-            }
-
-            // Apply selected difficulty
-            if (selectedLevel.key === 'adaptive') {
-                this.game.global.dynamicDifficulty.setAdaptiveDifficulty(true);
-                this.game.global.dynamicDifficulty.setBaseDifficulty(0.5); // Default to normal for adaptive
-            } else {
-                this.game.global.dynamicDifficulty.setAdaptiveDifficulty(false);
-                this.game.global.dynamicDifficulty.setBaseDifficulty(selectedLevel.value);
-            }
-
-            // Show confirmation message
-            this.showMessage(`Difficulty set to ${selectedLevel.label}`);
         });
     }
 

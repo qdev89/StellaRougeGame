@@ -266,10 +266,20 @@ class GameScene extends Phaser.Scene {
             // Create contextual tips system
             this.contextualTips = new ContextualTips(this);
 
-            // Show tutorial for first-time players
-            // Only show in sector 1 and if it's a new game
-            if (this.currentSector === 1 && !this.tutorial.tutorialComplete) {
-                // Delay tutorial start to allow the scene to fully initialize
+            // Check if we should start or skip the tutorial
+            if (this.scene.settings.data.startTutorial) {
+                // Explicitly start tutorial if requested
+                this.time.delayedCall(1000, () => {
+                    this.tutorial.startTutorial();
+                });
+            } else if (this.scene.settings.data.skipTutorial) {
+                // Explicitly skip tutorial if requested
+                this.tutorial.tutorialComplete = true;
+                if (this.game.global) {
+                    this.game.global.tutorialComplete = true;
+                }
+            } else if (this.currentSector === 1 && !this.tutorial.tutorialComplete) {
+                // Default behavior: Show tutorial for first-time players in sector 1
                 this.time.delayedCall(1000, () => {
                     this.tutorial.startTutorial();
                 });
@@ -1040,45 +1050,52 @@ class GameScene extends Phaser.Scene {
     }
 
     createAmmoUI() {
-        // Position for the ammo UI (bottom left)
+        // Position for the ammo UI (bottom left) - moved up to avoid being cut off
         const ammoX = 20;
-        const ammoY = this.cameras.main.height - 60;
+        const ammoY = this.cameras.main.height - 100; // Moved up from -60 to avoid cutoff
 
-        // Create background for ammo display
+        // Create background for ammo display with enhanced visibility
         const ammoBg = this.add.graphics()
             .setScrollFactor(0);
-        ammoBg.fillStyle(0x222233, 0.7);
-        ammoBg.fillRoundedRect(ammoX, ammoY, 200, 40, 5);
-        ammoBg.lineStyle(1, 0x33ff33, 0.5);
-        ammoBg.strokeRoundedRect(ammoX, ammoY, 200, 40, 5);
+        ammoBg.fillStyle(0x222233, 0.8); // Increased opacity from 0.7 to 0.8
+        ammoBg.fillRoundedRect(ammoX, ammoY, 220, 50, 8); // Increased size and rounded corners
+        ammoBg.lineStyle(2, 0x33ff33, 0.6); // Increased line thickness and opacity
+        ammoBg.strokeRoundedRect(ammoX, ammoY, 220, 50, 8);
 
-        // Create weapon icon
-        this.weaponIcon = this.add.rectangle(ammoX + 20, ammoY + 20, 30, 30, 0x33ff33)
-            .setScrollFactor(0);
+        // Create weapon icon with enhanced visibility
+        this.weaponIcon = this.add.rectangle(ammoX + 25, ammoY + 25, 36, 36, 0x33ff33) // Increased size
+            .setScrollFactor(0)
+            .setStrokeStyle(2, 0x000000, 1); // Added stroke for better visibility
 
-        // Create weapon name text
-        this.weaponNameText = this.add.text(ammoX + 40, ammoY + 10, 'BASIC LASER', {
+        // Create weapon name text with enhanced styling
+        this.weaponNameText = this.add.text(ammoX + 50, ammoY + 10, 'BASIC LASER', {
             fontFamily: 'monospace',
-            fontSize: '14px',
+            fontSize: '16px', // Increased from 14px
             color: '#ffffff',
             stroke: '#000000',
-            strokeThickness: 2
+            strokeThickness: 3, // Increased from 2
+            fontWeight: 'bold', // Added bold
+            shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 2, fill: true } // Added shadow
         }).setScrollFactor(0);
 
-        // Create ammo counter text
-        this.ammoText = this.add.text(ammoX + 40, ammoY + 25, '100 / 100', {
+        // Create ammo counter text with enhanced styling
+        this.ammoText = this.add.text(ammoX + 50, ammoY + 30, '100 / 100', {
             fontFamily: 'monospace',
-            fontSize: '12px',
+            fontSize: '16px', // Increased from 12px
             color: '#33ff33',
             stroke: '#000000',
-            strokeThickness: 2
+            strokeThickness: 3, // Increased from 2
+            fontWeight: 'bold', // Added bold
+            shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 2, fill: true } // Added shadow
         }).setScrollFactor(0);
 
-        // Create ammo bar background
+        // Create ammo bar background with enhanced visibility
         const ammoBarBg = this.add.graphics()
             .setScrollFactor(0);
         ammoBarBg.fillStyle(0x333344, 1);
-        ammoBarBg.fillRect(ammoX + 120, ammoY + 15, 70, 10);
+        ammoBarBg.fillRect(ammoX + 130, ammoY + 15, 80, 15); // Increased size
+        ammoBarBg.lineStyle(2, 0xffffff, 0.5); // Added stroke
+        ammoBarBg.strokeRect(ammoX + 130, ammoY + 15, 80, 15); // Added stroke
 
         // Create ammo bar fill
         this.ammoBarFill = this.add.graphics()
@@ -1086,17 +1103,17 @@ class GameScene extends Phaser.Scene {
 
         // Create weapon selector icons
         this.weaponIcons = [];
-        const iconSize = 25;
-        const iconSpacing = 30;
+        const iconSize = 32; // Increased from 25 for better visibility
+        const iconSpacing = 40; // Increased from 30 for better spacing
         const iconsY = ammoY + 60;
 
         // Create background for weapon selector
         const selectorBg = this.add.graphics()
             .setScrollFactor(0);
-        selectorBg.fillStyle(0x222233, 0.7);
-        selectorBg.fillRoundedRect(ammoX, iconsY - iconSize/2, iconSpacing * 7 + 20, iconSize + 10, 5);
-        selectorBg.lineStyle(1, 0x33ff33, 0.5);
-        selectorBg.strokeRoundedRect(ammoX, iconsY - iconSize/2, iconSpacing * 7 + 20, iconSize + 10, 5);
+        selectorBg.fillStyle(0x222233, 0.8); // Increased opacity from 0.7 to 0.8 for better visibility
+        selectorBg.fillRoundedRect(ammoX, iconsY - iconSize/2 - 5, iconSpacing * 7 + 30, iconSize + 20, 8); // Increased size and rounded corners
+        selectorBg.lineStyle(2, 0x33ff33, 0.6); // Increased line thickness and opacity
+        selectorBg.strokeRoundedRect(ammoX, iconsY - iconSize/2 - 5, iconSpacing * 7 + 30, iconSize + 20, 8);
 
         // Add weapon selector to container
         this.weaponContainer.add(selectorBg);
@@ -1121,12 +1138,15 @@ class GameScene extends Phaser.Scene {
             const icon = this.add.rectangle(x, iconsY, iconSize, iconSize, color, 0.7)
                 .setScrollFactor(0);
 
-            // Create number label
+            // Create number label with enhanced visibility
             const keyNumber = this.add.text(x, iconsY, (index + 1).toString(), {
                 fontFamily: 'monospace',
-                fontSize: '12px',
+                fontSize: '16px', // Increased from 12px
                 color: '#ffffff',
-                align: 'center'
+                align: 'center',
+                stroke: '#000000', // Added stroke
+                strokeThickness: 2, // Added stroke thickness
+                fontWeight: 'bold' // Added bold
             }).setOrigin(0.5).setScrollFactor(0);
 
             // Store reference
@@ -1167,12 +1187,16 @@ class GameScene extends Phaser.Scene {
             color = 0xff3333; // Red
         }
 
-        // Update ammo bar fill
+        // Update ammo bar fill with enhanced visibility
         const ammoX = 20;
-        const ammoY = this.cameras.main.height - 60;
+        const ammoY = this.cameras.main.height - 100; // Moved up to match new position
         this.ammoBarFill.clear();
         this.ammoBarFill.fillStyle(color, 1);
-        this.ammoBarFill.fillRect(ammoX + 120, ammoY + 15, 70 * ammoInfo.percentage, 10);
+        this.ammoBarFill.fillRect(ammoX + 130, ammoY + 15, 80 * ammoInfo.percentage, 15); // Updated to match new dimensions
+
+        // Add highlight for 3D effect
+        this.ammoBarFill.lineStyle(2, Phaser.Display.Color.IntegerToColor(color).brighten(50).color, 0.7);
+        this.ammoBarFill.lineBetween(ammoX + 130, ammoY + 16, ammoX + 130 + (80 * ammoInfo.percentage), ammoY + 16);
 
         // Update weapon icon color to match ammo bar
         this.weaponIcon.setFillStyle(color);
@@ -1761,54 +1785,83 @@ class GameScene extends Phaser.Scene {
     }
 
     createChoiceUI(choice, isTimePressure = false) {
-        // Create a semi-transparent background
+        // Create a semi-transparent background with blur effect
         const overlay = this.add.rectangle(
             0, 0,
             this.cameras.main.width,
             this.cameras.main.height,
-            0x000000, 0.7
+            0x000000, 0.8
         ).setOrigin(0, 0).setScrollFactor(0).setDepth(100);
 
-        // Create a panel for the choice
-        const panel = this.add.rectangle(
-            this.cameras.main.width / 2,
-            this.cameras.main.height / 2,
-            600, 400,
-            isTimePressure || choice.isTimePressure ? 0x663333 : 0x333366, 0.9 // Red background for time pressure
-        ).setScrollFactor(0).setDepth(101);
+        // Create a panel container
+        const panelWidth = 620;
+        const panelHeight = 450;
 
-        // Add title
+        // Create a panel with rounded corners and gradient
+        const panel = this.add.graphics();
+        panel.fillStyle(isTimePressure || choice.isTimePressure ? 0x663333 : 0x333366, 0.95);
+        panel.fillRoundedRect(
+            this.cameras.main.width / 2 - panelWidth/2,
+            this.cameras.main.height / 2 - panelHeight/2,
+            panelWidth, panelHeight,
+            15 // Corner radius
+        );
+
+        // Add a subtle border
+        panel.lineStyle(3, isTimePressure || choice.isTimePressure ? 0x994444 : 0x4444aa, 0.8);
+        panel.strokeRoundedRect(
+            this.cameras.main.width / 2 - panelWidth/2,
+            this.cameras.main.height / 2 - panelHeight/2,
+            panelWidth, panelHeight,
+            15
+        );
+
+        // Add a decorative header bar
+        panel.fillStyle(isTimePressure || choice.isTimePressure ? 0x994444 : 0x4444aa, 0.9);
+        panel.fillRoundedRect(
+            this.cameras.main.width / 2 - panelWidth/2,
+            this.cameras.main.height / 2 - panelHeight/2,
+            panelWidth, 40,
+            { tl: 15, tr: 15, bl: 0, br: 0 } // Rounded top corners only
+        );
+
+        // Add title in the header bar
         const title = this.add.text(
             this.cameras.main.width / 2,
-            this.cameras.main.height / 2 - 150,
-            choice.title,
+            this.cameras.main.height / 2 - panelHeight/2 + 20, // Position in header bar
+            choice.title.toUpperCase(),
             {
                 fontFamily: 'monospace',
-                fontSize: '24px',
-                color: isTimePressure || choice.isTimePressure ? '#ff3333' : '#ffffff', // Red text for time pressure
-                align: 'center'
+                fontSize: '22px',
+                fontWeight: 'bold',
+                color: '#ffffff',
+                align: 'center',
+                stroke: '#000000',
+                strokeThickness: 2,
+                shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 2, fill: true }
             }
         ).setOrigin(0.5).setScrollFactor(0).setDepth(102);
 
-        // Add description
+        // Add description with improved styling
         const description = this.add.text(
             this.cameras.main.width / 2,
-            this.cameras.main.height / 2 - 110,
+            this.cameras.main.height / 2 - panelHeight/2 + 70, // Position below header
             choice.description,
             {
                 fontFamily: 'monospace',
                 fontSize: '16px',
-                color: '#cccccc',
+                color: '#dddddd',
                 align: 'center',
-                wordWrap: { width: 550 }
+                wordWrap: { width: 550 },
+                shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 1, fill: true }
             }
         ).setOrigin(0.5).setScrollFactor(0).setDepth(102);
 
         // Add option buttons
         const optionButtons = [];
-        const buttonHeight = 70;
-        const buttonSpacing = 10;
-        const startY = this.cameras.main.height / 2 - 50;
+        const buttonHeight = 80; // Increased height for better readability
+        const buttonSpacing = 15; // Increased spacing for better separation
+        const startY = this.cameras.main.height / 2 - 30; // Adjusted starting position
 
         // Create UI elements array for later cleanup
         const uiElements = [overlay, panel, title, description];
@@ -1886,63 +1939,147 @@ class GameScene extends Phaser.Scene {
         }
 
         choice.options.forEach((option, index) => {
-            // Create button background
-            const button = this.add.rectangle(
+            // Create button background with rounded corners and gradient
+            const buttonWidth = 550;
+            const buttonY = startY + (buttonHeight + buttonSpacing) * index;
+
+            // Create button background with gradient
+            const button = this.add.graphics();
+            button.fillStyle(0x446688, 0.9);
+            button.fillRoundedRect(
+                this.cameras.main.width / 2 - buttonWidth/2,
+                buttonY - buttonHeight/2,
+                buttonWidth, buttonHeight,
+                10 // Corner radius
+            );
+
+            // Add a subtle border
+            button.lineStyle(2, 0x5588aa, 0.7);
+            button.strokeRoundedRect(
+                this.cameras.main.width / 2 - buttonWidth/2,
+                buttonY - buttonHeight/2,
+                buttonWidth, buttonHeight,
+                10
+            );
+
+            // Create an invisible interactive area over the button
+            const hitArea = this.add.rectangle(
                 this.cameras.main.width / 2,
-                startY + (buttonHeight + buttonSpacing) * index,
-                550, buttonHeight,
-                0x446688, 0.9
+                buttonY,
+                buttonWidth, buttonHeight
             ).setScrollFactor(0).setDepth(102)
             .setInteractive({ useHandCursor: true });
+            hitArea.setData('index', index); // Store index for reference
 
-            // Add option text
+            // Add option title with icon
             const text = this.add.text(
                 this.cameras.main.width / 2 - 260,
-                startY + (buttonHeight + buttonSpacing) * index - 25,
+                buttonY - 25,
                 option.text,
                 {
                     fontFamily: 'monospace',
-                    fontSize: '18px',
+                    fontSize: '20px',
                     color: '#ffffff',
-                    align: 'left'
+                    align: 'left',
+                    stroke: '#000000',
+                    strokeThickness: 2,
+                    shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 2, fill: true }
                 }
             ).setScrollFactor(0).setDepth(103);
 
-            // Add option description
+            // Add option description with improved styling
             const optDesc = this.add.text(
                 this.cameras.main.width / 2 - 260,
-                startY + (buttonHeight + buttonSpacing) * index + 5,
+                buttonY + 5,
                 option.description,
                 {
                     fontFamily: 'monospace',
                     fontSize: '14px',
-                    color: '#aaaaaa',
+                    color: '#cccccc',
                     align: 'left',
-                    wordWrap: { width: 500 }
+                    wordWrap: { width: 500 },
+                    shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 1, fill: true }
                 }
             ).setScrollFactor(0).setDepth(103);
 
-            // Add event handler
-            button.on('pointerdown', () => {
+            // Add event handler to the hit area
+            hitArea.on('pointerdown', () => {
                 // Cancel timer if it exists
                 if (timerEvent) {
                     timerEvent.remove();
                 }
 
+                // Visual feedback on click
+                this.tweens.add({
+                    targets: [text, optDesc],
+                    y: '+=3',
+                    duration: 50,
+                    yoyo: true,
+                    ease: 'Power1'
+                });
+
                 this.selectChoiceOption(index, choice, uiElements);
             });
 
             // Add hover effect
-            button.on('pointerover', () => {
-                button.setFillStyle(0x5588aa);
+            hitArea.on('pointerover', () => {
+                // Highlight effect
+                button.clear();
+                button.fillStyle(0x5588aa, 0.9);
+                button.fillRoundedRect(
+                    this.cameras.main.width / 2 - buttonWidth/2,
+                    buttonY - buttonHeight/2,
+                    buttonWidth, buttonHeight,
+                    10
+                );
+                button.lineStyle(2, 0x77aadd, 0.9);
+                button.strokeRoundedRect(
+                    this.cameras.main.width / 2 - buttonWidth/2,
+                    buttonY - buttonHeight/2,
+                    buttonWidth, buttonHeight,
+                    10
+                );
+
+                // Scale up text slightly
+                this.tweens.add({
+                    targets: [text],
+                    scaleX: 1.05,
+                    scaleY: 1.05,
+                    duration: 100,
+                    ease: 'Power1'
+                });
             });
 
-            button.on('pointerout', () => {
-                button.setFillStyle(0x446688);
+            hitArea.on('pointerout', () => {
+                // Return to normal state
+                button.clear();
+                button.fillStyle(0x446688, 0.9);
+                button.fillRoundedRect(
+                    this.cameras.main.width / 2 - buttonWidth/2,
+                    buttonY - buttonHeight/2,
+                    buttonWidth, buttonHeight,
+                    10
+                );
+                button.lineStyle(2, 0x5588aa, 0.7);
+                button.strokeRoundedRect(
+                    this.cameras.main.width / 2 - buttonWidth/2,
+                    buttonY - buttonHeight/2,
+                    buttonWidth, buttonHeight,
+                    10
+                );
+
+                // Scale back to normal
+                this.tweens.add({
+                    targets: [text],
+                    scaleX: 1,
+                    scaleY: 1,
+                    duration: 100,
+                    ease: 'Power1'
+                });
             });
 
-            optionButtons.push({ button, text, desc: optDesc });
-            uiElements.push(button, text, optDesc);
+            optionButtons.push({ button, hitArea, text, desc: optDesc });
+            uiElements.push(button, hitArea, text, optDesc);
         });
 
         // Store UI elements for later cleanup
@@ -2408,7 +2545,9 @@ class GameScene extends Phaser.Scene {
                 let closestEnemy = null;
                 let closestDistance = Infinity;
 
-                this.enemies.forEach(enemy => {
+                // Use getChildren() to get the array of enemies from the physics group
+                const enemiesArray = this.enemies.getChildren();
+                enemiesArray.forEach(enemy => {
                     if (enemy.active) {
                         const distance = Phaser.Math.Distance.Between(
                             missile.x, missile.y,
@@ -3662,13 +3801,16 @@ class GameScene extends Phaser.Scene {
 
         // Stop scrolling
         this.scrollSpeed = 0;
+        this.backgroundScrollSpeed = 0;
 
         // Screen effects
         this.cameras.main.flash(1000, 255, 255, 255, 0.8);
         this.cameras.main.shake(500, 0.02);
 
         // Update statistics
-        this.game.global.statistics.bossesDefeated++;
+        if (this.game.global.statistics) {
+            this.game.global.statistics.bossesDefeated = (this.game.global.statistics.bossesDefeated || 0) + 1;
+        }
 
         // Record boss defeated for dynamic difficulty
         if (this.dynamicDifficulty) {
@@ -3835,10 +3977,24 @@ class GameScene extends Phaser.Scene {
      */
     showBossRewards(boss) {
         // Get rewards from boss
-        if (!boss || !boss.grantRewards) return;
+        if (!boss || !boss.grantRewards) {
+            console.log('No rewards to show, completing level directly');
+            // If no rewards, complete the level directly
+            this.time.delayedCall(2000, () => {
+                this.completeLevel();
+            });
+            return;
+        }
 
         const rewards = boss.grantRewards();
-        if (!rewards || rewards.length === 0) return;
+        if (!rewards || rewards.length === 0) {
+            console.log('Empty rewards array, completing level directly');
+            // If empty rewards array, complete the level directly
+            this.time.delayedCall(2000, () => {
+                this.completeLevel();
+            });
+            return;
+        }
 
         console.log('Showing boss rewards:', rewards);
 
@@ -4330,6 +4486,20 @@ class GameScene extends Phaser.Scene {
     }
 
     completeLevel() {
+        console.log('Completing level, transitioning to upgrade scene');
+
+        // Ensure we can't call this method multiple times
+        if (this.levelCompleting) {
+            console.log('Level already completing, ignoring duplicate call');
+            return;
+        }
+
+        // Set flag to prevent multiple calls
+        this.levelCompleting = true;
+
+        // Pause physics to prevent further interactions
+        this.physics.pause();
+
         // Record sector completion for dynamic difficulty
         if (this.dynamicDifficulty && this.sectorStartTime) {
             const timeSpent = this.time.now - this.sectorStartTime;
@@ -4342,19 +4512,54 @@ class GameScene extends Phaser.Scene {
                 sector: this.currentSector,
                 score: this.score,
                 timeSpent: this.time.now - this.sectorStartTime,
-                enemiesDefeated: this.dynamicDifficulty ? this.dynamicDifficulty.metrics.enemiesDefeated : 0,
+                enemiesDefeated: this.dynamicDifficulty && this.dynamicDifficulty.metrics ?
+                    this.dynamicDifficulty.metrics.enemiesDefeated : 0,
                 upgrades: this.choiceSystem ? this.choiceSystem.playerBuild.activeUpgrades.length : 0,
                 penalties: this.choiceSystem ? this.choiceSystem.playerBuild.activePenalties.length : 0
             });
         }
 
-        // Level is complete, transition to upgrade scene
-        this.scene.start(CONSTANTS.SCENES.UPGRADE, {
-            sector: this.currentSector + 1,
-            score: this.score,
-            shipType: this.game.global.currentRun.shipType,
-            upgrades: this.game.global.currentRun.upgrades,
-            penalties: this.game.global.currentRun.penalties
+        // Show level complete message
+        const completeText = this.add.text(
+            this.cameras.main.width / 2,
+            this.cameras.main.height / 2,
+            'SECTOR COMPLETE',
+            {
+                fontFamily: 'monospace',
+                fontSize: '32px',
+                color: '#33ff33',
+                align: 'center',
+                stroke: '#000000',
+                strokeThickness: 4
+            }
+        ).setOrigin(0.5).setScrollFactor(0).setDepth(1001).setAlpha(0);
+
+        // Animate text
+        this.tweens.add({
+            targets: completeText,
+            alpha: 1,
+            duration: 500,
+            ease: 'Power2'
+        });
+
+        // Make sure the global state is properly initialized
+        if (!this.game.global.currentRun) {
+            this.game.global.currentRun = {
+                shipType: 'fighter',
+                upgrades: [],
+                penalties: []
+            };
+        }
+
+        // Level is complete, transition to upgrade scene after a short delay
+        this.time.delayedCall(2000, () => {
+            this.scene.start(CONSTANTS.SCENES.UPGRADE, {
+                sector: this.currentSector + 1,
+                score: this.score,
+                shipType: this.game.global.currentRun.shipType,
+                upgrades: this.game.global.currentRun.upgrades,
+                penalties: this.game.global.currentRun.penalties
+            });
         });
     }
 
@@ -4387,6 +4592,26 @@ class GameScene extends Phaser.Scene {
                 if (random <= cumulativeWeight) {
                     type = powerupTypes[i];
                     break;
+                }
+            }
+
+            // Special case: If player is low on ammo for special weapons, increase chance of ammo
+            if (this.player && type !== 'ammo') {
+                const specialWeapons = ['PLASMA_BOLT', 'HOMING_MISSILE', 'SCATTER_BOMB'];
+                const unlockedSpecialWeapons = specialWeapons.filter(weapon =>
+                    this.player.unlockedWeapons.includes(weapon));
+
+                // Check if any special weapon is below 30% ammo
+                const lowAmmoWeapon = unlockedSpecialWeapons.find(weapon => {
+                    const ammo = this.player.ammo[weapon];
+                    const maxAmmo = this.player.maxAmmo[weapon];
+                    return ammo / maxAmmo < 0.3; // Below 30%
+                });
+
+                // If a special weapon is low on ammo, 50% chance to override with ammo pickup
+                if (lowAmmoWeapon && Math.random() < 0.5) {
+                    console.log(`Low ammo detected for ${lowAmmoWeapon}, overriding powerup to ammo`);
+                    type = 'ammo';
                 }
             }
         }

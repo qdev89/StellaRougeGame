@@ -33,7 +33,9 @@ function createGameConfig() {
             InventoryScene,
             ProfileScene,
             SubsystemGridScene,
-            NemesisInfoScene
+            NemesisInfoScene,
+            HelpScene,
+            GameSettingsScene
         ],
         scale: {
             mode: Phaser.Scale.FIT,

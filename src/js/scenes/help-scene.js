@@ -110,26 +110,30 @@ class HelpScene extends Phaser.Scene {
         // Create tabs
         this.tabButtons = {};
         this.tabs.forEach(tab => {
-            // Create tab background
+            // Create tab background with enhanced styling
             const tabBg = this.add.rectangle(
                 tab.x,
                 0,
-                120,
-                40,
+                130, // Increased from 120
+                45,  // Increased from 40
                 0x224466,
-                0.7
-            ).setInteractive({ useHandCursor: true });
+                0.8  // Increased from 0.7
+            ).setInteractive({ useHandCursor: true })
+              .setStrokeStyle(2, 0x3399ff, 0.5); // Added stroke
 
-            // Create tab text
+            // Create tab text with enhanced styling
             const tabText = this.add.text(
                 tab.x,
                 0,
                 tab.label,
                 {
                     fontFamily: 'monospace',
-                    fontSize: '16px',
+                    fontSize: '18px', // Increased from 16px
                     color: '#ffffff',
-                    align: 'center'
+                    align: 'center',
+                    stroke: '#000033', // Added stroke
+                    strokeThickness: 2, // Added stroke thickness
+                    fontWeight: 'bold' // Added bold
                 }
             ).setOrigin(0.5);
 
@@ -144,14 +148,17 @@ class HelpScene extends Phaser.Scene {
                 this.showTabContent(tab.id);
             });
 
-            // Add hover effect
+            // Add hover effect with enhanced feedback
             tabBg.on('pointerover', () => {
-                tabBg.setFillStyle(0x3399ff, 0.7);
+                tabBg.setFillStyle(0x3399ff, 0.8);
+                tabText.setColor('#ffffff');
+                tabText.setShadow(1, 1, '#000000', 3, true, true); // Add shadow on hover
             });
 
             tabBg.on('pointerout', () => {
                 if (this.activeTab !== tab.id) {
-                    tabBg.setFillStyle(0x224466, 0.7);
+                    tabBg.setFillStyle(0x224466, 0.8);
+                    tabText.setShadow(0, 0, '#000000', 0); // Remove shadow
                 }
             });
         });
@@ -313,6 +320,112 @@ class HelpScene extends Phaser.Scene {
             // Add spacing between sections
             yOffset += 20;
         });
+
+        // Create Tutorial Buttons section
+        const tutorialTitle = this.add.text(
+            -this.contentPanel.width / 2 + 40,
+            yOffset,
+            'TUTORIAL OPTIONS',
+            {
+                fontFamily: 'monospace',
+                fontSize: '18px',
+                color: '#ffffff',
+                align: 'left'
+            }
+        ).setOrigin(0);
+
+        // Add underline
+        const tutorialUnderline = this.add.rectangle(
+            -this.contentPanel.width / 2 + 40,
+            yOffset + 20,
+            200,
+            2,
+            0x3399ff,
+            1
+        ).setOrigin(0);
+
+        container.add([tutorialTitle, tutorialUnderline]);
+
+        yOffset += 50;
+
+        // Create helper method for buttons
+        const createButton = (x, y, text, bgColor, callback) => {
+            const buttonBg = this.add.rectangle(x, y, 180, 40, bgColor, 0.8)
+                .setStrokeStyle(2, 0x3399ff, 0.7)
+                .setInteractive({ useHandCursor: true });
+
+            const buttonText = this.add.text(x, y, text, {
+                fontFamily: 'monospace',
+                fontSize: '16px',
+                color: '#ffffff',
+                align: 'center',
+                stroke: '#000033',
+                strokeThickness: 2
+            }).setOrigin(0.5);
+
+            // Add hover effect
+            buttonBg.on('pointerover', () => {
+                buttonBg.setFillStyle(0x3399ff, 0.9);
+                this.tweens.add({
+                    targets: [buttonBg, buttonText],
+                    scaleX: 1.05,
+                    scaleY: 1.05,
+                    duration: 100
+                });
+            });
+
+            buttonBg.on('pointerout', () => {
+                buttonBg.setFillStyle(bgColor, 0.8);
+                this.tweens.add({
+                    targets: [buttonBg, buttonText],
+                    scaleX: 1,
+                    scaleY: 1,
+                    duration: 100
+                });
+            });
+
+            // Add click handler
+            buttonBg.on('pointerdown', () => {
+                this.tweens.add({
+                    targets: [buttonBg, buttonText],
+                    scaleX: 0.95,
+                    scaleY: 0.95,
+                    duration: 50,
+                    yoyo: true,
+                    onComplete: callback
+                });
+            });
+
+            return this.add.container(0, 0, [buttonBg, buttonText]);
+        };
+
+        // Add Start Tutorial button
+        const startTutorialButton = createButton(
+            -this.contentPanel.width / 4,
+            yOffset,
+            'START TUTORIAL',
+            0x224466,
+            () => {
+                this.scene.start(CONSTANTS.SCENES.GAME, { startTutorial: true });
+            }
+        );
+
+        // Add Skip Tutorial button
+        const skipTutorialButton = createButton(
+            this.contentPanel.width / 4,
+            yOffset,
+            'SKIP TUTORIAL',
+            0x662244,
+            () => {
+                // Mark tutorial as completed in game state
+                if (this.game.global) {
+                    this.game.global.tutorialComplete = true;
+                }
+                this.scene.start(CONSTANTS.SCENES.GAME, { skipTutorial: true });
+            }
+        );
+
+        container.add([startTutorialButton, skipTutorialButton]);
 
         // Add all elements to container
         container.add(title);
@@ -821,33 +934,77 @@ class HelpScene extends Phaser.Scene {
     }
 
     createReturnButton() {
-        // Create return button
+        // Create button background with enhanced styling
+        const buttonBg = this.add.rectangle(
+            this.cameras.main.width / 2,
+            this.cameras.main.height - 50,
+            220,
+            50,
+            0x224466,
+            0.8
+        ).setInteractive({ useHandCursor: true })
+         .setStrokeStyle(2, 0x3399ff, 0.7);
+
+        // Create return button text with enhanced styling
         const returnButton = this.add.text(
             this.cameras.main.width / 2,
             this.cameras.main.height - 50,
             'RETURN TO MENU',
             {
                 fontFamily: 'monospace',
-                fontSize: '18px',
+                fontSize: '20px', // Increased from 18px
                 color: '#ffffff',
                 align: 'center',
                 stroke: '#000033',
-                strokeThickness: 2
+                strokeThickness: 3, // Increased from 2
+                fontWeight: 'bold', // Added bold
+                shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 3, fill: true } // Added shadow
             }
-        ).setOrigin(0.5).setInteractive({ useHandCursor: true });
+        ).setOrigin(0.5);
 
-        // Add hover effect
-        returnButton.on('pointerover', () => {
-            returnButton.setColor('#3399ff');
+        // Add hover effect with enhanced feedback
+        buttonBg.on('pointerover', () => {
+            buttonBg.setFillStyle(0x3399ff, 0.9);
+            returnButton.setColor('#ffffff');
+
+            // Add scale animation on hover
+            this.tweens.add({
+                targets: [buttonBg, returnButton],
+                scaleX: 1.05,
+                scaleY: 1.05,
+                duration: 100,
+                ease: 'Power1'
+            });
         });
 
-        returnButton.on('pointerout', () => {
+        buttonBg.on('pointerout', () => {
+            buttonBg.setFillStyle(0x224466, 0.8);
             returnButton.setColor('#ffffff');
+
+            // Reset scale on pointer out
+            this.tweens.add({
+                targets: [buttonBg, returnButton],
+                scaleX: 1,
+                scaleY: 1,
+                duration: 100,
+                ease: 'Power1'
+            });
         });
 
         // Add click handler
-        returnButton.on('pointerdown', () => {
-            this.returnToPreviousScene();
+        buttonBg.on('pointerdown', () => {
+            // Add click feedback
+            this.tweens.add({
+                targets: [buttonBg, returnButton],
+                scaleX: 0.95,
+                scaleY: 0.95,
+                duration: 50,
+                yoyo: true,
+                ease: 'Power1',
+                onComplete: () => {
+                    this.returnToPreviousScene();
+                }
+            });
         });
     }
 
@@ -858,24 +1015,61 @@ class HelpScene extends Phaser.Scene {
         // Update active tab
         this.activeTab = tabId;
 
-        // Update tab visuals
+        // Update tab visuals with enhanced feedback
         Object.entries(this.tabButtons).forEach(([id, elements]) => {
             if (id === tabId) {
-                elements.bg.setFillStyle(0x3399ff, 0.7);
+                // Active tab styling
+                elements.bg.setFillStyle(0x3399ff, 0.9); // Brighter blue with higher opacity
+                elements.bg.setStrokeStyle(3, 0x66ccff, 1.0); // Thicker, brighter stroke
                 elements.text.setColor('#ffffff');
+                elements.text.setShadow(1, 1, '#000000', 3, true, true); // Add shadow
+
+                // Add subtle pulse animation to active tab
+                this.tweens.add({
+                    targets: elements.bg,
+                    alpha: { from: 0.9, to: 1.0 },
+                    duration: 1000,
+                    yoyo: true,
+                    repeat: -1,
+                    ease: 'Sine.easeInOut'
+                });
             } else {
-                elements.bg.setFillStyle(0x224466, 0.7);
+                // Inactive tab styling
+                elements.bg.setFillStyle(0x224466, 0.8);
+                elements.bg.setStrokeStyle(2, 0x3399ff, 0.5);
                 elements.text.setColor('#cccccc');
+                elements.text.setShadow(0, 0, '#000000', 0); // Remove shadow
+
+                // Stop any animations on inactive tabs
+                this.tweens.killTweensOf(elements.bg);
+                elements.bg.alpha = 0.8;
             }
         });
 
-        // Hide all content
+        // Hide all content with a fade effect
         Object.values(this.tabContent).forEach(content => {
-            content.setVisible(false);
+            if (content.visible) {
+                this.tweens.add({
+                    targets: content,
+                    alpha: 0,
+                    duration: 200,
+                    onComplete: () => {
+                        content.setVisible(false);
+                    }
+                });
+            }
         });
 
-        // Show selected content
-        this.tabContent[tabId].setVisible(true);
+        // Show selected content with a fade-in effect
+        const selectedContent = this.tabContent[tabId];
+        selectedContent.alpha = 0;
+        selectedContent.setVisible(true);
+        this.tweens.add({
+            targets: selectedContent,
+            alpha: 1,
+            duration: 300,
+            ease: 'Power2'
+        });
     }
 
     returnToPreviousScene() {
