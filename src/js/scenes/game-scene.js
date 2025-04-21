@@ -37,6 +37,9 @@ class GameScene extends Phaser.Scene {
         this.isPaused = false;
         this.isGameOver = false;
         this.bossEncountered = this.nodeType === 'BOSS';
+        this.levelCompleting = false;
+        this.allWavesSpawned = false;
+        this.lastEnemyCheckTime = 0;
     }
 
     create() {
@@ -250,6 +253,10 @@ class GameScene extends Phaser.Scene {
                 createLevelUpEffect: () => {},
                 createBossEntranceEffect: () => {},
                 createTeleportEffect: () => {},
+                createPortalEffect: (x, y) => {
+                    // Return a basic sprite as fallback
+                    return this.add.sprite(x, y, 'portal').setDepth(1000);
+                },
                 cleanup: () => {}
             };
         }
@@ -351,6 +358,13 @@ class GameScene extends Phaser.Scene {
 
         // Spawn enemies based on sector data and progression
         this.updateEnemySpawning();
+
+        // Check if all enemies are defeated and level should be completed
+        // Only check every 2 seconds to avoid performance impact
+        if (time - this.lastEnemyCheckTime > 2000) {
+            this.lastEnemyCheckTime = time;
+            this.checkLevelCompletion();
+        }
 
         // Update collision handlers for enemy projectiles
         if (this.updateEnemyProjectileCollisions) {
@@ -1409,6 +1423,9 @@ class GameScene extends Phaser.Scene {
         const cameraY = this.cameras.main.scrollY;
         const visibleBottom = cameraY + this.cameras.main.height;
 
+        // Check if all waves have been spawned
+        let allSpawned = true;
+
         // Check each wave in the sector data
         this.currentSectorData.waves.forEach(wave => {
             // If wave is close to coming on screen and hasn't been spawned yet
@@ -1445,7 +1462,15 @@ class GameScene extends Phaser.Scene {
                     }
                 }
             }
+
+            // Check if this wave has been spawned yet
+            if (!wave.spawned) {
+                allSpawned = false;
+            }
         });
+
+        // Update the allWavesSpawned flag
+        this.allWavesSpawned = allSpawned;
     }
 
     spawnWave(wave) {
@@ -1784,7 +1809,7 @@ class GameScene extends Phaser.Scene {
         this.createChoiceUI(choice);
     }
 
-    createChoiceUI(choice, isTimePressure = false) {
+    createChoiceUI(choice, isTimePressure = false, callback = null) {
         // Create a semi-transparent background with blur effect
         const overlay = this.add.rectangle(
             0, 0,
@@ -2018,7 +2043,7 @@ class GameScene extends Phaser.Scene {
                     ease: 'Power1'
                 });
 
-                this.selectChoiceOption(index, choice, uiElements);
+                this.selectChoiceOption(index, choice, uiElements, callback);
             });
 
             // Add hover effect
@@ -2095,7 +2120,7 @@ class GameScene extends Phaser.Scene {
         };
     }
 
-    selectChoiceOption(index, choice, uiElements) {
+    selectChoiceOption(index, choice, uiElements, callback = null) {
         // Apply the choice
         const result = this.choiceSystem.applyChoice(index, choice);
 
@@ -2107,8 +2132,104 @@ class GameScene extends Phaser.Scene {
         // Clean up UI elements after a delay
         this.time.delayedCall(1500, () => {
             uiElements.forEach(element => element.destroy());
-            this.resumeGameplay();
+
+            // Call the callback if provided, otherwise resume gameplay
+            if (callback && typeof callback === 'function') {
+                callback();
+            } else {
+                this.resumeGameplay();
+            }
         });
+    }
+
+    /**
+     * Show a path choice for navigation between sectors
+     */
+    showPathChoice() {
+        // Pause the game while showing the choice UI
+        this.pauseGameplay();
+
+        // Generate a path choice from the choice system
+        const choice = this.choiceSystem.generateChoice('path', this.currentSector, this.nodeType);
+
+        // Create a modern navigation decision UI
+        if (typeof NavigationDecisionUI !== 'undefined') {
+            // Clean up any existing choice UI
+            if (this.choiceUI) {
+                Object.values(this.choiceUI).forEach(element => {
+                    if (element && typeof element.destroy === 'function') {
+                        element.destroy();
+                    }
+                });
+                this.choiceUI = null;
+            }
+
+            // Create the new navigation UI
+            this.navigationUI = new NavigationDecisionUI(this, choice, (index) => {
+                // Apply the choice
+                const result = this.choiceSystem.applyChoice(index, choice);
+                console.log('Applied navigation choice:', result);
+
+                // Show feedback
+                this.showChoiceFeedback(result);
+
+                // Clean up UI after a delay
+                this.time.delayedCall(1500, () => {
+                    if (this.navigationUI) {
+                        this.navigationUI.destroy();
+                        this.navigationUI = null;
+                    }
+
+                    // Continue to the next scene
+                    this.continueToNextScene();
+                });
+            });
+        } else {
+            // Fallback to standard choice UI if NavigationDecisionUI is not available
+            this.createChoiceUI(choice, false, () => {
+                this.continueToNextScene();
+            });
+        }
+    }
+
+    /**
+     * Continue to the next scene after completing a level
+     */
+    continueToNextScene() {
+        // Create level complete message
+        const completeText = this.add.text(
+            this.cameras.main.width / 2,
+            this.cameras.main.height / 2 - 100,
+            'SECTOR COMPLETE',
+            {
+                fontFamily: 'monospace',
+                fontSize: '32px',
+                color: '#33ff33',
+                align: 'center',
+                stroke: '#000000',
+                strokeThickness: 4
+            }
+        ).setOrigin(0.5).setScrollFactor(0).setDepth(1001).setAlpha(0);
+
+        // Animate text
+        this.tweens.add({
+            targets: completeText,
+            alpha: 1,
+            duration: 500,
+            ease: 'Power2'
+        });
+
+        // Create portal effect
+        this.createLevelCompletionPortal();
+
+        // Make sure the global state is properly initialized
+        if (!this.game.global.currentRun) {
+            this.game.global.currentRun = {
+                shipType: 'fighter',
+                upgrades: [],
+                penalties: []
+            };
+        }
     }
 
     showChoiceFeedback(result) {
@@ -4506,6 +4627,12 @@ class GameScene extends Phaser.Scene {
             this.dynamicDifficulty.recordSectorCompleted(this.currentSector, timeSpent);
         }
 
+        // Show path choice if not in a boss encounter
+        if (!this.bossEncountered) {
+            this.showPathChoice();
+            return;
+        }
+
         // Track sector completion in analytics
         if (this.game.global.analytics) {
             this.game.global.analytics.trackGameplay('progression', 'sector_completed', {
@@ -4519,48 +4646,187 @@ class GameScene extends Phaser.Scene {
             });
         }
 
-        // Show level complete message
-        const completeText = this.add.text(
+        // For boss encounters, show the portal directly
+        if (this.bossEncountered) {
+            this.continueToNextScene();
+        }
+    }
+
+    /**
+     * Check if all enemies have been spawned and defeated, and complete the level if so
+     */
+    checkLevelCompletion() {
+        // Skip if level is already completing or we're in a boss encounter
+        if (this.levelCompleting || this.bossEncountered) return;
+
+        // Check if all waves have been spawned
+        if (!this.allWavesSpawned) return;
+
+        // Check if there are any active enemies left
+        const activeEnemies = this.enemies.getChildren().filter(enemy => enemy.active);
+
+        // If no active enemies and all waves spawned, complete the level
+        if (activeEnemies.length === 0) {
+            console.log('All enemies defeated and all waves spawned - completing level');
+            this.completeLevel();
+        }
+    }
+
+    /**
+     * Create a portal for level completion and animate the player ship flying into it
+     */
+    createLevelCompletionPortal() {
+        // Create portal in the center of the screen
+        const portalX = this.cameras.main.width / 2;
+        const portalY = this.cameras.main.height / 2 + 50; // Below the 'SECTOR COMPLETE' text
+
+        // Make sure the portal texture exists
+        if (!this.textures.exists('portal')) {
+            // Create a simple fallback portal texture
+            const graphics = this.make.graphics();
+            graphics.fillStyle(0x3366ff);
+            graphics.fillCircle(64, 64, 64);
+            graphics.lineStyle(10, 0x66ccff);
+            graphics.strokeCircle(64, 64, 60);
+            graphics.generateTexture('portal', 128, 128);
+            graphics.clear();
+        }
+
+        // Create portal with visual effects
+        let portal;
+        if (this.visualEffects) {
+            portal = this.visualEffects.createPortalEffect(portalX, portalY);
+        } else {
+            // Fallback if visual effects system is not available
+            portal = this.add.sprite(portalX, portalY, 'portal');
+            portal.setDepth(1000);
+        }
+
+        // Add instruction text
+        const instructionText = this.add.text(
             this.cameras.main.width / 2,
-            this.cameras.main.height / 2,
-            'SECTOR COMPLETE',
+            portalY + 100,
+            'ENTERING PORTAL...',
             {
                 fontFamily: 'monospace',
-                fontSize: '32px',
-                color: '#33ff33',
+                fontSize: '18px',
+                color: '#66ccff',
                 align: 'center',
                 stroke: '#000000',
-                strokeThickness: 4
+                strokeThickness: 3
             }
         ).setOrigin(0.5).setScrollFactor(0).setDepth(1001).setAlpha(0);
 
-        // Animate text
+        // Fade in instruction text
         this.tweens.add({
-            targets: completeText,
+            targets: instructionText,
             alpha: 1,
             duration: 500,
+            delay: 1000,
             ease: 'Power2'
         });
 
-        // Make sure the global state is properly initialized
-        if (!this.game.global.currentRun) {
-            this.game.global.currentRun = {
-                shipType: 'fighter',
-                upgrades: [],
-                penalties: []
-            };
-        }
+        // Make sure player ship is above everything else
+        if (this.player) {
+            this.player.setDepth(1002);
 
-        // Level is complete, transition to upgrade scene after a short delay
-        this.time.delayedCall(2000, () => {
-            this.scene.start(CONSTANTS.SCENES.UPGRADE, {
-                sector: this.currentSector + 1,
-                score: this.score,
-                shipType: this.game.global.currentRun.shipType,
-                upgrades: this.game.global.currentRun.upgrades,
-                penalties: this.game.global.currentRun.penalties
+            // Wait a moment, then animate player ship flying into the portal
+            this.time.delayedCall(2000, () => {
+                // Create engine trail effect for the ship
+                const engineTrail = this.add.particles('star-particle');
+                const emitter = engineTrail.createEmitter({
+                    speed: { min: 50, max: 100 },
+                    scale: { start: 0.4, end: 0 },
+                    blendMode: 'ADD',
+                    lifespan: 500,
+                    tint: [0x66ccff, 0x3366ff]
+                });
+
+                // Follow the player ship
+                emitter.startFollow(this.player);
+
+                // Animate player ship moving to portal
+                this.tweens.add({
+                    targets: this.player,
+                    x: portalX,
+                    y: portalY,
+                    scale: 0.1, // Shrink as it enters the portal
+                    angle: 720, // Spin as it enters
+                    duration: 2000,
+                    ease: 'Sine.inOut',
+                    onComplete: () => {
+                        // Hide player ship
+                        this.player.setVisible(false);
+
+                        // Stop engine trail
+                        emitter.stop();
+
+                        // Create flash effect when ship enters portal
+                        if (this.visualEffects) {
+                            this.visualEffects.createFlash(portalX, portalY, 'large');
+                            this.visualEffects.createScreenShake(0.01, 500);
+                        }
+
+                        // Expand portal
+                        this.tweens.add({
+                            targets: portal,
+                            scale: 3,
+                            alpha: 0.8,
+                            duration: 1000,
+                            ease: 'Sine.in',
+                            onComplete: () => {
+                                // Flash screen
+                                this.cameras.main.flash(1000, 255, 255, 255, true);
+
+                                // Transition to upgrade scene
+                                this.time.delayedCall(1000, () => {
+                                    // Clean up portal and particles
+                                    try {
+                                        if (portal.particles) {
+                                            portal.particles.destroy();
+                                        }
+                                        if (portal.emitters) {
+                                            portal.emitters.forEach(emitter => {
+                                                if (emitter && typeof emitter.stop === 'function') {
+                                                    emitter.stop();
+                                                }
+                                            });
+                                        }
+                                        portal.destroy();
+                                        engineTrail.destroy();
+                                    } catch (error) {
+                                        console.warn('Error cleaning up portal effects:', error);
+                                        // Attempt basic cleanup
+                                        if (portal && !portal.destroyed) portal.destroy();
+                                        if (engineTrail && !engineTrail.destroyed) engineTrail.destroy();
+                                    }
+
+                                    // Start the upgrade scene
+                                    this.scene.start(CONSTANTS.SCENES.UPGRADE, {
+                                        sector: this.currentSector + 1,
+                                        score: this.score,
+                                        shipType: this.game.global.currentRun.shipType,
+                                        upgrades: this.game.global.currentRun.upgrades,
+                                        penalties: this.game.global.currentRun.penalties
+                                    });
+                                });
+                            }
+                        });
+                    }
+                });
             });
-        });
+        } else {
+            // If player doesn't exist, just transition after a delay
+            this.time.delayedCall(4000, () => {
+                this.scene.start(CONSTANTS.SCENES.UPGRADE, {
+                    sector: this.currentSector + 1,
+                    score: this.score,
+                    shipType: this.game.global.currentRun.shipType,
+                    upgrades: this.game.global.currentRun.upgrades,
+                    penalties: this.game.global.currentRun.penalties
+                });
+            });
+        }
     }
 
     playMusic() {

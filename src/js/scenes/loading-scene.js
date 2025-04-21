@@ -483,7 +483,8 @@ class LoadingScene extends Phaser.Scene {
             'powerup-weapon', 'powerup-score', 'powerup-flash', 'particle-blue',
             'star-particle', 'bg-dust', 'asteroid', 'enemy-interceptor', 'enemy-bomber',
             'enemy-stealth', 'enemy-turret', 'enemy-carrier', 'powerup-ammo',
-            'particle-health', 'particle-shield', 'particle-weapon', 'particle-score', 'particle-ammo'
+            'particle-health', 'particle-shield', 'particle-weapon', 'particle-score', 'particle-ammo',
+            'portal' // Added portal texture for level completion
             // New enemy types will use existing assets with different tints
         ];
 
@@ -546,6 +547,10 @@ class LoadingScene extends Phaser.Scene {
             color = 0xff6633; // Orange-red for scatter bomb
             // Create enhanced scatter bomb sprite
             this.createEnhancedScatterBombSprite(key, color);
+            return;
+        } else if (key.includes('portal')) {
+            // Create portal texture
+            this.createPortalTexture(key);
             return;
         } else if (key.includes('powerup')) {
             color = 0x33ffff; // Cyan for powerups
@@ -2871,6 +2876,124 @@ class LoadingScene extends Phaser.Scene {
             graphics.fillStyle(color);
             graphics.fillCircle(width/2, height/2, width/2);
             graphics.generateTexture(key, width, height);
+            graphics.clear();
+        }
+    }
+
+    /**
+     * Create a portal texture for level completion
+     * @param {string} key - Texture key
+     */
+    createPortalTexture(key) {
+        // Create a detailed portal with swirling energy effect
+        const size = 128; // Larger size for the portal
+
+        try {
+            // Create a canvas for the portal
+            const texture = this.textures.createCanvas(key, size, size);
+            const context = texture.getContext();
+
+            // Clear the canvas
+            context.clearRect(0, 0, size, size);
+
+            // Create outer ring gradient
+            const outerRingGradient = context.createRadialGradient(
+                size/2, size/2, size/2 - 10,
+                size/2, size/2, size/2
+            );
+            outerRingGradient.addColorStop(0, '#33ccff');
+            outerRingGradient.addColorStop(0.5, '#3366ff');
+            outerRingGradient.addColorStop(1, '#0033cc');
+
+            // Draw outer ring
+            context.fillStyle = outerRingGradient;
+            context.beginPath();
+            context.arc(size/2, size/2, size/2, 0, Math.PI * 2);
+            context.fill();
+
+            // Create inner portal gradient
+            const innerGradient = context.createRadialGradient(
+                size/2, size/2, 0,
+                size/2, size/2, size/2 - 15
+            );
+            innerGradient.addColorStop(0, '#ffffff');
+            innerGradient.addColorStop(0.2, '#ccffff');
+            innerGradient.addColorStop(0.5, '#66ccff');
+            innerGradient.addColorStop(0.8, '#3366ff');
+            innerGradient.addColorStop(1, '#0033cc');
+
+            // Draw inner portal
+            context.fillStyle = innerGradient;
+            context.beginPath();
+            context.arc(size/2, size/2, size/2 - 15, 0, Math.PI * 2);
+            context.fill();
+
+            // Add swirl effect
+            context.strokeStyle = '#ffffff';
+            context.lineWidth = 2;
+
+            // Draw multiple swirls
+            for (let i = 0; i < 3; i++) {
+                const radius = (size/2 - 20) - (i * 10);
+                context.beginPath();
+
+                for (let angle = 0; angle < Math.PI * 6; angle += 0.1) {
+                    const r = radius * (1 - angle / (Math.PI * 8));
+                    const x = size/2 + r * Math.cos(angle + (i * Math.PI/4));
+                    const y = size/2 + r * Math.sin(angle + (i * Math.PI/4));
+
+                    if (angle === 0) {
+                        context.moveTo(x, y);
+                    } else {
+                        context.lineTo(x, y);
+                    }
+                }
+
+                context.stroke();
+            }
+
+            // Add energy particles
+            for (let i = 0; i < 30; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const distance = Math.random() * (size/2 - 20);
+                const x = size/2 + distance * Math.cos(angle);
+                const y = size/2 + distance * Math.sin(angle);
+                const particleSize = 1 + Math.random() * 3;
+
+                context.fillStyle = '#ffffff';
+                context.beginPath();
+                context.arc(x, y, particleSize, 0, Math.PI * 2);
+                context.fill();
+            }
+
+            // Add glow effect
+            const glowGradient = context.createRadialGradient(
+                size/2, size/2, size/2 - 15,
+                size/2, size/2, size
+            );
+            glowGradient.addColorStop(0, 'rgba(51, 153, 255, 0.5)');
+            glowGradient.addColorStop(0.5, 'rgba(51, 153, 255, 0.3)');
+            glowGradient.addColorStop(1, 'rgba(51, 153, 255, 0)');
+
+            context.fillStyle = glowGradient;
+            context.beginPath();
+            context.arc(size/2, size/2, size, 0, Math.PI * 2);
+            context.fill();
+
+            // Update the texture
+            texture.refresh();
+
+            console.log(`Created portal texture: ${key}`);
+        } catch (error) {
+            console.warn(`Failed to create portal texture:`, error);
+
+            // Fallback to simple shape
+            const graphics = this.make.graphics();
+            graphics.fillStyle(0x3366ff);
+            graphics.fillCircle(size/2, size/2, size/2);
+            graphics.lineStyle(10, 0x66ccff);
+            graphics.strokeCircle(size/2, size/2, size/2 - 5);
+            graphics.generateTexture(key, size, size);
             graphics.clear();
         }
     }
