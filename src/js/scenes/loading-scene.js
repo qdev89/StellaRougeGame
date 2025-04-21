@@ -834,8 +834,8 @@ class LoadingScene extends Phaser.Scene {
     }
 
     createExplosionSpritesheet() {
-        // Create an enhanced explosion animation spritesheet
-        const frames = 12; // More frames for smoother animation
+        // Create a more detailed and realistic explosion animation spritesheet
+        const frames = 16; // Increased frames for smoother animation
         const size = 64;
 
         // Create a canvas for the spritesheet
@@ -847,165 +847,280 @@ class LoadingScene extends Phaser.Scene {
             const x = i * size;
             const progress = i / frames;
 
+            // Clear the frame area
+            context.clearRect(x, 0, size, size);
+
             // More complex explosion animation with multiple phases
             // Phase 1: Initial flash (frames 0-1)
-            // Phase 2: Expanding fireball (frames 2-5)
-            // Phase 3: Dissipating smoke and debris (frames 6-11)
+            // Phase 2: Expanding fireball (frames 2-7)
+            // Phase 3: Dissipating smoke and debris (frames 8-15)
 
-            if (progress < 0.15) { // Initial flash phase
+            if (progress < 0.12) { // Initial flash phase
                 // Bright white/yellow flash
-                const flashRadius = (size / 2) * (0.5 + progress * 3);
+                const flashRadius = (size / 2) * (0.5 + progress * 4);
 
-                // Outer glow
+                // Outer glow with enhanced colors
                 const glowGradient = context.createRadialGradient(
                     x + size/2, size/2, 0,
-                    x + size/2, size/2, flashRadius * 1.5
+                    x + size/2, size/2, flashRadius * 1.8
                 );
-                glowGradient.addColorStop(0, 'rgba(255, 255, 220, 0.8)');
-                glowGradient.addColorStop(1, 'rgba(255, 200, 100, 0)');
+                glowGradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+                glowGradient.addColorStop(0.3, 'rgba(255, 255, 220, 0.8)');
+                glowGradient.addColorStop(0.6, 'rgba(255, 200, 100, 0.5)');
+                glowGradient.addColorStop(1, 'rgba(255, 150, 50, 0)');
 
                 context.fillStyle = glowGradient;
                 context.fillRect(x, 0, size, size);
 
-                // Bright core
-                context.fillStyle = 'rgb(255, 255, 255)';
+                // Bright core with more intense white center
+                const coreGradient = context.createRadialGradient(
+                    x + size/2, size/2, 0,
+                    x + size/2, size/2, flashRadius * 0.7
+                );
+                coreGradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+                coreGradient.addColorStop(0.5, 'rgba(255, 255, 220, 0.9)');
+                coreGradient.addColorStop(1, 'rgba(255, 220, 150, 0.7)');
+
+                context.fillStyle = coreGradient;
                 context.beginPath();
                 context.arc(x + size/2, size/2, flashRadius * 0.7, 0, Math.PI * 2);
                 context.fill();
+
+                // Add initial shockwave ring
+                context.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+                context.lineWidth = 2;
+                context.beginPath();
+                context.arc(x + size/2, size/2, flashRadius * 0.9, 0, Math.PI * 2);
+                context.stroke();
             }
             else if (progress < 0.5) { // Expanding fireball phase
                 // Calculate phase progress (0-1 within this phase)
-                const phaseProgress = (progress - 0.15) / 0.35;
-                const fireballRadius = (size / 2) * (0.8 + phaseProgress * 0.4);
+                const phaseProgress = (progress - 0.12) / 0.38;
+                const fireballRadius = (size / 2) * (0.8 + phaseProgress * 0.5);
 
-                // Create a more realistic fireball with gradient
+                // Create a more realistic fireball with enhanced gradient
                 const fireGradient = context.createRadialGradient(
                     x + size/2, size/2, 0,
                     x + size/2, size/2, fireballRadius
                 );
 
-                // Inner bright yellow/white
-                fireGradient.addColorStop(0, 'rgb(255, 255, 220)');
-                // Middle orange
-                fireGradient.addColorStop(0.4, `rgb(255, ${Math.floor(200 - 150 * phaseProgress)}, 0)`);
-                // Outer red
-                fireGradient.addColorStop(0.8, `rgb(${Math.floor(200 - 100 * phaseProgress)}, 0, 0)`);
-                // Edge fade
-                fireGradient.addColorStop(1, 'rgba(100, 0, 0, 0.5)');
+                // Inner bright yellow/white - more intense
+                fireGradient.addColorStop(0, 'rgb(255, 255, 255)');
+                // Yellow-orange transition
+                fireGradient.addColorStop(0.2, 'rgb(255, 255, 180)');
+                // Middle orange - more vibrant
+                fireGradient.addColorStop(0.4, `rgb(255, ${Math.floor(220 - 170 * phaseProgress)}, ${Math.floor(50 * (1 - phaseProgress))})`);
+                // Outer red - deeper red
+                fireGradient.addColorStop(0.8, `rgb(${Math.floor(220 - 120 * phaseProgress)}, ${Math.floor(20 * (1 - phaseProgress))}, ${Math.floor(10 * (1 - phaseProgress))})`);
+                // Edge fade - more pronounced
+                fireGradient.addColorStop(1, `rgba(${Math.floor(120 - 40 * phaseProgress)}, 0, 0, ${0.7 - 0.2 * phaseProgress})`);
 
                 context.fillStyle = fireGradient;
+
+                // Create a more irregular explosion shape using multiple overlapping circles
+                const irregularityFactor = 0.2 + phaseProgress * 0.3; // Increases with time
+
+                // Main explosion body
                 context.beginPath();
                 context.arc(x + size/2, size/2, fireballRadius, 0, Math.PI * 2);
                 context.fill();
 
-                // Add shockwave ring in early frames of this phase
-                if (phaseProgress < 0.6) {
-                    const ringRadius = fireballRadius * (1 + phaseProgress * 0.5);
-                    const ringWidth = 2 + 3 * (1 - phaseProgress);
+                // Add irregular bulges to make explosion less uniform
+                for (let j = 0; j < 4; j++) {
+                    const angle = j * Math.PI / 2 + phaseProgress * Math.PI / 4;
+                    const offsetDistance = fireballRadius * irregularityFactor;
+                    const offsetX = Math.cos(angle) * offsetDistance;
+                    const offsetY = Math.sin(angle) * offsetDistance;
+                    const bulgeSize = fireballRadius * (0.6 + Math.random() * 0.4);
 
-                    context.strokeStyle = `rgba(255, 255, 255, ${0.7 * (1 - phaseProgress)})`;
-                    context.lineWidth = ringWidth;
                     context.beginPath();
-                    context.arc(x + size/2, size/2, ringRadius, 0, Math.PI * 2);
-                    context.stroke();
+                    context.arc(
+                        x + size/2 + offsetX,
+                        size/2 + offsetY,
+                        bulgeSize,
+                        0, Math.PI * 2
+                    );
+                    context.fill();
+                }
+
+                // Add shockwave ring with enhanced visual effect
+                if (phaseProgress < 0.7) {
+                    const ringRadius = fireballRadius * (1 + phaseProgress * 0.6);
+                    const ringWidth = 3 + 3 * (1 - phaseProgress);
+                    const ringOpacity = 0.8 * (1 - phaseProgress);
+
+                    // Create a gradient for the ring
+                    const ringGradient = context.createRadialGradient(
+                        x + size/2, size/2, ringRadius - ringWidth,
+                        x + size/2, size/2, ringRadius + ringWidth
+                    );
+                    ringGradient.addColorStop(0, `rgba(255, 255, 255, 0)`);
+                    ringGradient.addColorStop(0.5, `rgba(255, 255, 255, ${ringOpacity})`);
+                    ringGradient.addColorStop(1, `rgba(255, 200, 100, 0)`);
+
+                    context.fillStyle = ringGradient;
+                    context.beginPath();
+                    context.arc(x + size/2, size/2, ringRadius + ringWidth, 0, Math.PI * 2);
+                    context.fill();
                 }
             }
             else { // Dissipating smoke and debris phase
                 // Calculate phase progress (0-1 within this phase)
                 const phaseProgress = (progress - 0.5) / 0.5;
 
-                // Smoke cloud
-                const smokeRadius = (size / 2) * (1.2 - phaseProgress * 0.3);
+                // Smoke cloud with more realistic dissipation
+                const smokeRadius = (size / 2) * (1.3 - phaseProgress * 0.3);
 
-                // Create smoke with gradient
+                // Create smoke with enhanced gradient for more realistic look
                 const smokeGradient = context.createRadialGradient(
                     x + size/2, size/2, 0,
                     x + size/2, size/2, smokeRadius
                 );
 
-                // Calculate phase progress for smoke phase
-                const smokePhaseProgress = (progress - 0.5) / 0.5;
-
-                // Dark center
-                smokeGradient.addColorStop(0, `rgba(60, 60, 60, ${0.8 * (1 - smokePhaseProgress)})`);
-                // Lighter edges
-                smokeGradient.addColorStop(0.7, `rgba(100, 100, 100, ${0.5 * (1 - smokePhaseProgress)})`);
-                // Fade out
-                smokeGradient.addColorStop(1, 'rgba(120, 120, 120, 0)');
+                // Early smoke phase still has some fire/heat
+                if (phaseProgress < 0.3) {
+                    // Dark orange/red center fading to gray
+                    smokeGradient.addColorStop(0, `rgba(100, 50, 30, ${0.9 * (1 - phaseProgress * 2)})`);
+                    smokeGradient.addColorStop(0.3, `rgba(80, 60, 50, ${0.8 * (1 - phaseProgress * 1.5)})`);
+                    smokeGradient.addColorStop(0.7, `rgba(100, 100, 100, ${0.6 * (1 - phaseProgress)})`);
+                    smokeGradient.addColorStop(1, 'rgba(120, 120, 120, 0)');
+                } else {
+                    // Later smoke phase is just gray/black smoke
+                    smokeGradient.addColorStop(0, `rgba(60, 60, 60, ${0.7 * (1 - phaseProgress)})`);
+                    smokeGradient.addColorStop(0.5, `rgba(90, 90, 90, ${0.5 * (1 - phaseProgress)})`);
+                    smokeGradient.addColorStop(0.8, `rgba(120, 120, 120, ${0.3 * (1 - phaseProgress)})`);
+                    smokeGradient.addColorStop(1, 'rgba(150, 150, 150, 0)');
+                }
 
                 context.fillStyle = smokeGradient;
 
-                // Make smoke cloud more irregular with multiple overlapping circles
-                for (let j = 0; j < 3; j++) {
-                    const offsetX = (Math.random() - 0.5) * smokeRadius * 0.4;
-                    const offsetY = (Math.random() - 0.5) * smokeRadius * 0.4;
-                    const sizeVariation = 0.7 + Math.random() * 0.6;
+                // Make smoke cloud more realistic with multiple overlapping circles
+                // that drift apart as the explosion dissipates
+                const driftFactor = phaseProgress * 0.6; // Increases with time
+
+                for (let j = 0; j < 5; j++) { // More smoke puffs
+                    const angle = (j / 5) * Math.PI * 2 + phaseProgress * Math.PI / 4;
+                    const driftDistance = smokeRadius * driftFactor;
+                    const offsetX = Math.cos(angle) * driftDistance;
+                    const offsetY = Math.sin(angle) * driftDistance - (phaseProgress * 5); // Slight upward drift
+                    const sizeVariation = 0.5 + Math.random() * 0.7;
 
                     context.beginPath();
                     context.arc(
                         x + size/2 + offsetX,
                         size/2 + offsetY,
-                        smokeRadius * sizeVariation,
+                        smokeRadius * sizeVariation * (1 - phaseProgress * 0.3), // Smoke puffs get smaller
                         0, Math.PI * 2
                     );
                     context.fill();
                 }
             }
 
-            // Add debris particles in all phases
-            const particleCount = progress < 0.15 ? 3 : progress < 0.5 ? 8 : 5;
+            // Add debris particles with enhanced visual effects
+            // More particles in the middle of the explosion, fewer at start and end
+            const particleCount = progress < 0.12 ? 5 :
+                                progress < 0.5 ? 12 :
+                                10 - Math.floor(progress * 10); // Gradually reduce particles
+
             for (let j = 0; j < particleCount; j++) {
                 // Particle properties based on explosion phase
                 let particleSize, particleColor, distance;
 
-                if (progress < 0.15) { // Flash phase - small bright particles
+                if (progress < 0.12) { // Flash phase - small bright particles
                     particleSize = Math.random() * 3 + 1;
-                    particleColor = 'rgb(255, 255, 220)';
+
+                    // Brighter particles
+                    const brightness = Math.floor(220 + Math.random() * 35);
+                    particleColor = `rgb(${brightness}, ${brightness}, ${Math.floor(brightness * 0.9)})`;
+
                     distance = Math.random() * size * 0.3;
                 }
                 else if (progress < 0.5) { // Fireball phase - larger, colored particles
                     particleSize = Math.random() * 4 + 2;
 
-                    // Random particle colors - yellow, orange, red
+                    // Enhanced particle colors with more variation
                     const colorRoll = Math.random();
-                    if (colorRoll > 0.7) {
+                    if (colorRoll > 0.8) {
+                        particleColor = 'rgb(255, 255, 220)'; // Bright yellow/white
+                    } else if (colorRoll > 0.6) {
                         particleColor = 'rgb(255, 255, 100)'; // Yellow
                     } else if (colorRoll > 0.3) {
                         particleColor = 'rgb(255, 150, 50)'; // Orange
-                    } else {
+                    } else if (colorRoll > 0.1) {
                         particleColor = 'rgb(255, 50, 50)'; // Red
+                    } else {
+                        particleColor = 'rgb(200, 0, 0)'; // Deep red
                     }
 
-                    distance = Math.random() * size * 0.4;
+                    // Particles fly further as explosion expands
+                    const phaseProgress = (progress - 0.12) / 0.38;
+                    distance = Math.random() * size * (0.3 + phaseProgress * 0.3);
                 }
-                else { // Smoke phase - darker, smaller particles
+                else { // Smoke phase - darker, smaller particles with more variation
                     particleSize = Math.random() * 3 + 1;
 
                     // Calculate phase progress for smoke phase
                     const smokePhaseProgress = (progress - 0.5) / 0.5;
 
-                    // Random particle colors - gray, dark orange, dark red
+                    // Enhanced particle colors with more realistic smoke/debris colors
                     const colorRoll = Math.random();
-                    if (colorRoll > 0.7) {
-                        particleColor = `rgba(150, 150, 150, ${1 - smokePhaseProgress})`; // Gray
-                    } else if (colorRoll > 0.3) {
-                        particleColor = `rgba(150, 100, 50, ${1 - smokePhaseProgress})`; // Dark orange
+                    if (smokePhaseProgress < 0.3) {
+                        // Early smoke phase still has some embers
+                        if (colorRoll > 0.7) {
+                            particleColor = `rgba(200, 100, 50, ${1 - smokePhaseProgress * 2})`; // Ember
+                        } else if (colorRoll > 0.4) {
+                            particleColor = `rgba(150, 150, 150, ${1 - smokePhaseProgress * 1.5})`; // Light gray
+                        } else {
+                            particleColor = `rgba(100, 100, 100, ${1 - smokePhaseProgress * 1.5})`; // Dark gray
+                        }
                     } else {
-                        particleColor = `rgba(100, 50, 50, ${1 - smokePhaseProgress})`; // Dark red
+                        // Later smoke phase is just gray/black particles
+                        if (colorRoll > 0.6) {
+                            particleColor = `rgba(150, 150, 150, ${1 - smokePhaseProgress})`; // Light gray
+                        } else if (colorRoll > 0.3) {
+                            particleColor = `rgba(100, 100, 100, ${1 - smokePhaseProgress})`; // Medium gray
+                        } else {
+                            particleColor = `rgba(70, 70, 70, ${1 - smokePhaseProgress})`; // Dark gray
+                        }
                     }
 
-                    distance = Math.random() * size * 0.5;
+                    // Particles drift further apart in smoke phase
+                    distance = Math.random() * size * (0.4 + smokePhaseProgress * 0.3);
                 }
 
-                // Position particles with more variation as explosion progresses
+                // Position particles with more variation and realistic movement
                 const angle = Math.random() * Math.PI * 2;
+
+                // Add some vertical drift to later particles (smoke rises)
+                let verticalDrift = 0;
+                if (progress > 0.5) {
+                    const smokePhaseProgress = (progress - 0.5) / 0.5;
+                    verticalDrift = -smokePhaseProgress * 10 * Math.random(); // Upward drift
+                }
+
                 const particleX = x + size/2 + Math.cos(angle) * distance;
-                const particleY = size/2 + Math.sin(angle) * distance;
+                const particleY = size/2 + Math.sin(angle) * distance + verticalDrift;
 
                 context.fillStyle = particleColor;
                 context.beginPath();
                 context.arc(particleX, particleY, particleSize, 0, Math.PI * 2);
                 context.fill();
+
+                // Add streaks/trails to some particles in the fireball phase
+                if (progress > 0.12 && progress < 0.5 && Math.random() > 0.7) {
+                    const trailLength = particleSize * (2 + Math.random() * 3);
+                    const trailAngle = angle + Math.PI; // Trail goes opposite to particle direction
+
+                    context.strokeStyle = particleColor;
+                    context.lineWidth = particleSize * 0.7;
+                    context.beginPath();
+                    context.moveTo(particleX, particleY);
+                    context.lineTo(
+                        particleX + Math.cos(trailAngle) * trailLength,
+                        particleY + Math.sin(trailAngle) * trailLength
+                    );
+                    context.stroke();
+                }
             }
         }
 
@@ -1018,7 +1133,7 @@ class LoadingScene extends Phaser.Scene {
             this.textures.get('explosion').add(i, 0, i * size, 0, size, size);
         }
 
-        console.log('Created explosion spritesheet with frame data');
+        console.log('Created enhanced explosion spritesheet with 16 frames');
     }
 
     createEnginesSpritesheet() {
@@ -1148,9 +1263,13 @@ class LoadingScene extends Phaser.Scene {
                         { key: 'explosion', frame: 8 },
                         { key: 'explosion', frame: 9 },
                         { key: 'explosion', frame: 10 },
-                        { key: 'explosion', frame: 11 }
+                        { key: 'explosion', frame: 11 },
+                        { key: 'explosion', frame: 12 },
+                        { key: 'explosion', frame: 13 },
+                        { key: 'explosion', frame: 14 },
+                        { key: 'explosion', frame: 15 }
                     ],
-                    frameRate: 20, // Faster for more dynamic effect
+                    frameRate: 24, // Faster for more dynamic effect
                     repeat: 0
                 });
                 console.log('Created enhanced explosion animation');

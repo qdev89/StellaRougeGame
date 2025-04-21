@@ -78,7 +78,7 @@ The game features a balanced difficulty level with 50% fewer enemies and reduced
 **Deliverables:** Content-complete game with full progression, multiple bosses, unique systems
 
 ### Phase 4: Polish & Release Prep (4 weeks)
-- [ ] Refine visual effects (explosions, particles, screen shake)
+- [x] Refine visual effects (explosions, particles, screen shake)
 - [ ] Implement sound design and music (completely disabled for now, moved from earlier phases)
 - [ ] Add tutorial elements and help system
 - [ ] Optimize performance across devices
