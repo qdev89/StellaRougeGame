@@ -126,7 +126,7 @@ stellar-rogue/
 
 ## Current Status
 
-Phase 1, Phase 2, and Phase 3 are complete. We've made significant progress on Phase 4 with most features implemented.
+Phase 1, Phase 2, and Phase 3 are complete. We've made significant progress on Phase 4 with most features implemented. We've also begun implementing new ship types with unique abilities and expanded progression systems.
 
 ### Completed Features
 
@@ -163,6 +163,29 @@ Phase 1, Phase 2, and Phase 3 are complete. We've made significant progress on P
 - ✅ Refined visual effects (explosions, particles, screen shake)
 - ✅ Strategic ammo management system with visual UI
 - ✅ Skip tutorial feature with Skip All button
+- ✅ Redesigned menu with cleaner layout and logical grouping
+- ✅ Added Stella Rouge game banner overlay
+
+#### Ship Types and Progression Systems (Phase 4+)
+- ✅ Implemented multiple ship types with unique abilities
+  - ✅ Created base ship class framework for all ship types
+  - ✅ Implemented Scout ship with high speed and evasion abilities
+  - ✅ Implemented Tank ship (Juggernaut) with high health and damage reduction
+  - ✅ Implemented Support ship (Technician) with resource generation and repair abilities
+  - ✅ Implemented Experimental ship (Prototype X) with high-risk, high-reward mechanics
+  - ✅ Created ship registry system to manage all ship types
+- ✅ Developed expanded progression systems
+  - ✅ Implemented achievement system with in-game rewards
+  - ✅ Created ship customization system with visual options
+  - ✅ Added color schemes, engine effects, ship decorations, and weapon skins
+  - ✅ Designed purchase and unlock mechanics for customization options
+
+#### Mobile Support (Phase 4+)
+- ✅ Enhanced mobile support with touch controls
+  - ✅ Implemented responsive UI design for different screen sizes
+  - ✅ Added touch controls with virtual joystick
+  - ✅ Created mobile-specific performance optimizations
+  - ✅ Added device detection and adaptive settings
 
 #### Tutorial and Help System (Phase 4)
 - ✅ Comprehensive in-game tutorial for new players
@@ -171,13 +194,24 @@ Phase 1, Phase 2, and Phase 3 are complete. We've made significant progress on P
 
 ### In Progress Features
 
+#### Advanced Synergy System (Phase 4+)
+- 🔄 Implementing advanced synergy combinations between ship types and upgrades
+- 🔄 Creating element-based synergies (fire, ice, electric, etc.)
+- 🔄 Developing skill tree integration with synergies
+- 🔄 Adding visual effects for active synergies
+
+#### New Weapons and Upgrades (Phase 4+)
+- 🔄 Implementing additional weapon types beyond basic lasers
+- 🔄 Creating weapon modification system
+- 🔄 Adding special weapon effects and properties
+- 🔄 Developing upgrade paths for existing weapons
+
 #### Performance Optimization (Phase 4)
 - 🔄 Optimizing performance across devices
 - 🔄 Implementing graphics quality settings
 - 🔄 Optimizing asset loading and management
 
 #### Final Testing and Bug Fixing (Phase 4)
-- 🔄 Fixing critical bugs (homing missiles, nemesis icons, ammo particles)
 - 🔄 Conducting playtesting sessions
 - 🔄 Addressing performance issues on lower-end devices
 
@@ -196,7 +230,31 @@ Phase 1, Phase 2, and Phase 3 are complete. We've made significant progress on P
 
 ## Recent Updates
 
-### Bug Fixes and Improvements (Latest)
+### New Ship Types and Progression Systems (Latest)
+- Implemented new ship type system with unique abilities:
+  - Created base ship class framework for all ship types
+  - Implemented Scout ship with high speed and evasion abilities
+  - Implemented Tank ship (Juggernaut) with high health and damage reduction
+  - Implemented Support ship (Technician) with resource generation and repair abilities
+  - Implemented Experimental ship (Prototype X) with high-risk, high-reward mechanics
+  - Created ship registry system to manage all ship types
+- Developed expanded progression systems:
+  - Implemented achievement system with in-game rewards
+  - Created ship customization system with visual options
+  - Added color schemes, engine effects, ship decorations, and weapon skins
+  - Designed purchase and unlock mechanics for customization options
+- Enhanced mobile support:
+  - Implemented responsive UI design for different screen sizes
+  - Added touch controls with virtual joystick
+  - Created mobile-specific performance optimizations
+  - Added device detection and adaptive settings
+- Improved menu design:
+  - Created cleaner menu layout with logical grouping
+  - Added Stella Rouge game banner overlay
+  - Implemented hover descriptions for menu items
+  - Enhanced visual feedback for interactions
+
+### Bug Fixes and Improvements
 - Fixed critical bugs affecting gameplay:
   - Fixed homing missiles not tracking enemies properly
   - Resolved Nemesis information screen icon rendering issue
@@ -555,16 +613,31 @@ Phase 1, Phase 2, and Phase 3 are complete. We've made significant progress on P
   - Boss rush mode to challenge all bosses in sequence
   - Challenge mode with special modifiers
   - Daily runs with leaderboards
-- New ship types with unique abilities
-  - Scout ship with high speed and evasion
-  - Tank ship with high health but low speed
-  - Support ship with special abilities
-  - Experimental ships with unique mechanics
+- New ship types with unique abilities and elemental specializations
+  - Scout ship with high speed and evasion (Electric element)
+    - Electric Stealth special ability
+    - Chain lightning attacks
+    - Electric discharge when hit during stealth
+  - Tank ship with high health but low speed (Fire element)
+    - Inferno Shield special ability
+    - Burning damage over time effects
+    - Area damage to nearby enemies
+  - Support ship with special abilities (Ice element)
+    - Planned: Cryo-field special ability
+    - Planned: Freezing effects that slow enemies
+    - Planned: Shield regeneration aura
+  - Experimental ships with unique mechanics (Toxic element)
+    - Planned: Toxic Cloud special ability
+    - Planned: Corrosive damage that reduces enemy armor
+    - Planned: Self-repair mechanisms
 - Expanded progression systems
   - Achievement system with in-game rewards
   - Ship customization with visual options
   - Advanced synergy combinations
-  - New weapon types and upgrades
+    - Element-based synergies (fire, ice, electric, toxic)
+    - Combination effects between elements
+    - Ship-specific synergy bonuses
+  - New weapon types and upgrades with elemental properties
 
 ### Community Features
 - Online leaderboards for comparing scores

@@ -13,11 +13,23 @@
             document.getElementById('loading').style.display = 'none';
         }
 
+        // Initialize device detector
+        const deviceDetector = new DeviceDetector();
+
         // Create the game configuration
         const config = createGameConfig();
 
         // Initialize Phaser game with the configuration
         game = new Phaser.Game(config);
+
+        // Attach device detector to game
+        game.deviceDetector = deviceDetector;
+
+        // Initialize performance optimizer
+        game.performanceOptimizer = new PerformanceOptimizer(game);
+
+        // Set up mobile-specific handlers
+        setupMobileHandlers(game, deviceDetector);
     } catch (error) {
         console.error('Failed to initialize game:', error);
         if (document.getElementById('loading')) {
@@ -110,4 +122,116 @@
 
     // Print debug info
     console.log('STELLAR ROGUE game initialized');
+
+    /**
+     * Set up mobile-specific event handlers and optimizations
+     * @param {Phaser.Game} game - The game instance
+     * @param {DeviceDetector} deviceDetector - The device detector instance
+     */
+    function setupMobileHandlers(game, deviceDetector) {
+        // Only apply mobile handlers if on a mobile device
+        if (!deviceDetector || !deviceDetector.isMobile) return;
+
+        console.log('Setting up mobile handlers');
+
+        // Handle orientation changes
+        window.addEventListener('orientationchange', function() {
+            // Force resize event after orientation change completes
+            setTimeout(() => {
+                window.dispatchEvent(new Event('resize'));
+
+                // Update performance settings based on new orientation
+                if (game.performanceOptimizer) {
+                    game.performanceOptimizer.handleResize();
+                }
+
+                console.log('Orientation changed, game resized');
+            }, 200);
+        });
+
+        // Handle fullscreen for iOS Safari
+        if (deviceDetector.isIOS) {
+            // iOS doesn't support true fullscreen, but we can hide browser UI
+            window.addEventListener('touchend', function() {
+                if (document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen();
+                } else if (document.documentElement.webkitRequestFullscreen) {
+                    document.documentElement.webkitRequestFullscreen();
+                }
+            }, { once: true });
+        }
+
+        // Prevent pinch zoom on mobile
+        document.addEventListener('touchmove', function(event) {
+            if (event.touches.length > 1) {
+                event.preventDefault();
+            }
+        }, { passive: false });
+
+        // Prevent context menu on long press
+        window.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            return false;
+        });
+
+        // Add viewport meta tags for mobile if not already present
+        if (!document.querySelector('meta[name="viewport"]')) {
+            const viewportMeta = document.createElement('meta');
+            viewportMeta.name = 'viewport';
+            viewportMeta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover';
+            document.head.appendChild(viewportMeta);
+
+            // Add Apple mobile web app capable meta tag
+            const appleMeta = document.createElement('meta');
+            appleMeta.name = 'apple-mobile-web-app-capable';
+            appleMeta.content = 'yes';
+            document.head.appendChild(appleMeta);
+        }
+
+        // Add touch action CSS to prevent browser handling of touch events
+        const style = document.createElement('style');
+        style.textContent = `
+            #game-container {
+                touch-action: none;
+                -ms-touch-action: none;
+                -webkit-touch-callout: none;
+                -webkit-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+                -webkit-tap-highlight-color: transparent;
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Set up battery optimization if Battery API is available
+        if ('getBattery' in navigator) {
+            navigator.getBattery().then(function(battery) {
+                // If battery level is low, apply more aggressive optimizations
+                if (battery.level < 0.3 && !battery.charging) {
+                    if (game.performanceOptimizer) {
+                        // Apply low battery optimizations
+                        game.performanceOptimizer.updateSetting('particleMultiplier', 0.2);
+                        game.performanceOptimizer.updateSetting('usePostProcessing', false);
+                        game.performanceOptimizer.updateSetting('useLightEffects', false);
+                        game.performanceOptimizer.updateSetting('useBlur', false);
+                        game.performanceOptimizer.updateSetting('useGlow', false);
+
+                        console.log('Applied low battery optimizations');
+                    }
+                }
+
+                // Listen for battery level changes
+                battery.addEventListener('levelchange', function() {
+                    if (battery.level < 0.3 && !battery.charging && game.performanceOptimizer) {
+                        // Apply low battery optimizations
+                        game.performanceOptimizer.updateSetting('particleMultiplier', 0.2);
+                    } else if (battery.level > 0.5 && game.performanceOptimizer) {
+                        // Restore normal settings
+                        game.performanceOptimizer.updateSetting('particleMultiplier', 0.5);
+                    }
+                });
+            });
+        }
+    }
 })();

@@ -301,6 +301,55 @@ class VisualEffects {
             tint: [0xff9900, 0xff6600],
             emitting: false
         });
+
+        // Elemental emitters
+        // Fire element emitter
+        this.emitters.fireElement = this.scene.add.particles(0, 0, 'particles', {
+            frame: 'circle',
+            lifespan: { min: 300, max: 500 },
+            speed: { min: 20, max: 50 },
+            scale: { start: 0.4, end: 0 },
+            gravityY: -20, // Fire rises
+            blendMode: 'ADD',
+            tint: [0xff3300, 0xff6600, 0xff9900],
+            emitting: false
+        });
+
+        // Ice element emitter
+        this.emitters.iceElement = this.scene.add.particles(0, 0, 'particles', {
+            frame: 'circle',
+            lifespan: { min: 400, max: 600 },
+            speed: { min: 10, max: 30 },
+            scale: { start: 0.3, end: 0 },
+            gravityY: 5, // Ice falls slowly
+            blendMode: 'ADD',
+            tint: [0x33ccff, 0x66ccff, 0x99ccff],
+            emitting: false
+        });
+
+        // Electric element emitter
+        this.emitters.electricElement = this.scene.add.particles(0, 0, 'particles', {
+            frame: 'circle',
+            lifespan: { min: 200, max: 300 },
+            speed: { min: 30, max: 70 },
+            scale: { start: 0.3, end: 0 },
+            gravityY: 0,
+            blendMode: 'ADD',
+            tint: [0x66ccff, 0x3399ff, 0x0066ff],
+            emitting: false
+        });
+
+        // Toxic element emitter
+        this.emitters.toxicElement = this.scene.add.particles(0, 0, 'particles', {
+            frame: 'circle',
+            lifespan: { min: 500, max: 800 },
+            speed: { min: 10, max: 20 },
+            scale: { start: 0.3, end: 0 },
+            gravityY: 0,
+            blendMode: 'ADD',
+            tint: [0x33cc33, 0x66ff66, 0x99ff99],
+            emitting: false
+        });
     }
 
     /**
@@ -1198,6 +1247,464 @@ class VisualEffects {
         if (this.scene.game.global && this.scene.game.global.settings) {
             this.scene.game.global.settings.screenShake = enabled;
         }
+    }
+
+    /**
+     * Create an elemental trail effect for a projectile
+     * @param {Phaser.GameObjects.GameObject} projectile - Projectile to trail
+     * @param {string} element - Element type ('fire', 'ice', 'electric', 'toxic')
+     * @param {number} color - Trail color (hex)
+     */
+    createElementalTrail(projectile, element, color) {
+        // Get the appropriate emitter
+        let emitter;
+        switch (element) {
+            case 'fire':
+                emitter = this.emitters.fireElement;
+                break;
+            case 'ice':
+                emitter = this.emitters.iceElement;
+                break;
+            case 'electric':
+                emitter = this.emitters.electricElement;
+                break;
+            case 'toxic':
+                emitter = this.emitters.toxicElement;
+                break;
+            default:
+                emitter = this.emitters.fireElement;
+        }
+
+        if (!emitter) return;
+
+        // Set trail color
+        emitter.setTint(color);
+
+        // Start trail emission
+        emitter.startFollow(projectile, 0, 0, true);
+
+        // Store reference to emitter on projectile for cleanup
+        projectile.elementalEmitter = emitter;
+
+        // Add cleanup on projectile destroy
+        const originalDestroy = projectile.destroy;
+        projectile.destroy = function() {
+            if (this.elementalEmitter) {
+                this.elementalEmitter.stopFollow();
+            }
+            originalDestroy.call(this);
+        };
+    }
+
+    /**
+     * Create an elemental explosion effect
+     * @param {number} x - X position
+     * @param {number} y - Y position
+     * @param {string} element - Element type ('fire', 'ice', 'electric', 'toxic')
+     * @param {number} radius - Explosion radius
+     */
+    createElementalExplosion(x, y, element, radius = 100) {
+        // Get element color
+        let color;
+        switch (element) {
+            case 'fire': color = 0xff3300; break;
+            case 'ice': color = 0x33ccff; break;
+            case 'electric': color = 0x66ccff; break;
+            case 'toxic': color = 0x33cc33; break;
+            default: color = 0xffffff;
+        }
+
+        // Create standard explosion with element color
+        this.createExplosion(x, y, element === 'fire' ? 'medium' : 'small');
+
+        // Create element-specific effects
+        switch (element) {
+            case 'fire':
+                this.createFireElementalEffect(x, y, radius);
+                break;
+            case 'ice':
+                this.createIceElementalEffect(x, y, radius);
+                break;
+            case 'electric':
+                this.createElectricElementalEffect(x, y, radius);
+                break;
+            case 'toxic':
+                this.createToxicElementalEffect(x, y, radius);
+                break;
+        }
+    }
+
+    /**
+     * Create a fire elemental effect
+     * @param {number} x - X position
+     * @param {number} y - Y position
+     * @param {number} radius - Effect radius
+     */
+    createFireElementalEffect(x, y, radius) {
+        // Create fire particles
+        const particleCount = Math.floor(radius / 5);
+
+        // Use fire element emitter
+        this.emitters.fireElement.explode(particleCount, x, y);
+
+        // Create additional fire effect
+        const fireCircle = this.scene.add.circle(x, y, radius * 0.7, 0xff3300, 0.3);
+
+        // Animate fire circle
+        this.scene.tweens.add({
+            targets: fireCircle,
+            alpha: 0,
+            scale: 1.5,
+            duration: 1000,
+            onComplete: () => fireCircle.destroy()
+        });
+    }
+
+    /**
+     * Create an ice elemental effect
+     * @param {number} x - X position
+     * @param {number} y - Y position
+     * @param {number} radius - Effect radius
+     */
+    createIceElementalEffect(x, y, radius) {
+        // Create ice particles
+        const particleCount = Math.floor(radius / 8);
+
+        // Use ice element emitter
+        this.emitters.iceElement.explode(particleCount, x, y);
+
+        // Create ice circle
+        const iceCircle = this.scene.add.circle(x, y, radius * 0.7, 0x33ccff, 0.3);
+
+        // Animate ice circle
+        this.scene.tweens.add({
+            targets: iceCircle,
+            alpha: 0,
+            scale: 1.3,
+            duration: 800,
+            onComplete: () => iceCircle.destroy()
+        });
+
+        // Create ice crystals
+        for (let i = 0; i < 6; i++) {
+            const angle = (i / 6) * Math.PI * 2;
+            const distance = radius * 0.5;
+
+            // Create ice crystal graphic
+            const crystal = this.scene.add.graphics();
+            crystal.fillStyle(0x33ccff, 0.7);
+            crystal.fillTriangle(0, -8, -5, 8, 5, 8);
+            crystal.setPosition(x + Math.cos(angle) * distance, y + Math.sin(angle) * distance);
+            crystal.setRotation(angle);
+
+            // Animate crystal
+            this.scene.tweens.add({
+                targets: crystal,
+                alpha: 0,
+                scale: 1.5,
+                duration: 1000,
+                onComplete: () => crystal.destroy()
+            });
+        }
+    }
+
+    /**
+     * Create an electric elemental effect
+     * @param {number} x - X position
+     * @param {number} y - Y position
+     * @param {number} radius - Effect radius
+     */
+    createElectricElementalEffect(x, y, radius) {
+        // Create electric particles
+        const particleCount = Math.floor(radius / 6);
+
+        // Use electric element emitter
+        this.emitters.electricElement.explode(particleCount, x, y);
+
+        // Create lightning bolts
+        const boltCount = 5;
+        for (let i = 0; i < boltCount; i++) {
+            const angle = (i / boltCount) * Math.PI * 2;
+            const distance = radius * 0.8;
+
+            // Create lightning bolt
+            this.createLightningBolt(
+                x, y,
+                x + Math.cos(angle) * distance,
+                y + Math.sin(angle) * distance,
+                0x66ccff
+            );
+        }
+    }
+
+    /**
+     * Create a lightning bolt effect
+     * @param {number} x1 - Start X position
+     * @param {number} y1 - Start Y position
+     * @param {number} x2 - End X position
+     * @param {number} y2 - End Y position
+     * @param {number} color - Bolt color
+     */
+    createLightningBolt(x1, y1, x2, y2, color) {
+        // Calculate distance and angle
+        const distance = Phaser.Math.Distance.Between(x1, y1, x2, y2);
+        const angle = Phaser.Math.Angle.Between(x1, y1, x2, y2);
+
+        // Create lightning segments
+        const segments = Math.floor(distance / 10) + 2;
+        const points = [];
+
+        // Add start point
+        points.push({ x: x1, y: y1 });
+
+        // Add middle points with random offsets
+        for (let i = 1; i < segments; i++) {
+            const segmentDistance = (i / segments) * distance;
+            const baseX = x1 + Math.cos(angle) * segmentDistance;
+            const baseY = y1 + Math.sin(angle) * segmentDistance;
+
+            // Add random perpendicular offset
+            const perpAngle = angle + Math.PI / 2;
+            const offsetDistance = (Math.random() - 0.5) * 20;
+
+            points.push({
+                x: baseX + Math.cos(perpAngle) * offsetDistance,
+                y: baseY + Math.sin(perpAngle) * offsetDistance
+            });
+        }
+
+        // Add end point
+        points.push({ x: x2, y: y2 });
+
+        // Create graphics for lightning
+        const lightning = this.scene.add.graphics();
+        lightning.lineStyle(2, color, 0.8);
+
+        // Draw lightning path
+        lightning.beginPath();
+        lightning.moveTo(points[0].x, points[0].y);
+
+        for (let i = 1; i < points.length; i++) {
+            lightning.lineTo(points[i].x, points[i].y);
+        }
+
+        lightning.strokePath();
+
+        // Create glow
+        const glow = this.scene.add.graphics();
+        glow.lineStyle(4, color, 0.3);
+
+        // Draw glow path
+        glow.beginPath();
+        glow.moveTo(points[0].x, points[0].y);
+
+        for (let i = 1; i < points.length; i++) {
+            glow.lineTo(points[i].x, points[i].y);
+        }
+
+        glow.strokePath();
+
+        // Animate lightning
+        this.scene.tweens.add({
+            targets: [lightning, glow],
+            alpha: 0,
+            duration: 300,
+            onComplete: () => {
+                lightning.destroy();
+                glow.destroy();
+            }
+        });
+    }
+
+    /**
+     * Create a toxic elemental effect
+     * @param {number} x - X position
+     * @param {number} y - Y position
+     * @param {number} radius - Effect radius
+     */
+    createToxicElementalEffect(x, y, radius) {
+        // Create toxic particles
+        const particleCount = Math.floor(radius / 4);
+
+        // Use toxic element emitter
+        this.emitters.toxicElement.explode(particleCount, x, y);
+
+        // Create toxic cloud
+        const toxicCloud = this.scene.add.circle(x, y, radius * 0.8, 0x33cc33, 0.3);
+
+        // Animate toxic cloud
+        this.scene.tweens.add({
+            targets: toxicCloud,
+            alpha: 0,
+            scale: 1.4,
+            duration: 1500,
+            onComplete: () => toxicCloud.destroy()
+        });
+
+        // Create toxic bubbles
+        for (let i = 0; i < 10; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const distance = Math.random() * radius * 0.7;
+
+            const bubble = this.scene.add.circle(
+                x + Math.cos(angle) * distance,
+                y + Math.sin(angle) * distance,
+                3 + Math.random() * 3,
+                0x33cc33,
+                0.7
+            );
+
+            // Animate bubble
+            this.scene.tweens.add({
+                targets: bubble,
+                alpha: 0,
+                scale: 2,
+                duration: 1000 + Math.random() * 500,
+                onComplete: () => bubble.destroy()
+            });
+        }
+    }
+
+    /**
+     * Create an overheat effect for weapons
+     * @param {PlayerShip} playerShip - The player ship
+     */
+    createOverheatEffect(playerShip) {
+        // Create overheat particles
+        for (let i = 0; i < 10; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const distance = 20 + Math.random() * 20;
+
+            const particle = this.scene.add.circle(
+                playerShip.x + Math.cos(angle) * distance,
+                playerShip.y + Math.sin(angle) * distance,
+                3 + Math.random() * 3,
+                0xff3300,
+                0.8
+            );
+
+            // Animate particle
+            this.scene.tweens.add({
+                targets: particle,
+                x: particle.x + Math.cos(angle) * 20,
+                y: particle.y + Math.sin(angle) * 20,
+                alpha: 0,
+                scale: 0.5,
+                duration: 500 + Math.random() * 300,
+                onComplete: () => particle.destroy()
+            });
+        }
+
+        // Create overheat text
+        const text = this.scene.add.text(
+            playerShip.x,
+            playerShip.y - 40,
+            'OVERHEAT',
+            {
+                fontFamily: 'monospace',
+                fontSize: '14px',
+                color: '#ff3300',
+                stroke: '#000000',
+                strokeThickness: 4
+            }
+        ).setOrigin(0.5);
+
+        // Animate text
+        this.scene.tweens.add({
+            targets: text,
+            y: text.y - 20,
+            alpha: 0,
+            duration: 1000,
+            onComplete: () => text.destroy()
+        });
+    }
+
+    /**
+     * Create a stealth field effect
+     * @param {number} x - X position
+     * @param {number} y - Y position
+     * @param {number} color - Color of the stealth field
+     * @returns {Phaser.GameObjects.Container} - Container with stealth field effects
+     */
+    createStealthField(x, y, color = 0x66ccff) {
+        // Create a container for all stealth field elements
+        const container = this.scene.add.container(x, y);
+
+        // Create the main stealth field
+        const field = this.scene.add.ellipse(0, 0, 80, 80, color, 0.2);
+        container.add(field);
+
+        // Create pulsing inner field
+        const innerField = this.scene.add.ellipse(0, 0, 60, 60, color, 0.3);
+        container.add(innerField);
+
+        // Create electric arcs around the field
+        const arcs = [];
+        const arcCount = 5;
+
+        for (let i = 0; i < arcCount; i++) {
+            const angle = (i / arcCount) * Math.PI * 2;
+            const distance = 40;
+
+            // Create a small arc graphic
+            const arc = this.scene.add.graphics();
+            arc.lineStyle(2, color, 0.7);
+
+            // Draw a small curved line
+            const startAngle = angle - 0.2;
+            const endAngle = angle + 0.2;
+            arc.beginPath();
+            arc.arc(0, 0, distance, startAngle, endAngle, false);
+            arc.strokePath();
+
+            container.add(arc);
+            arcs.push(arc);
+
+            // Animate the arc
+            this.scene.tweens.add({
+                targets: arc,
+                alpha: { from: 0.7, to: 0.2 },
+                scale: { from: 1, to: 1.2 },
+                duration: 500 + Math.random() * 500,
+                yoyo: true,
+                repeat: -1
+            });
+        }
+
+        // Animate the fields
+        this.scene.tweens.add({
+            targets: field,
+            scale: { from: 1, to: 1.1 },
+            alpha: { from: 0.2, to: 0.1 },
+            duration: 1500,
+            yoyo: true,
+            repeat: -1
+        });
+
+        this.scene.tweens.add({
+            targets: innerField,
+            scale: { from: 1, to: 0.9 },
+            alpha: { from: 0.3, to: 0.4 },
+            duration: 1000,
+            yoyo: true,
+            repeat: -1
+        });
+
+        // Add a method to update the position
+        container.updatePosition = function(newX, newY) {
+            this.setPosition(newX, newY);
+        };
+
+        // Add a method to destroy all elements
+        const originalDestroy = container.destroy;
+        container.destroy = function() {
+            field.destroy();
+            innerField.destroy();
+            arcs.forEach(arc => arc.destroy());
+            originalDestroy.call(this);
+        };
+
+        return container;
     }
 
     /**

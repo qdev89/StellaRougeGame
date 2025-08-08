@@ -2,8 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stellar Rogue</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Stella Rouge</title>
     <style>
         body {
             margin: 0;
@@ -19,6 +21,34 @@
         #game-container {
             width: 640px;
             height: 800px;
+            touch-action: none;
+            -ms-touch-action: none;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Mobile-specific styles */
+        @media (max-width: 800px) {
+            body {
+                position: fixed;
+                width: 100%;
+                height: 100%;
+                overflow: hidden;
+            }
+
+            #game-container {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                width: 100%;
+                height: 100%;
+            }
         }
         #loading {
             position: absolute;
@@ -103,7 +133,15 @@
     <script src="src/js/ui/nemesis-difficulty-selector.js"></script>
     <script src="src/js/ui/nemesis-attack-guide.js"></script>
     <script src="src/js/ui/navigation-decision-ui.js"></script>
+    <script src="src/js/ui/game-banner.js"></script>
     <script src="src/js/audio/nemesis-sound-manager.js"></script>
+
+    <!-- Mobile Support -->
+    <script src="src/js/utils/device-detector.js"></script>
+    <script src="src/js/utils/responsive-ui.js"></script>
+    <script src="src/js/utils/performance-optimizer.js"></script>
+    <script src="src/js/controls/virtual-joystick.js"></script>
+    <script src="src/js/controls/touch-controls.js"></script>
     <script src="src/js/systems/nemesis-adaptive-difficulty.js"></script>
     <script src="src/js/systems/balance-config.js"></script>
     <script src="src/js/systems/dynamic-difficulty-system.js"></script>

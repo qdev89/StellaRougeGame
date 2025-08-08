@@ -59,6 +59,9 @@ class GameScene extends Phaser.Scene {
                 };
             }
 
+            // Initialize responsive UI system
+            this.initializeResponsiveUI();
+
             // Create scrolling background
             this.createBackground();
 
@@ -71,6 +74,9 @@ class GameScene extends Phaser.Scene {
             // Set up UI elements
             this.createUI();
             this.createAmmoUI();
+
+            // Initialize touch controls for mobile devices
+            this.initializeTouchControls();
 
             // Collision handlers are set up in setupPhysics()
 
@@ -122,6 +128,9 @@ class GameScene extends Phaser.Scene {
             // Create a camera that follows the player
             this.cameras.main.startFollow(this.player, true, 0.05, 0.05);
             this.cameras.main.setDeadzone(100, 200);
+
+            // Apply performance optimizations if available
+            this.applyPerformanceOptimizations();
 
             console.log('GameScene: Initialization complete');
         } catch (error) {
@@ -315,8 +324,176 @@ class GameScene extends Phaser.Scene {
         }
     }
 
+    /**
+     * Initialize responsive UI system
+     */
+    initializeResponsiveUI() {
+        try {
+            // Create responsive UI system if available
+            if (typeof ResponsiveUI !== 'undefined') {
+                this.responsiveUI = new ResponsiveUI(this);
+                console.log('Responsive UI system initialized');
+            } else {
+                console.log('ResponsiveUI class not available, skipping initialization');
+            }
+        } catch (error) {
+            console.error('Error initializing responsive UI:', error);
+        }
+    }
+
+    /**
+     * Initialize touch controls for mobile devices
+     */
+    initializeTouchControls() {
+        try {
+            // Check if we're on a mobile device
+            const isMobile = this.game.deviceDetector ? this.game.deviceDetector.isMobile : false;
+
+            // Create touch controls if on mobile or if forced for testing
+            if ((isMobile || this.game.global.debug.forceTouchControls) && typeof TouchControls !== 'undefined') {
+                console.log('Initializing touch controls for mobile');
+
+                // Create touch controls
+                this.touchControls = new TouchControls(this, {
+                    joystickSide: 'left',
+                    buttonSide: 'right',
+                    fadeWhenInactive: true,
+                    showLabels: false,
+                    vibrateOnPress: true
+                });
+
+                // Listen for touch button events
+                this.events.on('touch-button-press', this.handleTouchButtonPress, this);
+
+                // Set up touch control visibility based on game state
+                this.events.on('pause', () => {
+                    if (this.touchControls) this.touchControls.hide();
+                });
+
+                this.events.on('resume', () => {
+                    if (this.touchControls) this.touchControls.show();
+                });
+            } else {
+                console.log('Touch controls not initialized - not on mobile device');
+            }
+        } catch (error) {
+            console.error('Error initializing touch controls:', error);
+        }
+    }
+
+    /**
+     * Handle touch button press events
+     * @param {string} buttonId - ID of the button pressed
+     */
+    handleTouchButtonPress(buttonId) {
+        if (!this.player || !this.player.active) return;
+
+        switch (buttonId) {
+            case 'fire':
+                // Trigger weapon fire
+                this.player.fireWeapon();
+                break;
+
+            case 'special':
+                // Trigger special ability
+                this.player.useSpecialAbility();
+                break;
+
+            case 'dash':
+                // Trigger dash/boost
+                this.player.dash();
+                break;
+
+            case 'weapon':
+                // Switch weapon
+                this.player.cycleWeapon();
+                break;
+        }
+    }
+
+    /**
+     * Apply performance optimizations based on device capabilities
+     */
+    applyPerformanceOptimizations() {
+        try {
+            // Check if performance optimizer is available
+            if (!this.game.performanceOptimizer) return;
+
+            const settings = this.game.performanceOptimizer.getSettings();
+            console.log('Applying performance optimizations:', settings);
+
+            // Apply particle optimizations
+            if (this.visualEffects) {
+                // Adjust particle counts
+                if (this.visualEffects.particleEmitters) {
+                    Object.values(this.visualEffects.particleEmitters).forEach(emitter => {
+                        if (emitter && emitter.setMaxParticles) {
+                            const newMax = Math.floor(emitter.maxParticles * settings.particleMultiplier);
+                            emitter.setMaxParticles(newMax);
+                        }
+                    });
+                }
+
+                // Disable certain effects on low-end devices
+                if (!settings.usePostProcessing) {
+                    // Disable post-processing effects
+                    if (this.visualEffects.disablePostProcessing) {
+                        this.visualEffects.disablePostProcessing();
+                    }
+                }
+            }
+
+            // Adjust enemy count based on performance profile
+            if (this.currentSectorData && this.currentSectorData.waves) {
+                this.currentSectorData.waves.forEach(wave => {
+                    if (wave.enemies && wave.enemies.length > 0) {
+                        // Reduce enemy count for low-end devices
+                        const maxEnemies = settings.maxEnemiesOnScreen;
+                        if (wave.enemies.length > maxEnemies) {
+                            wave.enemies = wave.enemies.slice(0, maxEnemies);
+                        }
+                    }
+                });
+            }
+
+            // Adjust physics settings
+            if (this.physics && this.physics.world) {
+                // Set appropriate FPS for physics
+                if (settings.updateRate === 'low') {
+                    this.physics.world.setFPS(45);
+                } else if (settings.updateRate === 'very-low') {
+                    this.physics.world.setFPS(30);
+                }
+            }
+
+            // Emit event for other systems to optimize
+            this.events.emit('performance-optimized', settings);
+        } catch (error) {
+            console.error('Error applying performance optimizations:', error);
+        }
+    }
+
     update(time, delta) {
         if (this.isPaused || this.isGameOver) return;
+
+        // Update touch controls if available
+        if (this.touchControls) {
+            // Get joystick values
+            const joystick = this.touchControls.getJoystickValues();
+
+            // Apply joystick movement to player if active
+            if (joystick && joystick.active && this.player && this.player.active) {
+                // Scale joystick values to player movement
+                const moveX = joystick.x * this.player.speed;
+                const moveY = joystick.y * this.player.speed;
+
+                // Apply movement to player
+                this.player.setVelocity(moveX, moveY);
+
+                // Set player moving flag
+                this.player.isMoving = joystick.force > 0.1;
+            }
+        }
 
         // Update player
         if (this.player && this.player.active) {
@@ -2175,9 +2352,16 @@ class GameScene extends Phaser.Scene {
 
                 // Clean up UI after a delay
                 this.time.delayedCall(1500, () => {
+                    // Clean up navigation UI
                     if (this.navigationUI) {
                         this.navigationUI.destroy();
                         this.navigationUI = null;
+                    }
+
+                    // Clean up any feedback text
+                    if (this.feedbackText && this.feedbackText.destroy) {
+                        this.feedbackText.destroy();
+                        this.feedbackText = null;
                     }
 
                     // Continue to the next scene
@@ -2268,8 +2452,21 @@ class GameScene extends Phaser.Scene {
             }
         ).setOrigin(0.5).setScrollFactor(0).setDepth(105);
 
-        // Add to UI elements for cleanup
-        this.choiceUI.feedback = feedback;
+        // Add to UI elements for cleanup if choiceUI exists
+        if (this.choiceUI) {
+            this.choiceUI.feedback = feedback;
+        } else {
+            // If choiceUI doesn't exist, store feedback separately for cleanup later
+            this.feedbackText = feedback;
+
+            // Auto-destroy after a delay if not part of choiceUI
+            this.time.delayedCall(3000, () => {
+                if (this.feedbackText && this.feedbackText.destroy) {
+                    this.feedbackText.destroy();
+                    this.feedbackText = null;
+                }
+            });
+        }
     }
 
     /**

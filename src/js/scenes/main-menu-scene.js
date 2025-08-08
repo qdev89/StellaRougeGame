@@ -17,55 +17,74 @@ class MainMenuScene extends Phaser.Scene {
         // Create a simple background if image assets aren't available
         this.createBackground();
 
-        // Create a title container for animations - positioned higher to avoid overlap with menu
-        const titleContainer = this.add.container(width / 2, height / 7);
+        // Create the game banner
+        if (typeof GameBanner !== 'undefined') {
+            this.gameBanner = new GameBanner(this, width / 2, height / 7, {
+                title: 'STELLA ROUGE',
+                subtitle: 'SPACE ADVENTURE',
+                width: 550,
+                height: 140,
+                animate: true
+            });
+        } else {
+            // Fallback to simple title if GameBanner is not available
+            // Create a title container for animations
+            const titleContainer = this.add.container(width / 2, height / 7);
 
-        // Title text with enhanced styling
-        const titleText = this.add.text(0, 0, 'STELLAR ROGUE', {
-            fontFamily: 'monospace',
-            fontSize: '52px',
-            fontStyle: 'bold',
-            color: '#33aaff',
-            align: 'center',
-            stroke: '#000033',
-            strokeThickness: 8,
-            shadow: { offsetX: 2, offsetY: 2, color: '#0066cc', blur: 10, stroke: true }
-        }).setOrigin(0.5);
+            // Title text with enhanced styling
+            const titleText = this.add.text(0, 0, 'STELLA ROUGE', {
+                fontFamily: 'monospace',
+                fontSize: '52px',
+                fontStyle: 'bold',
+                color: '#33aaff',
+                align: 'center',
+                stroke: '#000033',
+                strokeThickness: 8,
+                shadow: { offsetX: 2, offsetY: 2, color: '#0066cc', blur: 10, stroke: true }
+            }).setOrigin(0.5);
 
-        // Add a glow effect behind the title
-        const titleGlow = this.add.graphics();
-        titleGlow.fillStyle(0x33aaff, 0.2);
-        titleGlow.fillCircle(0, 0, 180);
+            titleContainer.add(titleText);
+        }
 
-        // Add elements to container in correct order (glow behind text)
-        titleContainer.add([titleGlow, titleText]);
+        // Only add glow and subtitle if we're using the fallback title
+        if (!this.gameBanner) {
+            // Add a glow effect behind the title
+            const titleGlow = this.add.graphics();
+            titleGlow.fillStyle(0x33aaff, 0.2);
+            titleGlow.fillCircle(0, 0, 180);
 
-        // Animate the title with a gentle floating effect
-        this.tweens.add({
-            targets: titleContainer,
-            y: titleContainer.y - 10,
-            duration: 2000,
-            yoyo: true,
-            repeat: -1,
-            ease: 'Sine.easeInOut'
-        });
+            // Add elements to container in correct order (glow behind text)
+            titleContainer.add([titleGlow, titleText]);
 
-        // Subtitle text with enhanced styling
-        const subtitleText = this.add.text(width / 2, titleContainer.y + 60, 'RETRO ROGUELIKE FLYING SHOOTER', {
-            fontFamily: 'monospace',
-            fontSize: '18px',
-            color: '#ffffff',
-            align: 'center',
-            stroke: '#000033',
-            strokeThickness: 3,
-            shadow: { offsetX: 1, offsetY: 1, color: '#33aaff', blur: 5, stroke: true }
-        }).setOrigin(0.5);
+            // Animate the title with a gentle floating effect
+            this.tweens.add({
+                targets: titleContainer,
+                y: titleContainer.y - 10,
+                duration: 2000,
+                yoyo: true,
+                repeat: -1,
+                ease: 'Sine.easeInOut'
+            });
 
-        // Version text
-        this.add.text(width - 20, height - 20, `v${CONSTANTS.GAME_VERSION || '0.1.0'}`, {
+            // Subtitle text with enhanced styling
+            const subtitleText = this.add.text(width / 2, titleContainer.y + 60, 'SPACE ADVENTURE', {
+                fontFamily: 'monospace',
+                fontSize: '18px',
+                color: '#ffffff',
+                align: 'center',
+                stroke: '#000033',
+                strokeThickness: 3,
+                shadow: { offsetX: 1, offsetY: 1, color: '#33aaff', blur: 5, stroke: true }
+            }).setOrigin(0.5);
+        }
+
+        // Version text with improved styling
+        this.add.text(width - 20, height - 20, `v${CONSTANTS.GAME_VERSION || '0.6.0'}`, {
             fontFamily: 'monospace',
             fontSize: '12px',
-            color: '#666666'
+            color: '#aaaaaa',
+            stroke: '#000000',
+            strokeThickness: 1
         }).setOrigin(1);
 
         // Create menu buttons
@@ -268,12 +287,12 @@ class MainMenuScene extends Phaser.Scene {
 
     createMenuButtons(width, height) {
         // Create a modern menu panel with a more futuristic design
-        const panelWidth = 320;
+        const panelWidth = 400; // Wider panel for better layout
         // Set panel height to accommodate all buttons from the start
-        let panelHeight = 650; // Increased to provide more space for all buttons
+        let panelHeight = 500; // Reduced height for a more compact layout
         const panelX = width / 2;
         // Center the panel vertically based on its actual height
-        const panelY = height / 2 + 40; // Moved down to avoid overlap with title
+        const panelY = height / 2 + 60; // Moved down to avoid overlap with title
 
         // Create a container for the menu
         const menuContainer = this.add.container(0, 0);
@@ -290,6 +309,29 @@ class MainMenuScene extends Phaser.Scene {
         border.lineStyle(2, 0x33aaff, 0.8);
         border.strokeRoundedRect(panelX - panelWidth/2, panelY - panelHeight/2, panelWidth, panelHeight, 15);
         menuContainer.add(border);
+
+        // Add decorative elements
+        // Top accent line
+        const topAccent = this.add.graphics();
+        topAccent.lineStyle(2, 0x33aaff, 0.6);
+        topAccent.lineBetween(
+            panelX - panelWidth/2 + 30,
+            panelY - panelHeight/2 - 5,
+            panelX + panelWidth/2 - 30,
+            panelY - panelHeight/2 - 5
+        );
+        menuContainer.add(topAccent);
+
+        // Bottom accent line
+        const bottomAccent = this.add.graphics();
+        bottomAccent.lineStyle(2, 0x33aaff, 0.6);
+        bottomAccent.lineBetween(
+            panelX - panelWidth/2 + 30,
+            panelY + panelHeight/2 + 5,
+            panelX + panelWidth/2 - 30,
+            panelY + panelHeight/2 + 5
+        );
+        menuContainer.add(bottomAccent);
 
         // Add a pulsing effect to the border
         this.tweens.add({
@@ -341,96 +383,104 @@ class MainMenuScene extends Phaser.Scene {
         });
 
         // Button configs with icons - grouped by category
-        const buttonSpacing = 70; // Reduced spacing for grouped items
-        const groupSpacing = 30; // Space between groups
+        const buttonSpacing = 60; // Reduced spacing for grouped items
+        const groupSpacing = 40; // Space between groups
 
         // Calculate starting position
-        let currentY = panelY - panelHeight/2 + headerHeight + 60;
+        let currentY = panelY - panelHeight/2 + headerHeight + 40;
 
-        // Group 1: Game Start
-        const gameGroup = this.add.text(
-            panelX - panelWidth/2 + 20,
-            currentY,
-            'GAME',
+        // Define menu groups
+        const menuGroups = [
             {
-                fontFamily: 'monospace',
-                fontSize: '14px',
+                id: 'play',
+                title: 'PLAY',
+                color: '#33ff33',
+                items: [
+                    {
+                        text: 'START MISSION',
+                        icon: '🚀',
+                        handler: () => this.startGame(),
+                        description: 'Begin a new mission'
+                    },
+                    {
+                        text: 'HANGAR BAY',
+                        icon: '🛸',
+                        handler: () => this.openHangar(),
+                        description: 'Select and customize your ship'
+                    }
+                ]
+            },
+            {
+                id: 'profile',
+                title: 'PROFILE',
                 color: '#33aaff',
-                fontStyle: 'bold'
-            }
-        );
-        menuContainer.add(gameGroup);
-        currentY += 30;
-
-        const buttonConfigs = [
-            // Group 1: Game Start
-            {
-                text: 'START MISSION',
-                icon: '🚀',
-                y: currentY,
-                handler: () => this.startGame(),
-                group: 'game'
+                items: [
+                    {
+                        text: 'PILOT PROFILE',
+                        icon: '👨‍🚀',
+                        handler: () => this.openProfile(),
+                        description: 'View your pilot stats and achievements'
+                    },
+                    {
+                        text: 'NEMESIS INFO',
+                        icon: '👾',
+                        handler: () => this.openNemesisInfo(),
+                        description: 'Learn about your nemesis'
+                    }
+                ]
             },
             {
-                text: 'HANGAR BAY',
-                icon: '🛸',
-                y: currentY + buttonSpacing,
-                handler: () => this.openHangar(),
-                group: 'game'
-            },
-
-            // Group 2: Pilot & Info
-            {
-                text: 'PILOT PROFILE',
-                icon: '👨‍🚀',
-                y: currentY + buttonSpacing * 2 + groupSpacing,
-                handler: () => this.openProfile(),
-                group: 'pilot'
-            },
-            {
-                text: 'NEMESIS INFO',
-                icon: '👾',
-                y: currentY + buttonSpacing * 3 + groupSpacing,
-                handler: () => this.openNemesisInfo(),
-                group: 'pilot'
-            },
-
-            // Group 3: Settings
-            {
-                text: 'GAME SETTINGS',
-                icon: '⚙️',
-                y: currentY + buttonSpacing * 4 + groupSpacing * 2,
-                handler: () => this.openGameSettings(),
-                group: 'settings'
+                id: 'settings',
+                title: 'SETTINGS',
+                color: '#ffaa33',
+                items: [
+                    {
+                        text: 'GAME SETTINGS',
+                        icon: '⚙️',
+                        handler: () => this.openGameSettings(),
+                        description: 'Configure game options and access help'
+                    }
+                ]
             }
         ];
 
-        // Add group headers
-        const pilotGroup = this.add.text(
-            panelX - panelWidth/2 + 20,
-            currentY + buttonSpacing * 2 + groupSpacing - 30,
-            'PILOT',
-            {
-                fontFamily: 'monospace',
-                fontSize: '14px',
-                color: '#33aaff',
-                fontStyle: 'bold'
-            }
-        );
-        menuContainer.add(pilotGroup);
+        // Create button configs array from menu groups
+        const buttonConfigs = [];
 
-        const settingsGroup = this.add.text(
-            panelX - panelWidth/2 + 20,
-            currentY + buttonSpacing * 4 + groupSpacing * 2 - 30,
-            'SETTINGS',
-            {
-                fontFamily: 'monospace',
-                fontSize: '14px',
-                color: '#33aaff',
-                fontStyle: 'bold'
-            }
-        );
-        menuContainer.add(settingsGroup);
+        // Add group headers and collect button configs
+        menuGroups.forEach((group, groupIndex) => {
+            // Calculate group position
+            const groupY = currentY + (buttonSpacing * buttonConfigs.length) + (groupSpacing * groupIndex);
+
+            // Add group header
+            const groupHeader = this.add.text(
+                panelX - panelWidth/2 + 30,
+                groupY,
+                group.title,
+                {
+                    fontFamily: 'monospace',
+                    fontSize: '16px',
+                    color: group.color || '#33aaff',
+                    fontStyle: 'bold',
+                    stroke: '#000000',
+                    strokeThickness: 2
+                }
+            );
+            menuContainer.add(groupHeader);
+
+            // Add group items
+            group.items.forEach((item, itemIndex) => {
+                buttonConfigs.push({
+                    text: item.text,
+                    icon: item.icon,
+                    description: item.description,
+                    y: groupY + 40 + (buttonSpacing * itemIndex),
+                    handler: item.handler,
+                    group: group.id,
+                    color: group.color
+                });
+            });
+        });
 
         // Add horizontal separator lines for groups
         const separatorLines = this.add.graphics();
@@ -460,19 +510,24 @@ class MainMenuScene extends Phaser.Scene {
             menuContainer.add(buttonContainer);
 
             // Create button background with gradient
-            const buttonWidth = 260;
-            const buttonHeight = 60;
+            const buttonWidth = 320;
+            const buttonHeight = 50;
             const button = this.add.graphics();
 
+            // Get color from config or use default
+            const buttonColor = config.color ? Phaser.Display.Color.HexStringToColor(config.color).color : 0x33aaff;
+            const buttonColorDark = Phaser.Display.Color.ValueToColor(buttonColor).darken(30).color;
+            const buttonColorLight = Phaser.Display.Color.ValueToColor(buttonColor).lighten(20).color;
+
             // Default state - gradient background
-            button.fillGradientStyle(0x222244, 0x222255, 0x222266, 0x222255, 0.8);
+            button.fillGradientStyle(0x001133, 0x001133, 0x002266, 0x002266, 0.7);
             button.fillRoundedRect(-buttonWidth/2, -buttonHeight/2, buttonWidth, buttonHeight, 10);
-            button.lineStyle(1, 0x33aaff, 0.5);
+            button.lineStyle(1, buttonColor, 0.5);
             button.strokeRoundedRect(-buttonWidth/2, -buttonHeight/2, buttonWidth, buttonHeight, 10);
             buttonContainer.add(button);
 
-            // Add a left accent bar
-            const accentBar = this.add.rectangle(-buttonWidth/2 + 5, 0, 3, buttonHeight - 10, 0x33aaff, 0.7)
+            // Add a left accent bar with the group color
+            const accentBar = this.add.rectangle(-buttonWidth/2 + 5, 0, 3, buttonHeight - 10, buttonColor, 0.7)
                 .setOrigin(0.5);
             buttonContainer.add(accentBar);
 
@@ -499,12 +554,32 @@ class MainMenuScene extends Phaser.Scene {
                 color: '#ffffff',
                 stroke: '#000000',
                 strokeThickness: 2,
-                shadow: { offsetX: 1, offsetY: 1, color: '#33aaff', blur: 5, stroke: true }
+                shadow: { offsetX: 1, offsetY: 1, color: config.color || '#33aaff', blur: 5, stroke: true }
             }).setOrigin(config.icon ? 0 : 0.5, 0.5);
             buttonContainer.add(buttonText);
 
+            // Add description text if available
+            let descriptionText;
+            if (config.description) {
+                descriptionText = this.add.text(
+                    buttonWidth/2 - 15,
+                    buttonHeight/2 + 5,
+                    config.description,
+                    {
+                        fontFamily: 'monospace',
+                        fontSize: '12px',
+                        color: '#aaaaaa',
+                        align: 'right'
+                    }
+                ).setOrigin(1, 0);
+                buttonContainer.add(descriptionText);
+
+                // Only show description on hover
+                descriptionText.setVisible(false);
+            }
+
             // Add a subtle glow effect behind the button
-            const glow = this.add.rectangle(0, 0, buttonWidth, buttonHeight, 0x33aaff, 0)
+            const glow = this.add.rectangle(0, 0, buttonWidth, buttonHeight, buttonColor, 0)
                 .setOrigin(0.5);
             buttonContainer.add(glow);
             buttonContainer.sendToBack(glow);
@@ -513,13 +588,14 @@ class MainMenuScene extends Phaser.Scene {
             hitArea.on('pointerover', () => {
                 // Clear and redraw with hover style
                 button.clear();
-                button.fillGradientStyle(0x3344aa, 0x3355bb, 0x3366cc, 0x3355bb, 0.9);
+                button.fillGradientStyle(0x002266, 0x002266, 0x003399, 0x003399, 0.8);
                 button.fillRoundedRect(-buttonWidth/2, -buttonHeight/2, buttonWidth, buttonHeight, 10);
-                button.lineStyle(2, 0x33ccff, 0.8);
+                button.lineStyle(2, buttonColorLight, 0.8);
                 button.strokeRoundedRect(-buttonWidth/2, -buttonHeight/2, buttonWidth, buttonHeight, 10);
 
                 // Enhance text glow
-                buttonText.setShadow(1, 1, '#33ccff', 10, true);
+                buttonText.setShadow(1, 1, config.color || '#33ccff', 10, true);
+                buttonText.setColor(config.color || '#33aaff');
 
                 // Animate the accent bar
                 this.tweens.add({
@@ -534,18 +610,24 @@ class MainMenuScene extends Phaser.Scene {
                     alpha: 0.2,
                     duration: 200
                 });
+
+                // Show description if available
+                if (descriptionText) {
+                    descriptionText.setVisible(true);
+                }
             });
 
             hitArea.on('pointerout', () => {
                 // Clear and redraw with default style
                 button.clear();
-                button.fillGradientStyle(0x222244, 0x222255, 0x222266, 0x222255, 0.8);
+                button.fillGradientStyle(0x001133, 0x001133, 0x002266, 0x002266, 0.7);
                 button.fillRoundedRect(-buttonWidth/2, -buttonHeight/2, buttonWidth, buttonHeight, 10);
-                button.lineStyle(1, 0x33aaff, 0.5);
+                button.lineStyle(1, buttonColor, 0.5);
                 button.strokeRoundedRect(-buttonWidth/2, -buttonHeight/2, buttonWidth, buttonHeight, 10);
 
                 // Reset text glow
-                buttonText.setShadow(1, 1, '#33aaff', 5, true);
+                buttonText.setShadow(1, 1, config.color || '#33aaff', 5, true);
+                buttonText.setColor('#ffffff');
 
                 // Reset the accent bar
                 this.tweens.add({
@@ -560,12 +642,17 @@ class MainMenuScene extends Phaser.Scene {
                     alpha: 0,
                     duration: 200
                 });
+
+                // Hide description
+                if (descriptionText) {
+                    descriptionText.setVisible(false);
+                }
             });
 
             hitArea.on('pointerdown', () => {
                 // Clear and redraw with pressed style
                 button.clear();
-                button.fillGradientStyle(0x2233aa, 0x2244bb, 0x2255cc, 0x2244bb, 1);
+                button.fillGradientStyle(buttonColorDark, buttonColorDark, buttonColor, buttonColor, 1);
                 button.fillRoundedRect(-buttonWidth/2, -buttonHeight/2, buttonWidth, buttonHeight, 10);
 
                 // Add press effect
