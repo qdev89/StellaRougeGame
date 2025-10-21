@@ -36,6 +36,9 @@
     // Initialize analytics
     game.global.analytics = new GameAnalytics();
 
+    // Initialize performance monitor
+    game.global.performanceMonitor = new PerformanceMonitor();
+
     // Add event listeners for browser visibility changes
     document.addEventListener('visibilitychange', function() {
         if (document.hidden) {
