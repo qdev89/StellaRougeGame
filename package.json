@@ -1,6 +1,6 @@
 {
   "name": "stellar-rogue",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "A roguelike space shooter with procedurally generated sectors and adaptive difficulty",
   "main": "index.html",
   "scripts": {

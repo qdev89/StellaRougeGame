@@ -1,11 +1,90 @@
 # STELLAR ROGUE - Release Notes
 
-## Version 0.5.0 Beta (Current)
+## Version 0.6.0 Beta (Current - Release Candidate)
+
+### Major Features - Project Completion
+This version represents the completion of the main development phase of STELLAR ROGUE, with all core features implemented and polished.
+
+#### Enhanced Analytics System
+- **Balance Data Tracking**: Comprehensive system for tracking game balance metrics
+  - Weapon usage statistics tracking
+  - Enemy encounter data collection
+  - Boss encounter performance metrics
+  - Upgrade selection analytics
+  - Player death analysis
+  - Difficulty adjustment tracking
+  - Session summary generation
+- **Data Export**: Export analytics data to JSON for offline analysis
+- **Local Analysis**: Real-time analytics data viewing and reporting
+
+#### Performance Optimization
+- **Performance Monitor**: Real-time performance monitoring system
+  - FPS tracking and averaging
+  - Active entity count monitoring
+  - Particle count tracking
+  - Memory usage monitoring
+  - Performance threshold warnings
+- **Auto-Optimization**: Automatic quality adjustment based on performance
+  - Dynamic quality settings (high, medium, low)
+  - Adaptive particle count limits
+  - Enemy count optimization
+  - Performance-based visual effects scaling
+- **Quality Settings**: Manual quality control for different hardware
+  - Particle density adjustment
+  - Maximum entity limits
+  - Effects quality presets
+- **Performance Reporting**: Detailed performance reports with min/max/average FPS
+
+#### Tutorial and Help System (v0.5.0 Completion)
+- **In-Game Tutorial**: Comprehensive step-by-step tutorial for new players
+  - Movement and combat basics
+  - Weapon switching mechanics
+  - Upgrade system introduction
+  - Interactive tutorial elements with visual highlights
+  - Skip All button to bypass tutorial entirely
+- **Contextual Tips**: Smart tips system that adapts to gameplay
+  - Situation-aware tips for low health, shields, and difficult encounters
+  - Adaptive cooldown to prevent tip spam
+  - Priority-based queue for important information
+- **Help Scene**: Detailed help documentation accessible from main menu
+  - Complete game mechanics explanation
+  - Controls reference
+  - Combat system details
+  - Upgrade and synergy system guide
+  - Sector navigation help
+
+#### Bug Fixes and Improvements
+- Fixed homing missiles not tracking enemies properly
+- Resolved Nemesis information screen icon rendering issues
+- Fixed ammo particle graphics not displaying correctly
+- Improved ammo display for all weapon types
+- Enhanced menu overlay positioning to prevent title overlap
+- Improved UI hierarchy and visibility
+
+#### Documentation Updates
+- Updated all documentation to reflect v0.6.0 features
+- Comprehensive project plan updates
+- Enhanced README with current feature status
+- Updated roadmap for post-release plans
+
+### Release Preparation
+- Version bump from 0.5.0 to 0.6.0
+- Complete feature set for initial public release
+- All Phase 4 polish items completed
+- Ready for deployment
+
+### What's Next (Post-Release)
+- Sound implementation (music and sound effects)
+- Platform expansion (mobile, gamepad support)
+- Additional game modes
+- Community features
+
+## Version 0.5.0 Beta
 
 ### Post-Release Preparation
 - Added GitHub Pages deployment workflow
 - Created comprehensive testing plan
-- Added analytics system for tracking player behavior
+- Added base analytics system for tracking player behavior
 - Created future development roadmap
 - Updated documentation for deployment and testing
 

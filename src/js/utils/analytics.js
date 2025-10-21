@@ -222,6 +222,128 @@ class GameAnalytics {
             ...data
         });
     }
+
+    /**
+     * Track balance data - for game balancing analysis
+     * @param {string} category - Balance category (e.g., 'weapon_usage', 'enemy_difficulty')
+     * @param {object} data - Balance-related data
+     */
+    trackBalance(category, data = {}) {
+        this.trackEvent('balance_data', {
+            category,
+            timestamp: Date.now(),
+            ...data
+        });
+    }
+
+    /**
+     * Track weapon usage statistics
+     * @param {string} weaponType - Type of weapon used
+     * @param {object} data - Additional weapon data
+     */
+    trackWeaponUsage(weaponType, data = {}) {
+        this.trackBalance('weapon_usage', {
+            weaponType,
+            ...data
+        });
+    }
+
+    /**
+     * Track enemy encounter data
+     * @param {string} enemyType - Type of enemy
+     * @param {object} data - Encounter data (health, damage dealt, etc.)
+     */
+    trackEnemyEncounter(enemyType, data = {}) {
+        this.trackBalance('enemy_encounter', {
+            enemyType,
+            ...data
+        });
+    }
+
+    /**
+     * Track boss encounter data
+     * @param {string} bossName - Name of the boss
+     * @param {object} data - Boss encounter data
+     */
+    trackBossEncounter(bossName, data = {}) {
+        this.trackBalance('boss_encounter', {
+            bossName,
+            ...data
+        });
+    }
+
+    /**
+     * Track upgrade selections
+     * @param {string} upgradeType - Type of upgrade selected
+     * @param {object} data - Additional upgrade data
+     */
+    trackUpgradeSelection(upgradeType, data = {}) {
+        this.trackBalance('upgrade_selection', {
+            upgradeType,
+            ...data
+        });
+    }
+
+    /**
+     * Track player death data
+     * @param {object} data - Death data (sector, cause, time survived, etc.)
+     */
+    trackPlayerDeath(data = {}) {
+        this.trackBalance('player_death', {
+            ...data
+        });
+    }
+
+    /**
+     * Track difficulty adjustments
+     * @param {string} adjustmentType - Type of difficulty adjustment
+     * @param {object} data - Adjustment data
+     */
+    trackDifficultyAdjustment(adjustmentType, data = {}) {
+        this.trackBalance('difficulty_adjustment', {
+            adjustmentType,
+            ...data
+        });
+    }
+
+    /**
+     * Track session summary for balance analysis
+     * @param {object} summary - Complete session summary data
+     */
+    trackSessionSummary(summary = {}) {
+        this.trackBalance('session_summary', {
+            sessionDuration: Math.floor((Date.now() - this.sessionStartTime) / 1000),
+            ...summary
+        });
+    }
+
+    /**
+     * Get analytics data for local analysis
+     * @returns {object} Current analytics data
+     */
+    getAnalyticsData() {
+        return {
+            sessionId: this.sessionId,
+            events: [...this.events],
+            sessionDuration: Math.floor((Date.now() - this.sessionStartTime) / 1000)
+        };
+    }
+
+    /**
+     * Export analytics data to JSON file
+     * @param {string} filename - Name of the file to export
+     */
+    exportData(filename = 'stellar-rogue-analytics.json') {
+        const data = this.getAnalyticsData();
+        const dataStr = JSON.stringify(data, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+
+        const exportFileDefaultName = filename;
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportFileDefaultName);
+        linkElement.click();
+    }
 }
 
 // For non-ES6 module compatibility
